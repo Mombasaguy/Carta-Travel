@@ -12,13 +12,13 @@
       "rule_id": "US_ESTA_BUSINESS",
       "from_citizenship_group": ["GB", "DE", "FR", "JP", "AU", "NZ", "IT", "ES", "NL", "BE", "CH", "SE", "NO", "DK", "FI", "IE", "AT", "PT", "SG", "KR", "TW"],
       "to_country": "US",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 90,
       "effective_start": "2025-01-01",
       "effective_end": null,
       "outputs": {
         "entry_authorization": {
-          "type": "ESTA",
+          "type": "ETA",
           "required": true,
           "headline": "ESTA (Electronic System for Travel Authorization) required for Visa Waiver Program countries.",
           "details": "Apply online at least 72 hours before travel. Valid for 2 years or until passport expires.",
@@ -41,16 +41,16 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
-      "rule_id": "US_B1_VISA_BUSINESS",
+      "rule_id": "US_VISA_BUSINESS",
       "from_citizenship_group": ["BR", "CN", "IN", "MX", "RU", "PH", "VN", "ID", "TH", "NG"],
       "to_country": "US",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 180,
       "effective_start": "2025-01-01",
       "effective_end": null,
       "outputs": {
         "entry_authorization": {
-          "type": "B1_VISA",
+          "type": "VISA",
           "required": true,
           "headline": "B-1 Business Visa required for non-VWP countries.",
           "details": "Schedule interview at US Embassy/Consulate. Processing times vary by location (2-8 weeks typical).",
@@ -76,7 +76,7 @@
       "rule_id": "GB_ETA_US_BUSINESS",
       "from_citizenship_group": ["US"],
       "to_country": "GB",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 180,
       "effective_start": "2025-01-01",
       "effective_end": null,
@@ -105,16 +105,16 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
-      "rule_id": "GB_VISA_FREE_EU_BUSINESS",
+      "rule_id": "GB_NONE_EU_BUSINESS",
       "from_citizenship_group": ["DE", "FR", "IT", "ES", "NL", "BE", "AT", "PT", "IE", "SE", "DK", "FI", "NO", "CH", "PL", "CZ", "HU", "GR"],
       "to_country": "GB",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 180,
       "effective_start": "2025-01-01",
       "effective_end": null,
       "outputs": {
         "entry_authorization": {
-          "type": "VISA_FREE",
+          "type": "NONE",
           "required": false,
           "headline": "No visa required for EU/EEA nationals for short business visits.",
           "details": "Present valid passport or national ID at border. No pre-authorization needed.",
@@ -132,16 +132,16 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
-      "rule_id": "CA_VISA_FREE_US_BUSINESS",
+      "rule_id": "CA_NONE_US_BUSINESS",
       "from_citizenship_group": ["US"],
       "to_country": "CA",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 180,
       "effective_start": "2025-01-01",
       "effective_end": null,
       "outputs": {
         "entry_authorization": {
-          "type": "VISA_FREE",
+          "type": "NONE",
           "required": false,
           "headline": "US citizens do not need an eTA or visa for Canada.",
           "details": "Present valid US passport at border. Entry granted at border officer's discretion.",
@@ -162,7 +162,7 @@
       "rule_id": "CA_ETA_VWP_BUSINESS",
       "from_citizenship_group": ["GB", "DE", "FR", "JP", "AU", "NZ", "IT", "ES", "NL", "BE", "CH", "SE", "NO", "DK", "FI", "IE", "AT", "PT", "SG", "KR"],
       "to_country": "CA",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 180,
       "effective_start": "2025-01-01",
       "effective_end": null,
@@ -190,16 +190,16 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
-      "rule_id": "DE_SCHENGEN_US_BUSINESS",
+      "rule_id": "DE_NONE_SCHENGEN_BUSINESS",
       "from_citizenship_group": ["US", "CA", "AU", "NZ", "JP", "KR", "SG", "GB"],
       "to_country": "DE",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 90,
       "effective_start": "2025-01-01",
       "effective_end": null,
       "outputs": {
         "entry_authorization": {
-          "type": "VISA_FREE",
+          "type": "NONE",
           "required": false,
           "headline": "No visa required for short-term business visits (Schengen Area).",
           "details": "Up to 90 days within any 180-day period across the entire Schengen Area.",
@@ -217,16 +217,16 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
-      "rule_id": "JP_VISA_FREE_US_BUSINESS",
+      "rule_id": "JP_NONE_VWP_BUSINESS",
       "from_citizenship_group": ["US", "CA", "GB", "DE", "FR", "AU", "NZ", "IT", "ES", "NL", "BE", "CH", "SE", "NO", "DK", "FI", "IE", "AT", "SG", "KR"],
       "to_country": "JP",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 90,
       "effective_start": "2025-01-01",
       "effective_end": null,
       "outputs": {
         "entry_authorization": {
-          "type": "VISA_FREE",
+          "type": "NONE",
           "required": false,
           "headline": "No visa required for short-term business visits.",
           "details": "Present valid passport at immigration. Complete arrival card and customs declaration.",
@@ -244,16 +244,16 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
-      "rule_id": "BR_VISA_FREE_US_BUSINESS",
+      "rule_id": "BR_NONE_VWP_BUSINESS",
       "from_citizenship_group": ["US", "CA", "AU", "JP"],
       "to_country": "BR",
-      "purpose": "business",
+      "purpose": "BUSINESS",
       "max_duration_days": 90,
       "effective_start": "2025-01-01",
       "effective_end": null,
       "outputs": {
         "entry_authorization": {
-          "type": "VISA_FREE",
+          "type": "NONE",
           "required": false,
           "headline": "No visa required for US, Canadian, Australian, and Japanese citizens.",
           "details": "Visa exemption for tourism and business visits up to 90 days.",

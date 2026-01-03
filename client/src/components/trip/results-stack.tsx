@@ -51,11 +51,7 @@ const entryTypeLabels: Record<string, { label: string; color: string }> = {
 };
 
 const purposeLabels: Record<string, string> = {
-  business: "Business",
-  conference: "Conference",
-  client_meeting: "Client Meeting",
-  internal: "Internal",
-  relocation: "Relocation",
+  BUSINESS: "Business",
 };
 
 export function ResultsStack({ result, input, onReset }: ResultsStackProps) {

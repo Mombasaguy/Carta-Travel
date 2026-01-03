@@ -43,8 +43,7 @@ export interface CustomsInfo {
 
 // ============= TRIP FLOW SCHEMAS =============
 
-export const tripPurposeEnum = z.enum(["business", "conference", "client_meeting", "internal", "relocation"]);
-export type TripPurpose = z.infer<typeof tripPurposeEnum>;
+const DateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export const tripInputSchema = z.object({
   employeeName: z.string().min(1, "Employee name is required"),
@@ -53,77 +52,77 @@ export const tripInputSchema = z.object({
   destinationCountry: z.string().min(2, "Destination country is required"),
   departureDate: z.string().min(1, "Departure date is required"),
   returnDate: z.string().min(1, "Return date is required"),
-  purpose: tripPurposeEnum,
+  purpose: z.literal("BUSINESS"),
   citizenship: z.string().min(2, "Citizenship is required"),
   needsInvitationLetter: z.boolean().default(false),
 });
 export type TripInput = z.infer<typeof tripInputSchema>;
 
-// Enhanced Rule Schema
+// Enhanced Rule Schema matching governance requirements
 export const actionSchema = z.object({
   label: z.string(),
   url: z.string().url(),
 });
 
 export const feeSchema = z.object({
-  amount: z.number(),
-  currency: z.string(),
-  reimbursable: z.boolean().optional(),
+  amount: z.number().nonnegative(),
+  currency: z.string().min(3).max(3),
+  reimbursable: z.boolean(),
 });
 
 export const entryAuthorizationSchema = z.object({
-  type: z.string(),
+  type: z.enum(["VISA", "ETA", "EVISA", "NONE", "UNKNOWN"]),
   required: z.boolean(),
   headline: z.string(),
-  details: z.string(),
-  validity: z.string().optional(),
+  details: z.string().nullable().optional(),
+  validity: z.string().nullable().optional(),
   fee: feeSchema.optional(),
   actions: z.array(actionSchema).optional(),
 });
 
 export const passportValiditySchema = z.object({
-  rule: z.string(),
+  rule: z.string().nullable(),
 });
 
 export const invitationLetterSchema = z.object({
   available: z.boolean(),
-  template_id: z.string().optional(),
+  template_id: z.string().nullable().optional(),
 });
 
 export const ruleOutputsSchema = z.object({
   entry_authorization: entryAuthorizationSchema,
-  passport_validity: passportValiditySchema.optional(),
+  passport_validity: passportValiditySchema,
   required_documents: z.array(z.string()),
-  recommended_documents: z.array(z.string()).optional(),
-  invitation_letter: invitationLetterSchema.optional(),
-  notes: z.array(z.string()).optional(),
+  recommended_documents: z.array(z.string()),
+  invitation_letter: invitationLetterSchema,
+  notes: z.array(z.string()),
 });
 
 export const sourceSchema = z.object({
   source_id: z.string(),
   title: z.string(),
-  verified_at: z.string(),
+  verified_at: DateString,
 });
 export type Source = z.infer<typeof sourceSchema>;
 
 export const governanceSchema = z.object({
   owner: z.string(),
-  review_due_at: z.string(),
-  status: z.enum(["VERIFIED", "PENDING_REVIEW", "EXPIRED"]),
+  review_due_at: DateString,
+  status: z.enum(["VERIFIED", "NEEDS_REVIEW"]),
 });
 
 export const travelRuleSchema = z.object({
   rule_id: z.string(),
   from_citizenship_group: z.array(z.string()),
-  to_country: z.string(),
-  purpose: z.string(),
-  max_duration_days: z.number(),
-  effective_start: z.string(),
-  effective_end: z.string().nullable(),
+  to_country: z.string().length(2),
+  purpose: z.literal("BUSINESS"),
+  max_duration_days: z.number().int().positive(),
+  effective_start: DateString,
+  effective_end: DateString.nullable(),
   outputs: ruleOutputsSchema,
   sources: z.array(sourceSchema),
   governance: governanceSchema,
-});
+}).strict();
 export type TravelRule = z.infer<typeof travelRuleSchema>;
 
 // Severity for requirements display

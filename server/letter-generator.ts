@@ -150,11 +150,7 @@ Carta Travel Team`
 };
 
 const purposeLabels: Record<string, string> = {
-  business: "Business Meetings",
-  conference: "Conference Attendance",
-  client_meeting: "Client Meeting",
-  internal: "Internal Meeting",
-  relocation: "Relocation",
+  BUSINESS: "Business Meetings",
 };
 
 export function generateLetter(request: LetterRequest): string {

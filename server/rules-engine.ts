@@ -54,7 +54,7 @@ export function resolveTrip(input: TripInput): TripResult {
   
   if (matchedRule) {
     requirements = buildRequirementsFromRule(matchedRule);
-    letterTemplate = matchedRule.outputs.invitation_letter?.template_id;
+    letterTemplate = matchedRule.outputs.invitation_letter?.template_id ?? undefined;
     letterEligible = matchedRule.outputs.invitation_letter?.available === true && parsedInput.needsInvitationLetter;
     sources = matchedRule.sources;
   } else {
@@ -165,7 +165,7 @@ function buildRequirementsFromRule(rule: TravelRule): StructuredRequirement[] {
   });
   
   // Passport validity
-  if (outputs.passport_validity) {
+  if (outputs.passport_validity && outputs.passport_validity.rule) {
     requirements.push({
       id: `${rule.rule_id}-passport`,
       type: "document",
