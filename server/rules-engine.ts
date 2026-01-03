@@ -19,6 +19,11 @@ const rulesCollectionSchema = z.object({
     approvalWorkflow: z.string(),
     expensePolicy: z.string(),
     travelInsurance: z.string(),
+    flightPolicy: z.string().optional(),
+    mealAllowance: z.string().optional(),
+    groundTransportation: z.string().optional(),
+    visaAndPassport: z.string().optional(),
+    invitationLetterGuidance: z.string().optional(),
   }),
   rules: z.array(travelRuleSchema),
 });
@@ -94,6 +99,57 @@ export function resolveTrip(input: TripInput): TripResult {
     description: cartaPolicy.travelInsurance,
     severity: "info",
   });
+  
+  // Add additional Carta policy sections if available
+  if (cartaPolicy.flightPolicy) {
+    requirements.push({
+      id: "carta-policy-flight",
+      type: "policy",
+      title: "Flight Policy",
+      description: cartaPolicy.flightPolicy,
+      severity: "info",
+    });
+  }
+  
+  if (cartaPolicy.mealAllowance) {
+    requirements.push({
+      id: "carta-policy-meals",
+      type: "policy",
+      title: "Meal Allowance",
+      description: cartaPolicy.mealAllowance,
+      severity: "info",
+    });
+  }
+  
+  if (cartaPolicy.groundTransportation) {
+    requirements.push({
+      id: "carta-policy-transport",
+      type: "policy",
+      title: "Ground Transportation",
+      description: cartaPolicy.groundTransportation,
+      severity: "info",
+    });
+  }
+  
+  if (cartaPolicy.visaAndPassport) {
+    requirements.push({
+      id: "carta-policy-visa",
+      type: "policy",
+      title: "Visa & Passport",
+      description: cartaPolicy.visaAndPassport,
+      severity: "info",
+    });
+  }
+  
+  if (cartaPolicy.invitationLetterGuidance) {
+    requirements.push({
+      id: "carta-policy-letter",
+      type: "policy",
+      title: "Invitation Letter",
+      description: cartaPolicy.invitationLetterGuidance,
+      severity: "info",
+    });
+  }
   
   return {
     matched: matchedRule !== null,

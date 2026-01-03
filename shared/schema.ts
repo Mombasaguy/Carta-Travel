@@ -163,6 +163,7 @@ export const letterRequestSchema = z.object({
   employeeEmail: z.string().email(),
   employeeTitle: z.string().optional(),
   destinationCountry: z.string(),
+  citizenship: z.string(),
   departureDate: z.string(),
   returnDate: z.string(),
   purpose: z.string(),

@@ -75,7 +75,9 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
         body: JSON.stringify({
           employeeName: input.employeeName,
           employeeEmail: input.employeeEmail,
+          employeeTitle: input.employeeTitle,
           destinationCountry: getCountryName(),
+          citizenship: input.citizenship,
           departureDate: input.departureDate,
           returnDate: input.returnDate,
           purpose: input.purpose,

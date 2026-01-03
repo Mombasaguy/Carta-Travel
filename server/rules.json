@@ -2,10 +2,15 @@
   "version": "2.0.0",
   "lastUpdated": "2025-07-28",
   "cartaPolicy": {
-    "bookingGuidance": "Book all international travel through Navan (TripActions). Direct bookings require manager approval and may not be reimbursed.",
-    "approvalWorkflow": "International trips require manager approval 14+ days in advance. Executive-level trips (C-suite meetings) require VP approval.",
-    "expensePolicy": "Per diem rates apply based on destination. See Carta Travel Policy for daily limits. Premium economy approved for flights over 6 hours.",
-    "travelInsurance": "All international travel is automatically covered under Carta's corporate travel insurance. Carry your insurance card."
+    "bookingGuidance": "All Carta travel must be booked through Navan (access via OKTA). Obtain manager approval using the Trip Proposal feature before confirming bookings.",
+    "approvalWorkflow": "Book domestic travel 21+ days and international travel 35+ days in advance. Travel booked less than 14 days from departure requires executive leader approval. All international travel requires Zip Approval from your Executive Leader.",
+    "expensePolicy": "Economy class is standard. Premium Economy allowed on international flights over 6 hours. Hotel rates: $400/night (NYC, SF, London, Seattle), $250/night (Toronto, Singapore, SLC), $200/night (Manila, Rio), $150/night (Bangalore).",
+    "travelInsurance": "Carta provides corporate travel insurance for international travel. Carry your insurance card. Contact #travel_and_expense_help on Slack for questions.",
+    "flightPolicy": "Travelers must obtain lowest available non-refundable airfare. Extra legroom ($150 max round trip) allowed for domestic flights over 4 hours. In-flight WiFi and checked baggage fees are reimbursable.",
+    "mealAllowance": "Daily meal allowance when visiting Carta offices (lunch provided): $70 (NYC, SF, London), $50 (Toronto, Singapore). When lunch not provided: $100 (NYC, SF, London), $80 (Toronto, Singapore). Travel days: $100 prorated.",
+    "groundTransportation": "Preferred rideshare: Lyft/Uber. Car rental: Enterprise or National via Navan (midsize max unless 4+ people). Personal vehicle mileage reimbursed at IRS rate.",
+    "visaAndPassport": "Passport maintenance is personal responsibility (not reimbursed). Carta reimburses visitor visas and immigration permits for business travel. Discuss with manager and obtain pre-approval for visa costs.",
+    "invitationLetterGuidance": "Business invitation letters should be dated within 2 weeks of travel, signed by a manager in the receiving country. Present to immigration only if requested."
   },
   "rules": [
     {
@@ -21,7 +26,7 @@
           "type": "ETA",
           "required": true,
           "headline": "ESTA (Electronic System for Travel Authorization) required for Visa Waiver Program countries.",
-          "details": "Apply online at least 72 hours before travel. Valid for 2 years or until passport expires.",
+          "details": "Apply online at least 72 hours before travel. Valid for 2 years or until passport expires. Most applications approved within minutes.",
           "validity": "Multiple entries for up to 2 years.",
           "fee": { "amount": 21, "currency": "USD", "reimbursable": true },
           "actions": [
@@ -30,13 +35,13 @@
         },
         "passport_validity": { "rule": "Passport must be valid for 6 months beyond intended stay." },
         "required_documents": ["Valid passport", "Approved ESTA", "Proof of return/onward travel"],
-        "recommended_documents": ["Carta business invitation letter (US)", "Hotel confirmation", "Travel itinerary"],
+        "recommended_documents": ["Carta business invitation letter", "Hotel confirmation", "Travel itinerary", "Business meeting details"],
         "invitation_letter": { "available": true, "template_id": "US" },
-        "notes": ["ESTA does not guarantee entry - CBP officer makes final decision.", "Business activities limited to meetings, conferences, negotiations - no paid work."]
+        "notes": ["ESTA does not guarantee entry - CBP officer makes final decision.", "Business activities limited to meetings, conferences, negotiations - no paid work.", "Carry invitation letter to present if requested by immigration."]
       },
       "sources": [
         { "source_id": "CBP_ESTA", "title": "ESTA Official Requirements", "verified_at": "2025-07-28" },
-        { "source_id": "CARTA_INV_GUIDE", "title": "Business Invitation Letter Guidelines", "verified_at": "2025-07-28" }
+        { "source_id": "CARTA_TRAVEL_POLICY", "title": "Carta Global Travel Policy", "verified_at": "2025-07-28" }
       ],
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
@@ -53,28 +58,29 @@
           "type": "VISA",
           "required": true,
           "headline": "B-1 Business Visa required for non-VWP countries.",
-          "details": "Schedule interview at US Embassy/Consulate. Processing times vary by location (2-8 weeks typical).",
+          "details": "Schedule interview at US Embassy/Consulate. Processing times vary by location (2-8 weeks typical). Allow ample time before planned departure.",
           "validity": "Usually issued for 10 years with multiple entries.",
           "fee": { "amount": 185, "currency": "USD", "reimbursable": true },
           "actions": [
-            { "label": "Schedule Visa Interview", "url": "https://travel.state.gov/content/travel/en/us-visas/business.html" }
+            { "label": "Schedule Visa Interview", "url": "https://travel.state.gov/content/travel/en/us-visas/business.html" },
+            { "label": "CIBTvisas (Carta preferred)", "url": "https://cibtvisas.com/" }
           ]
         },
         "passport_validity": { "rule": "Passport must be valid for 6 months beyond intended stay." },
-        "required_documents": ["Valid passport", "DS-160 confirmation", "Visa appointment letter", "Passport photo"],
-        "recommended_documents": ["Carta business invitation letter (US)", "Employment verification", "Bank statements", "Travel itinerary"],
+        "required_documents": ["Valid passport", "DS-160 confirmation", "Visa appointment letter", "Passport photo (2x2 inches)"],
+        "recommended_documents": ["Carta business invitation letter", "Employment verification letter", "Bank statements (3 months)", "Travel itinerary", "Hotel confirmation"],
         "invitation_letter": { "available": true, "template_id": "US" },
-        "notes": ["Allow extra time for visa processing.", "Bring supporting documents to interview."]
+        "notes": ["Discuss with manager and obtain pre-approval for visa costs.", "For full-service visa assistance, contact CIBTvisas (Carta's preferred provider).", "Visa costs are reimbursable by Carta."]
       },
       "sources": [
         { "source_id": "DOS_B1_VISA", "title": "B-1 Visa Requirements", "verified_at": "2025-07-28" },
-        { "source_id": "CARTA_INV_GUIDE", "title": "Business Invitation Letter Guidelines", "verified_at": "2025-07-28" }
+        { "source_id": "CARTA_TRAVEL_POLICY", "title": "Carta Global Travel Policy", "verified_at": "2025-07-28" }
       ],
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
       "rule_id": "GB_ETA_US_BUSINESS",
-      "from_citizenship_group": ["US"],
+      "from_citizenship_group": ["US", "CA", "AU"],
       "to_country": "GB",
       "purpose": "BUSINESS",
       "max_duration_days": 180,
@@ -85,22 +91,23 @@
           "type": "ETA",
           "required": true,
           "headline": "UK Electronic Travel Authorisation (ETA) required for visa-exempt nationals.",
-          "details": "Apply via GOV.UK or the UK ETA app. Most decisions in ~3 working days; apply early.",
-          "validity": "Multiple entries up to 2 years or until passport expiry (whichever is sooner).",
+          "details": "Apply via GOV.UK or the UK ETA app (takes ~10 minutes). Most decisions within 3 working days. Apply as early as possible.",
+          "validity": "Multiple entries for up to 2 years or until passport expires.",
           "fee": { "amount": 16, "currency": "GBP", "reimbursable": true },
           "actions": [
-            { "label": "Apply for UK ETA", "url": "https://www.gov.uk/guidance/electronic-travel-authorisation-eta" }
+            { "label": "Apply for UK ETA", "url": "https://www.gov.uk/guidance/electronic-travel-authorisation-eta" },
+            { "label": "Download UK ETA App", "url": "https://www.gov.uk/guidance/apply-for-an-electronic-travel-authorisation-eta" }
           ]
         },
-        "passport_validity": { "rule": "Passport must be valid for the duration of stay." },
-        "required_documents": ["Valid passport", "Approved UK ETA"],
-        "recommended_documents": ["Carta business invitation letter (UK)", "Proof of onward travel", "Hotel confirmation"],
+        "passport_validity": { "rule": "Passport must be valid for the duration of stay in the UK." },
+        "required_documents": ["Valid passport", "Approved UK ETA", "Clear passport photo (UK standards)"],
+        "recommended_documents": ["Carta business invitation letter (signed by UK manager)", "Proof of onward travel", "Hotel confirmation", "Business meeting agenda"],
         "invitation_letter": { "available": true, "template_id": "UK" },
-        "notes": ["ETA is required even if transiting through the UK."]
+        "notes": ["ETA is required even if transiting through the UK.", "ETA does not permit work or productive activities.", "Carry invitation letter from Carta UK to present if requested by Border Force.", "Apply early - travel planning should account for possible delays."]
       },
       "sources": [
         { "source_id": "UK_ETA_GUIDANCE", "title": "UK ETA Requirement for Travelers", "verified_at": "2025-07-28" },
-        { "source_id": "CARTA_INV_GUIDE", "title": "Business Invitation Letter Guidelines", "verified_at": "2025-07-28" }
+        { "source_id": "CARTA_UK_ETA_POLICY", "title": "Carta UK ETA Guidance", "verified_at": "2025-07-28" }
       ],
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
@@ -116,15 +123,15 @@
         "entry_authorization": {
           "type": "NONE",
           "required": false,
-          "headline": "No visa required for EU/EEA nationals for short business visits.",
+          "headline": "No visa or ETA required for EU/EEA nationals for short business visits.",
           "details": "Present valid passport or national ID at border. No pre-authorization needed.",
           "validity": "Up to 6 months per visit."
         },
         "passport_validity": { "rule": "Passport or national ID must be valid for the duration of stay." },
         "required_documents": ["Valid passport or national ID card"],
-        "recommended_documents": ["Carta business invitation letter (UK)", "Return ticket", "Proof of accommodation"],
+        "recommended_documents": ["Carta business invitation letter (signed by UK manager)", "Return ticket", "Proof of accommodation"],
         "invitation_letter": { "available": true, "template_id": "UK" },
-        "notes": ["Cannot work or access public funds during visit."]
+        "notes": ["Cannot work or access public funds during visit.", "Business activities only - no productive work."]
       },
       "sources": [
         { "source_id": "UK_GOV_VISIT", "title": "Visit the UK as an EU citizen", "verified_at": "2025-07-28" }
@@ -149,12 +156,13 @@
         },
         "passport_validity": { "rule": "Passport must be valid for the duration of stay." },
         "required_documents": ["Valid US passport"],
-        "recommended_documents": ["Carta business invitation letter (CA)", "Proof of return travel", "Business meeting details"],
+        "recommended_documents": ["Carta business invitation letter (signed by Canada-based manager)", "Proof of return travel", "Business meeting details"],
         "invitation_letter": { "available": true, "template_id": "CA" },
-        "notes": ["NEXUS card holders can use expedited lanes."]
+        "notes": ["NEXUS card holders can use expedited lanes.", "Business visitor activities only - cannot enter Canadian labor market."]
       },
       "sources": [
-        { "source_id": "IRCC_US_VISITORS", "title": "US citizens visiting Canada", "verified_at": "2025-07-28" }
+        { "source_id": "IRCC_US_VISITORS", "title": "US citizens visiting Canada", "verified_at": "2025-07-28" },
+        { "source_id": "CARTA_CA_LETTER", "title": "Carta Canada Invitation Letter Template", "verified_at": "2025-07-28" }
       ],
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
@@ -171,7 +179,7 @@
           "type": "ETA",
           "required": true,
           "headline": "Electronic Travel Authorization (eTA) required for visa-exempt travelers flying to Canada.",
-          "details": "Apply online. Most applications approved within minutes.",
+          "details": "Apply online. Most applications approved within minutes. Valid for 5 years.",
           "validity": "Valid for 5 years or until passport expires.",
           "fee": { "amount": 7, "currency": "CAD", "reimbursable": true },
           "actions": [
@@ -180,12 +188,47 @@
         },
         "passport_validity": { "rule": "Passport must be valid for the duration of stay." },
         "required_documents": ["Valid passport", "Approved eTA"],
-        "recommended_documents": ["Carta business invitation letter (CA)", "Return ticket", "Hotel confirmation"],
+        "recommended_documents": ["Carta business invitation letter (signed by Canada-based manager)", "Return ticket", "Hotel confirmation"],
         "invitation_letter": { "available": true, "template_id": "CA" },
-        "notes": ["eTA not needed if entering by land or sea from the US."]
+        "notes": ["eTA not needed if entering by land or sea from the US.", "For visa applicants, apply independently - refer to IRCC for processing times.", "For full-service visa assistance, contact CIBTvisas."]
       },
       "sources": [
-        { "source_id": "IRCC_ETA", "title": "Canada eTA Requirements", "verified_at": "2025-07-28" }
+        { "source_id": "IRCC_ETA", "title": "Canada eTA Requirements", "verified_at": "2025-07-28" },
+        { "source_id": "CARTA_CA_LETTER", "title": "Carta Canada Invitation Letter Template", "verified_at": "2025-07-28" }
+      ],
+      "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
+    },
+    {
+      "rule_id": "CA_VISA_REQUIRED_BUSINESS",
+      "from_citizenship_group": ["BR", "CN", "IN", "MX", "PH", "VN", "ID", "TH", "NG"],
+      "to_country": "CA",
+      "purpose": "BUSINESS",
+      "max_duration_days": 180,
+      "effective_start": "2025-01-01",
+      "effective_end": null,
+      "outputs": {
+        "entry_authorization": {
+          "type": "VISA",
+          "required": true,
+          "headline": "Business Visitor Visa required for travel to Canada.",
+          "details": "Apply independently via IRCC. Processing times vary by location. Allow ample time before planned departure.",
+          "validity": "Varies - typically up to 10 years with multiple entries.",
+          "fee": { "amount": 100, "currency": "CAD", "reimbursable": true },
+          "actions": [
+            { "label": "Apply for Canada Visa", "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada/apply-visitor-visa.html" },
+            { "label": "Check Processing Times", "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/application/check-processing-times.html" },
+            { "label": "CIBTvisas (Carta preferred)", "url": "https://cibtvisas.com/" }
+          ]
+        },
+        "passport_validity": { "rule": "Passport must be valid for the duration of stay." },
+        "required_documents": ["Valid passport", "Completed visa application", "Passport photos", "Proof of funds"],
+        "recommended_documents": ["Carta business invitation letter (signed by Canada-based manager)", "Employment verification", "Bank statements", "Travel itinerary"],
+        "invitation_letter": { "available": true, "template_id": "CA" },
+        "notes": ["Discuss with manager and obtain pre-approval for visa costs.", "For full-service visa assistance, contact CIBTvisas (Carta's preferred provider).", "Visa costs are reimbursable by Carta."]
+      },
+      "sources": [
+        { "source_id": "IRCC_VISITOR_VISA", "title": "Canada Visitor Visa Requirements", "verified_at": "2025-07-28" },
+        { "source_id": "CARTA_CA_LETTER", "title": "Carta Canada Invitation Letter Template", "verified_at": "2025-07-28" }
       ],
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
@@ -206,10 +249,10 @@
           "validity": "90 days in 180-day rolling period."
         },
         "passport_validity": { "rule": "Passport must be valid for at least 3 months beyond planned departure from Schengen area." },
-        "required_documents": ["Valid passport (3+ months validity)", "Proof of travel insurance (30,000 EUR coverage)"],
-        "recommended_documents": ["Carta business invitation letter (DE)", "Hotel confirmation", "Return ticket"],
+        "required_documents": ["Valid passport (3+ months validity)", "Proof of travel insurance (30,000 EUR minimum coverage)"],
+        "recommended_documents": ["Carta business invitation letter", "Hotel confirmation", "Return ticket", "Proof of sufficient funds"],
         "invitation_letter": { "available": true, "template_id": "DE" },
-        "notes": ["90-day limit applies across all Schengen countries combined.", "Travel insurance strongly recommended."]
+        "notes": ["90-day limit applies across all Schengen countries combined.", "Travel insurance strongly recommended.", "Track your days carefully if visiting multiple Schengen countries."]
       },
       "sources": [
         { "source_id": "SCHENGEN_INFO", "title": "Schengen Visa Requirements", "verified_at": "2025-07-28" }
@@ -234,9 +277,9 @@
         },
         "passport_validity": { "rule": "Passport must be valid for the duration of stay." },
         "required_documents": ["Valid passport", "Return/onward ticket"],
-        "recommended_documents": ["Carta business invitation letter (JP)", "Hotel confirmation", "Business contact details"],
+        "recommended_documents": ["Carta business invitation letter", "Hotel confirmation", "Business contact details", "Visit Japan Web registration"],
         "invitation_letter": { "available": true, "template_id": "JP" },
-        "notes": ["Visit Japan Web registration recommended for faster entry.", "No paid work permitted on visa-free entry."]
+        "notes": ["Visit Japan Web registration recommended for faster entry.", "No paid work permitted on visa-free entry.", "Complete arrival card on flight."]
       },
       "sources": [
         { "source_id": "MOFA_VISA_FREE", "title": "Japan Visa Exemption", "verified_at": "2025-07-28" }
@@ -256,14 +299,42 @@
           "type": "NONE",
           "required": false,
           "headline": "No visa required for US, Canadian, Australian, and Japanese citizens.",
-          "details": "Visa exemption for tourism and business visits up to 90 days.",
+          "details": "Visa exemption for tourism and business visits up to 90 days. Can be extended to 180 days per year.",
           "validity": "90 days, extendable to 180 days per year."
         },
         "passport_validity": { "rule": "Passport must be valid for at least 6 months." },
         "required_documents": ["Valid passport (6+ months validity)", "Return ticket"],
-        "recommended_documents": ["Carta business invitation letter (BR)", "Yellow fever vaccination certificate (if traveling from affected areas)", "Hotel confirmation"],
+        "recommended_documents": ["Carta business invitation letter (signed by Brazil-based manager)", "Yellow fever vaccination certificate (if from affected areas)", "Hotel confirmation", "Business meeting details"],
         "invitation_letter": { "available": true, "template_id": "BR" },
-        "notes": ["Yellow fever vaccination may be required depending on origin.", "Register with Federal Police if staying over 90 days."]
+        "notes": ["Yellow fever vaccination may be required depending on origin country.", "Register with Federal Police if staying over 90 days.", "Daily meal allowance in Rio: $40 (when lunch provided), $50 (when not provided)."]
+      },
+      "sources": [
+        { "source_id": "BR_CONSULATE", "title": "Brazil Visa Requirements", "verified_at": "2025-07-28" },
+        { "source_id": "CARTA_BR_LETTER", "title": "Carta Brazil Invitation Letter Template", "verified_at": "2025-07-28" }
+      ],
+      "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
+    },
+    {
+      "rule_id": "BR_EVISA_EU_BUSINESS",
+      "from_citizenship_group": ["GB", "DE", "FR", "IT", "ES", "NL", "BE", "AT", "PT", "SE", "DK", "FI", "NO", "CH", "PL", "CZ", "HU", "GR", "IE"],
+      "to_country": "BR",
+      "purpose": "BUSINESS",
+      "max_duration_days": 90,
+      "effective_start": "2025-01-01",
+      "effective_end": null,
+      "outputs": {
+        "entry_authorization": {
+          "type": "NONE",
+          "required": false,
+          "headline": "No visa required for EU/Schengen nationals for business visits.",
+          "details": "Present valid passport at immigration. Up to 90 days within 180-day period.",
+          "validity": "90 days in 180-day period."
+        },
+        "passport_validity": { "rule": "Passport must be valid for at least 6 months." },
+        "required_documents": ["Valid passport (6+ months validity)", "Return ticket"],
+        "recommended_documents": ["Carta business invitation letter (signed by Brazil-based manager)", "Yellow fever vaccination certificate", "Hotel confirmation"],
+        "invitation_letter": { "available": true, "template_id": "BR" },
+        "notes": ["Yellow fever vaccination recommended.", "Business activities only - no paid work."]
       },
       "sources": [
         { "source_id": "BR_CONSULATE", "title": "Brazil Visa Requirements", "verified_at": "2025-07-28" }

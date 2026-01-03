@@ -4,149 +4,173 @@ import { type LetterRequest } from "@shared/schema";
 import path from "path";
 import fs from "fs";
 
-// Template content stored as base64 strings since we can't include actual DOCX files
-// These would normally be loaded from actual template files
-
 const templateContent: Record<string, string> = {
-  US: `Dear Immigration Officer,
+  US: `[Date: {currentDate}]
 
-This letter is to confirm that {employeeName} ({employeeEmail}) is an employee of Carta, Inc. and is traveling to the United States for business purposes.
+U.S. Department of Homeland Security
+Customs and Border Protection
+United States Port of Entry
 
-Travel Details:
-- Destination: {destinationCountry}
-- Departure Date: {departureDate}
-- Return Date: {returnDate}
-- Purpose: {purpose}
+Re: Visitor Admission for {employeeName}
+    Country of Citizenship: {citizenship}
 
-During this visit, {employeeName} will be attending business meetings, and will not be engaging in any employment activities that would require a work visa. All expenses will be covered by Carta, Inc.
+Dear Officer:
 
-{employeeName} is expected to return to their home country on or before {returnDate}.
+eShares, Inc. dba Carta, Inc. ("Carta") is a Delaware corporation in the United States of America incorporated in 2012. Carta is an innovative, high value and high-growth company. The Carta group of companies maintains worldwide headquarters in San Francisco, California in the United States of America and offers highly specialized equity management software solutions and related solutions related to the ecosystem around private capital to our global clientele.
 
-If you have any questions, please contact:
-Carta, Inc.
-333 Bush Street, Floor 23
-San Francisco, CA 94104
-travel@carta.com
+This letter is submitted in support of the business visitor request for admission for {employeeName}, to attend business meetings at Carta's offices. {employeeName}'s expected travel dates are {departureDate} to {returnDate}. {employeeName} is currently employed within the Carta group as {employeeTitle} and during this business trip to the U.S., {employeeName} will attend internal business meetings and collaborate with team members.
+
+{employeeName}'s trip to the United States is limited both in duration and scope, and will engage only in these limited business activities during this stay. {employeeName} will remain at all times an employee of our international subsidiary, and the company will be responsible for all costs and expenses in connection with this business trip. Upon conclusion of this temporary stay, {employeeName} will return to their full-time position.
+
+Thank you for your attention to this important matter. Please feel free to contact the undersigned if you have any questions.
 
 Sincerely,
-Carta Travel Team`,
 
-  UK: `Dear Border Force Officer,
+ESHARES, INC. DBA CARTA, INC.
 
-This letter confirms that {employeeName} ({employeeEmail}) is employed by Carta, Inc. and is traveling to the United Kingdom for legitimate business purposes.
-
-Visit Details:
-- Destination: {destinationCountry}
-- Arrival Date: {departureDate}
-- Departure Date: {returnDate}
-- Purpose of Visit: {purpose}
-
-The purpose of this visit is to attend business meetings and {employeeName} will not be taking employment or providing services to UK clients. Carta, Inc. will continue to pay their salary during this trip.
-
-{employeeName} will depart the United Kingdom no later than {returnDate}.
-
-For verification, please contact:
-Carta, Inc.
-333 Bush Street, Floor 23
-San Francisco, CA 94104
-Email: travel@carta.com
-
-Yours faithfully,
-Carta Travel Department`,
-
-  CA: `To Whom It May Concern,
-
-This letter serves as confirmation that {employeeName} ({employeeEmail}) is a bona fide employee of Carta, Inc. and is visiting Canada for business purposes.
-
-Trip Information:
-- Destination: {destinationCountry}
-- Entry Date: {departureDate}
-- Exit Date: {returnDate}
-- Business Purpose: {purpose}
-
-{employeeName} is visiting as a business visitor and will not be entering the Canadian labor market. Their primary source of remuneration remains outside Canada, and any business activities during this visit will be limited to meetings, conferences, or after-sales service.
-
-Expected departure from Canada: {returnDate}
-
-Contact for verification:
-Carta, Inc.
-333 Bush Street, Floor 23
-San Francisco, CA 94104
+______________________
+Carta Travel Team
 travel@carta.com
 
-Best regards,
-Carta Travel Team`,
+eShares, Inc. dba Carta, Inc.
+333 Bush Street, 23rd Floor, Suite 2300
+San Francisco, California 94104`,
 
-  BR: `Prezado(a) Oficial de Imigração / Dear Immigration Officer,
+  UK: `[Date: {currentDate}]
 
-Esta carta confirma que {employeeName} ({employeeEmail}) é funcionário(a) da Carta, Inc. e está viajando ao Brasil para fins comerciais.
+To Whom It May Concern
 
-This letter confirms that {employeeName} ({employeeEmail}) is an employee of Carta, Inc. and is traveling to Brazil for business purposes.
+Dear Officer:
 
-Detalhes da Viagem / Travel Details:
-- Destino / Destination: {destinationCountry}
-- Data de Chegada / Arrival Date: {departureDate}
-- Data de Partida / Departure Date: {returnDate}
-- Propósito / Purpose: {purpose}
+RE: Business Visitor Entry on behalf of {employeeName}
+    Nationality: {citizenship}
 
-{employeeName} participará de reuniões de negócios e não exercerá atividades que requeiram visto de trabalho.
+eShares, Inc. dba Carta, Inc. ("Carta") is a Delaware corporation in the United States of America incorporated in 2012. Carta is an innovative, high value and high-growth company. The Carta group of companies maintains worldwide headquarters in San Francisco, California in the United States and offers highly specialized equity management software solutions to our global clientele.
 
-{employeeName} will attend business meetings and will not engage in activities requiring a work visa.
+Effective June 30, 2022, Vauban Technologies Limited ("Vauban") based in the U.K. was acquired by U.S.-based Carta, Inc.
 
-Contato / Contact:
-Carta, Inc.
-333 Bush Street, Floor 23
-San Francisco, CA 94104
+This letter is submitted in support of the business visitor request for admission for {employeeName}, to attend business meetings at our London office. {employeeName}'s expected travel dates are {departureDate} to {returnDate}. {employeeName} is currently employed within the Carta group as {employeeTitle} and during this business trip to the U.K., {employeeName} will attend internal business meetings and collaborate with team members.
+
+{employeeName}'s trip to London, U.K. is limited both in duration and scope, and will engage only in these limited business activities during this stay. {employeeName} will remain at all times an employee of our subsidiary, and the company will be responsible for all costs and expenses in connection with this business trip. Upon conclusion of this temporary stay, {employeeName} will return to their full-time position.
+
+Therefore, we would be grateful if {employeeName} could be granted leave to enter the UK as a standard visitor in accordance with the Immigration Rules, Appendix V: Visitor Rules, to undertake permitted legal related activities, as set out in Appendix Visitor: Permitted Activities.
+
+Thank you for your attention to this important matter. Please feel free to contact the undersigned if you have any questions.
+
+Sincerely,
+
+Vauban Technologies Limited
+
+______________________
+Carta Travel Team
+travel@carta.com`,
+
+  CA: `[Date: {currentDate}]
+
+Canada Border Services Agency
+
+RE: Business Visitor Entry on behalf of {employeeName}
+
+Dear Officer:
+
+Carta Maple Technologies, Inc. ("Carta Canada") is incorporated in British Columbia and extra-provincially registered in Ontario. Carta Canada is the wholly owned subsidiary of eShares, Inc. dba Carta, Inc. ("Carta"), a Delaware corporation in the United States of America incorporated in 2012. Carta is an innovative, high value and high-growth company. The Carta group of companies maintains worldwide headquarters in San Francisco, California in the United States of America and offers highly specialized equity management software solutions to our global clientele.
+
+This letter is submitted in support of the business visitor request for admission for {employeeName}, a citizen of {citizenship}, to attend business meetings at our Toronto office. {employeeName}'s expected travel dates are {departureDate} to {returnDate}. {employeeName} is currently employed within the Carta group as {employeeTitle} and during this business trip to Canada, {employeeName} will attend internal business meetings and collaborate with team members.
+
+{employeeName}'s trip to Canada is limited both in duration and scope, and will engage only in these limited business activities during this stay. {employeeName} will remain at all times an employee of our subsidiary, and the company will be responsible for all costs and expenses in connection with this business trip. Upon conclusion of this temporary stay, {employeeName} will return to their full-time position.
+
+Thank you for your attention to this important matter. Please feel free to contact the undersigned if you have any questions.
+
+Sincerely,
+
+CARTA MAPLE TECHNOLOGIES, INC.
+
+______________________
+Carta Travel Team
+travel@carta.com`,
+
+  BR: `[Date: {currentDate}]
+
+Consulate General of Brazil
+Consular Section
+
+RE: Business Visitor Entry on behalf of {employeeName}
+
+Dear Officer:
+
+eShares Desenvolvimento de Softwares Ltda ("Carta Brazil") is a wholly-owned subsidiary of eShares, Inc. dba Carta, Inc. ("Carta"), a Delaware corporation in the United States of America incorporated in 2012. Carta is an innovative, high value and high-growth company. The Carta group of companies maintains worldwide headquarters in San Francisco, California in the United States of America and offers highly specialized equity management software solutions and related solutions to our global clientele.
+
+This letter is submitted in support of the business visitor request for admission for {employeeName}, a citizen of {citizenship}. {employeeName}'s expected travel dates are {departureDate} to {returnDate}. {employeeName} is currently employed within the Carta group as {employeeTitle}. During this business trip to Brazil, {employeeName} will visit Carta Brazil's office and attend internal business meetings.
+
+{employeeName}'s trip to Brazil is limited both in duration and scope, and will engage only in these limited business activities during this stay. {employeeName} will remain at all times an employee of our subsidiary, and Carta will be responsible for all costs and expenses in connection with this business trip. Upon conclusion of this temporary stay, {employeeName} will return to their full-time position.
+
+Thank you for your attention to this important matter. Please feel free to contact the undersigned if you have any questions.
+
+Sincerely,
+
+ESHARES, INC. DBA CARTA, INC.
+
+______________________
+Carta Travel Team
 travel@carta.com
 
-Atenciosamente / Sincerely,
-Carta Travel Team`,
+eShares, Inc. dba Carta, Inc.
+333 Bush Street, 23rd Floor, Suite 2300
+San Francisco, California 94104`,
 
-  DE: `Sehr geehrte Damen und Herren / Dear Sir or Madam,
+  DE: `[Date: {currentDate}]
 
-This letter confirms that {employeeName} ({employeeEmail}) is employed by Carta, Inc. and is traveling to Germany for business purposes.
+Sehr geehrte Damen und Herren / Dear Sir or Madam,
 
-Travel Details:
-- Destination: {destinationCountry}
-- Arrival Date: {departureDate}
-- Departure Date: {returnDate}
-- Purpose of Visit: {purpose}
+RE: Business Visitor Entry on behalf of {employeeName}
+    Nationality: {citizenship}
 
-{employeeName} will be attending business meetings and will not be engaging in any paid work requiring a work permit. Carta, Inc. will continue to pay their salary during this business trip.
+eShares, Inc. dba Carta, Inc. ("Carta") is a Delaware corporation in the United States of America incorporated in 2012. Carta is an innovative, high value and high-growth company. The Carta group of companies maintains worldwide headquarters in San Francisco, California in the United States of America and offers highly specialized equity management software solutions to our global clientele.
 
-{employeeName} will depart Germany no later than {returnDate}.
+This letter is submitted in support of the business visitor request for admission for {employeeName}, to attend business meetings in Germany. {employeeName}'s expected travel dates are {departureDate} to {returnDate}. {employeeName} is currently employed within the Carta group as {employeeTitle} and during this business trip to Germany, {employeeName} will attend internal business meetings and collaborate with team members.
 
-For verification, please contact:
-Carta, Inc.
-333 Bush Street, Floor 23
-San Francisco, CA 94104
-Email: travel@carta.com
+{employeeName}'s trip to Germany is limited both in duration and scope, and will engage only in these limited business activities during this stay. {employeeName} will remain at all times an employee of our subsidiary, and the company will be responsible for all costs and expenses in connection with this business trip. Upon conclusion of this temporary stay, {employeeName} will return to their full-time position.
+
+Thank you for your attention to this important matter. Please feel free to contact the undersigned if you have any questions.
 
 Mit freundlichen Grüßen / Kind regards,
-Carta Travel Team`,
 
-  JP: `Dear Immigration Officer,
+ESHARES, INC. DBA CARTA, INC.
 
-This letter confirms that {employeeName} ({employeeEmail}) is an employee of Carta, Inc. and is traveling to Japan for business purposes.
-
-Travel Details:
-- Destination: {destinationCountry}
-- Arrival Date: {departureDate}
-- Departure Date: {returnDate}
-- Purpose of Visit: {purpose}
-
-During this visit, {employeeName} will be attending business meetings and will not be engaging in any employment activities that would require a work visa. All expenses will be covered by Carta, Inc.
-
-{employeeName} is expected to depart Japan on or before {returnDate}.
-
-Contact for verification:
-Carta, Inc.
-333 Bush Street, Floor 23
-San Francisco, CA 94104
+______________________
+Carta Travel Team
 travel@carta.com
 
+eShares, Inc. dba Carta, Inc.
+333 Bush Street, 23rd Floor, Suite 2300
+San Francisco, California 94104`,
+
+  JP: `[Date: {currentDate}]
+
+Dear Immigration Officer,
+
+RE: Business Visitor Entry on behalf of {employeeName}
+    Nationality: {citizenship}
+
+eShares, Inc. dba Carta, Inc. ("Carta") is a Delaware corporation in the United States of America incorporated in 2012. Carta is an innovative, high value and high-growth company. The Carta group of companies maintains worldwide headquarters in San Francisco, California in the United States of America and offers highly specialized equity management software solutions to our global clientele.
+
+This letter is submitted in support of the business visitor request for admission for {employeeName}, to attend business meetings in Japan. {employeeName}'s expected travel dates are {departureDate} to {returnDate}. {employeeName} is currently employed within the Carta group as {employeeTitle} and during this business trip to Japan, {employeeName} will attend internal business meetings and collaborate with team members.
+
+{employeeName}'s trip to Japan is limited both in duration and scope, and will engage only in these limited business activities during this stay. {employeeName} will remain at all times an employee of our subsidiary, and the company will be responsible for all costs and expenses in connection with this business trip. Upon conclusion of this temporary stay, {employeeName} will return to their full-time position.
+
+Thank you for your attention to this important matter. Please feel free to contact the undersigned if you have any questions.
+
 Sincerely,
-Carta Travel Team`
+
+ESHARES, INC. DBA CARTA, INC.
+
+______________________
+Carta Travel Team
+travel@carta.com
+
+eShares, Inc. dba Carta, Inc.
+333 Bush Street, 23rd Floor, Suite 2300
+San Francisco, California 94104`
 };
 
 const purposeLabels: Record<string, string> = {
@@ -160,14 +184,22 @@ export function generateLetter(request: LetterRequest): string {
     throw new Error(`Template not found: ${request.template}`);
   }
   
-  // Replace placeholders
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+  
   let content = template
     .replace(/{employeeName}/g, request.employeeName)
     .replace(/{employeeEmail}/g, request.employeeEmail)
+    .replace(/{employeeTitle}/g, request.employeeTitle || "Team Member")
     .replace(/{destinationCountry}/g, request.destinationCountry)
+    .replace(/{citizenship}/g, request.citizenship)
     .replace(/{departureDate}/g, formatDate(request.departureDate))
     .replace(/{returnDate}/g, formatDate(request.returnDate))
-    .replace(/{purpose}/g, purposeLabels[request.purpose] || request.purpose);
+    .replace(/{purpose}/g, purposeLabels[request.purpose] || request.purpose)
+    .replace(/{currentDate}/g, currentDate);
   
   return content;
 }
@@ -185,8 +217,6 @@ function formatDate(dateString: string): string {
   }
 }
 
-// Generate a simple text file that can be downloaded
-// In production, this would generate actual DOCX using templates
 export function generateLetterBuffer(request: LetterRequest): Buffer {
   const content = generateLetter(request);
   return Buffer.from(content, "utf-8");
