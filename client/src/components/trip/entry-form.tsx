@@ -29,8 +29,9 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Check, ChevronsUpDown, CalendarIcon, Clock } from "lucide-react";
+import { Check, ChevronsUpDown, CalendarIcon, Clock, AlertTriangle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { differenceInCalendarDays, parseISO, startOfDay } from "date-fns";
 
 const formSchema = z.object({
   citizenship: z.string().min(2, "Select citizenship"),
@@ -509,6 +510,52 @@ function SearchableCombobox({
   );
 }
 
+type PolicyWarningType = "short-notice" | "domestic-advisory" | "international-advisory" | null;
+
+interface PolicyWarning {
+  type: PolicyWarningType;
+  message: string;
+  severity: "warning" | "info";
+}
+
+function calculatePolicyWarning(travelDate: string, destination: string): PolicyWarning | null {
+  if (!travelDate || !destination) return null;
+  
+  const today = startOfDay(new Date());
+  const departure = startOfDay(parseISO(travelDate));
+  const daysUntilDeparture = differenceInCalendarDays(departure, today);
+  
+  if (daysUntilDeparture < 0) return null;
+  
+  const isDomestic = destination === "US";
+  
+  if (daysUntilDeparture < 14) {
+    return {
+      type: "short-notice",
+      message: "Short-notice travel: This trip is less than 14 days away. Carta policy requires additional Executive Leader approval for travel booked within 14 days of departure.",
+      severity: "warning",
+    };
+  }
+  
+  if (isDomestic && daysUntilDeparture < 21) {
+    return {
+      type: "domestic-advisory",
+      message: "Carta recommends booking domestic travel 21+ days in advance.",
+      severity: "info",
+    };
+  }
+  
+  if (!isDomestic && daysUntilDeparture < 35) {
+    return {
+      type: "international-advisory",
+      message: "Carta recommends booking international travel 35+ days in advance.",
+      severity: "info",
+    };
+  }
+  
+  return null;
+}
+
 export function EntryForm({ onSubmit, defaultDestination }: EntryFormProps) {
   const validatedDestination = defaultDestination && 
     destinationOptions.some(opt => opt.value === defaultDestination) 
@@ -525,6 +572,10 @@ export function EntryForm({ onSubmit, defaultDestination }: EntryFormProps) {
       isUSEmployerSponsored: false,
     },
   });
+
+  const travelDate = form.watch("travelDate");
+  const destination = form.watch("destination");
+  const policyWarning = calculatePolicyWarning(travelDate, destination);
 
   const handleSubmit = async (data: EntryFormData) => {
     await onSubmit({ ...data, purpose: "BUSINESS" });
@@ -653,6 +704,32 @@ export function EntryForm({ onSubmit, defaultDestination }: EntryFormProps) {
             )}
           />
         </div>
+
+        {policyWarning && (
+          <div 
+            className={cn(
+              "flex items-start gap-3 rounded-lg p-4 text-sm",
+              policyWarning.severity === "warning" 
+                ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800" 
+                : "bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800"
+            )}
+            data-testid="policy-warning"
+          >
+            {policyWarning.severity === "warning" ? (
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            ) : (
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            )}
+            <p className={cn(
+              "leading-relaxed",
+              policyWarning.severity === "warning" 
+                ? "text-amber-800 dark:text-amber-200" 
+                : "text-blue-800 dark:text-blue-200"
+            )}>
+              {policyWarning.message}
+            </p>
+          </div>
+        )}
 
         <FormField
           control={form.control}
