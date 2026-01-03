@@ -10,8 +10,6 @@ import { X, Plane, FileText, Clock, AlertCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-
 type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
 
 interface MapColorResponse {
@@ -125,6 +123,12 @@ export default function MapPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [assessResult, setAssessResult] = useState<AssessResult | null>(null);
 
+  const { data: configData, isLoading: configLoading } = useQuery<{ token: string }>({
+    queryKey: ["/api/config/mapbox"],
+  });
+
+  const mapboxToken = configData?.token;
+
   const { data: mapData, isLoading: mapLoading } = useQuery<MapColorResponse>({
     queryKey: ["/api/map", passport],
     queryFn: async () => {
@@ -176,13 +180,22 @@ export default function MapPage() {
     "#d1d5db",
   ];
 
-  if (!MAPBOX_TOKEN) {
+  if (configLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+        <p className="text-muted-foreground mt-4">Loading map...</p>
+      </div>
+    );
+  }
+
+  if (!mapboxToken) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
         <h1 className="text-2xl font-semibold mb-2">Mapbox Token Required</h1>
         <p className="text-muted-foreground">
-          Please set the VITE_MAPBOX_ACCESS_TOKEN environment variable to enable the map.
+          Please configure the MAPBOX_PUBLIC_KEY secret to enable the map.
         </p>
       </div>
     );
@@ -221,7 +234,7 @@ export default function MapPage() {
       </div>
 
       <Map
-        mapboxAccessToken={MAPBOX_TOKEN}
+        mapboxAccessToken={mapboxToken}
         initialViewState={{
           longitude: 0,
           latitude: 20,

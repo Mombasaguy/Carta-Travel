@@ -9,6 +9,15 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Mapbox token endpoint for frontend
+  app.get("/api/config/mapbox", (req, res) => {
+    const token = process.env.MAPBOX_PUBLIC_KEY;
+    if (!token) {
+      return res.status(404).json({ error: "Mapbox token not configured" });
+    }
+    res.json({ token });
+  });
+
   // Map of visa requirements for all destinations for a given passport
   app.get("/api/map", async (req, res) => {
     const passport = (req.query.passport as string)?.toUpperCase();
