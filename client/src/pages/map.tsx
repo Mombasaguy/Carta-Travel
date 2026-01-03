@@ -300,14 +300,15 @@ export default function MapPage() {
             id="country-fills"
             type="fill"
             source-layer="country_boundaries"
+            beforeId="admin-1-boundary"
             filter={[
-              "all",
-              ["==", ["get", "worldview"], "US"],
-              ["!=", ["get", "disputed"], "true"]
+              "any",
+              ["==", "all", ["get", "worldview"]],
+              ["in", "US", ["get", "worldview"]]
             ]}
             paint={{
               "fill-color": mapLoading ? "#d1d5db" : fillColorExpression,
-              "fill-opacity": 0.8,
+              "fill-opacity": 0.7,
             }}
           />
           <Layer
@@ -315,13 +316,13 @@ export default function MapPage() {
             type="line"
             source-layer="country_boundaries"
             filter={[
-              "all",
-              ["==", ["get", "worldview"], "US"],
-              ["!=", ["get", "disputed"], "true"]
+              "any",
+              ["==", "all", ["get", "worldview"]],
+              ["in", "US", ["get", "worldview"]]
             ]}
             paint={{
-              "line-color": "#4b5563",
-              "line-width": 1,
+              "line-color": "#374151",
+              "line-width": 0.8,
             }}
           />
         </Source>
