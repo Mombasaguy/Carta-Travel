@@ -12,13 +12,14 @@ import {
   User,
   Briefcase,
   Shield,
-  Clock
+  Clock,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import type { TripResult, TripInput, Requirement, Severity } from "@shared/schema";
+import type { TripResult, TripInput, StructuredRequirement, RequirementSeverity } from "@shared/schema";
 
 interface ResultsStackProps {
   result: TripResult;
@@ -26,31 +27,46 @@ interface ResultsStackProps {
   onReset: () => void;
 }
 
-const severityConfig: Record<Severity, { icon: typeof CheckCircle2; variant: "default" | "destructive" | "outline" | "secondary"; label: string }> = {
-  required: { icon: AlertCircle, variant: "destructive", label: "Required" },
-  recommended: { icon: Info, variant: "secondary", label: "Recommended" },
-  optional: { icon: CheckCircle2, variant: "outline", label: "Optional" },
+const countryNames: Record<string, string> = {
+  US: "United States",
+  GB: "United Kingdom",
+  CA: "Canada",
+  DE: "Germany",
+  JP: "Japan",
+  BR: "Brazil",
 };
 
-const visaTypeLabels: Record<string, { label: string; color: string }> = {
-  visa_free: { label: "Visa Free", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
-  visa_required: { label: "Visa Required", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
-  visa_on_arrival: { label: "Visa on Arrival", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
-  e_visa: { label: "e-Visa", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
-  eta: { label: "ETA/Authorization", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+const severityConfig: Record<RequirementSeverity, { icon: typeof CheckCircle2; variant: "default" | "destructive" | "outline" | "secondary"; label: string }> = {
+  required: { icon: AlertCircle, variant: "destructive", label: "Required" },
+  recommended: { icon: Info, variant: "secondary", label: "Recommended" },
+  info: { icon: Info, variant: "outline", label: "Info" },
+  warning: { icon: AlertCircle, variant: "secondary", label: "Warning" },
+};
+
+const entryTypeLabels: Record<string, { label: string; color: string }> = {
+  VISA_FREE: { label: "Visa Free", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  B1_VISA: { label: "B-1 Visa Required", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  ETA: { label: "ETA Required", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  ESTA: { label: "ESTA Required", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
 };
 
 const purposeLabels: Record<string, string> = {
-  business_meeting: "Business Meeting",
+  business: "Business",
   conference: "Conference",
-  client_visit: "Client Visit",
-  training: "Training",
+  client_meeting: "Client Meeting",
+  internal: "Internal",
   relocation: "Relocation",
-  personal: "Personal Travel",
 };
 
 export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const getCountryName = () => {
+    if (result.matchedRule) {
+      return countryNames[result.matchedRule.to_country] || result.matchedRule.to_country;
+    }
+    return countryNames[input.destinationCountry.toUpperCase()] || input.destinationCountry;
+  };
 
   const handleDownloadLetter = async () => {
     if (!result.letterTemplate) return;
@@ -63,7 +79,7 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
         body: JSON.stringify({
           employeeName: input.employeeName,
           employeeEmail: input.employeeEmail,
-          destinationCountry: result.matchedRule?.countryName || input.destinationCountry,
+          destinationCountry: getCountryName(),
           departureDate: input.departureDate,
           returnDate: input.returnDate,
           purpose: input.purpose,
@@ -73,7 +89,6 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
       
       const data = await response.json();
       
-      // Create and download as text file
       const blob = new Blob([data.content], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -114,7 +129,7 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
     }
   };
 
-  const groupedRequirements = result.requirements.reduce<Record<string, Requirement[]>>((acc, req) => {
+  const groupedRequirements = result.requirements.reduce<Record<string, StructuredRequirement[]>>((acc, req) => {
     if (!acc[req.type]) acc[req.type] = [];
     acc[req.type].push(req);
     return acc;
@@ -128,6 +143,9 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
     stay: { label: "Stay Rules", icon: Clock },
     policy: { label: "Carta Policy", icon: Info },
   };
+
+  const entryType = result.matchedRule?.outputs.entry_authorization.type;
+  const entryLabel = entryType ? entryTypeLabels[entryType] : null;
 
   return (
     <motion.div
@@ -155,18 +173,18 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
               <div>
                 <CardTitle className="text-xl flex items-center gap-2" data-testid="text-destination-name">
                   <MapPin className="w-5 h-5 text-primary" />
-                  {result.matchedRule?.countryName || input.destinationCountry}
+                  {getCountryName()}
                 </CardTitle>
                 <CardDescription className="mt-1" data-testid="text-trip-purpose">
-                  {purposeLabels[input.purpose]} Trip
+                  {purposeLabels[input.purpose] || input.purpose} Trip
                 </CardDescription>
               </div>
-              {result.matchedRule && (
+              {entryLabel && (
                 <Badge 
-                  className={`${visaTypeLabels[result.matchedRule.output.visaType]?.color || ""} text-sm`}
+                  className={`${entryLabel.color} text-sm`}
                   data-testid="badge-visa-type"
                 >
-                  {visaTypeLabels[result.matchedRule.output.visaType]?.label || result.matchedRule.output.visaType}
+                  {entryLabel.label}
                 </Badge>
               )}
             </div>
@@ -188,7 +206,7 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
               {result.matchedRule && (
                 <div className="flex items-center gap-2" data-testid="text-result-max-stay">
                   <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{result.matchedRule.output.maxStayDays} days max</span>
+                  <span>{result.matchedRule.max_duration_days} days max</span>
                 </div>
               )}
             </div>
@@ -196,7 +214,7 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
         </Card>
       </motion.div>
 
-      {Object.entries(groupedRequirements).map(([type, reqs], index) => {
+      {Object.entries(groupedRequirements).map(([type, reqs]) => {
         const typeConfig = typeLabels[type] || { label: type, icon: Info };
         const TypeIcon = typeConfig.icon;
         
@@ -236,15 +254,29 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
                         </AccordionTrigger>
                         <AccordionContent className="pb-4">
                           <p className="text-muted-foreground mb-3">{req.description}</p>
-                          {req.details && req.details.length > 0 && (
-                            <ul className="space-y-1.5">
-                              {req.details.map((detail, idx) => (
-                                <li key={idx} className="flex items-start gap-2 text-sm">
-                                  <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                                  <span>{detail}</span>
-                                </li>
+                          {req.fee && (
+                            <p className="text-sm mb-2">
+                              <span className="font-medium">Fee:</span> {req.fee.amount} {req.fee.currency}
+                              {req.fee.reimbursable && <span className="text-green-600 dark:text-green-400 ml-2">(Reimbursable)</span>}
+                            </p>
+                          )}
+                          {req.actions && req.actions.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {req.actions.map((action, idx) => (
+                                <Button
+                                  key={idx}
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                  data-testid={`button-action-${req.id}-${idx}`}
+                                >
+                                  <a href={action.url} target="_blank" rel="noopener noreferrer">
+                                    {action.label}
+                                    <ExternalLink className="w-3 h-3 ml-1" />
+                                  </a>
+                                </Button>
                               ))}
-                            </ul>
+                            </div>
                           )}
                         </AccordionContent>
                       </AccordionItem>
@@ -266,7 +298,7 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
                 Invitation Letter Ready
               </CardTitle>
               <CardDescription data-testid="text-letter-description">
-                A formal business invitation letter for {result.matchedRule?.countryName || input.destinationCountry} immigration purposes is available.
+                A formal business invitation letter for {getCountryName()} immigration purposes is available.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -283,11 +315,34 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
         </motion.div>
       )}
 
+      {result.sources && result.sources.length > 0 && (
+        <motion.div variants={cardVariants}>
+          <Card className="overflow-visible bg-muted/50" data-testid="card-sources">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Sources</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {result.sources.map((source) => (
+                  <li key={source.source_id} data-testid={`text-source-${source.source_id}`}>
+                    {source.title} (verified {source.verified_at})
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       <motion.div variants={cardVariants} className="pt-4">
-        <p className="text-xs text-muted-foreground text-center">
-          Requirements last updated: {result.matchedRule?.lastUpdated || "N/A"} 
-          {" · "}
-          Always verify requirements with official sources before travel.
+        <p className="text-xs text-muted-foreground text-center" data-testid="text-governance-info">
+          {result.governance ? (
+            <>
+              Owner: {result.governance.owner} · Status: {result.governance.status} · Review due: {result.governance.review_due_at}
+            </>
+          ) : (
+            "Always verify requirements with official sources before travel."
+          )}
         </p>
       </motion.div>
     </motion.div>

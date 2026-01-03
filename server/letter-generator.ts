@@ -7,7 +7,7 @@ import fs from "fs";
 // Template content stored as base64 strings since we can't include actual DOCX files
 // These would normally be loaded from actual template files
 
-const templateContent = {
+const templateContent: Record<string, string> = {
   US: `Dear Immigration Officer,
 
 This letter is to confirm that {employeeName} ({employeeEmail}) is an employee of Carta, Inc. and is traveling to the United States for business purposes.
@@ -100,16 +100,61 @@ San Francisco, CA 94104
 travel@carta.com
 
 Atenciosamente / Sincerely,
+Carta Travel Team`,
+
+  DE: `Sehr geehrte Damen und Herren / Dear Sir or Madam,
+
+This letter confirms that {employeeName} ({employeeEmail}) is employed by Carta, Inc. and is traveling to Germany for business purposes.
+
+Travel Details:
+- Destination: {destinationCountry}
+- Arrival Date: {departureDate}
+- Departure Date: {returnDate}
+- Purpose of Visit: {purpose}
+
+{employeeName} will be attending business meetings and will not be engaging in any paid work requiring a work permit. Carta, Inc. will continue to pay their salary during this business trip.
+
+{employeeName} will depart Germany no later than {returnDate}.
+
+For verification, please contact:
+Carta, Inc.
+333 Bush Street, Floor 23
+San Francisco, CA 94104
+Email: travel@carta.com
+
+Mit freundlichen Grüßen / Kind regards,
+Carta Travel Team`,
+
+  JP: `Dear Immigration Officer,
+
+This letter confirms that {employeeName} ({employeeEmail}) is an employee of Carta, Inc. and is traveling to Japan for business purposes.
+
+Travel Details:
+- Destination: {destinationCountry}
+- Arrival Date: {departureDate}
+- Departure Date: {returnDate}
+- Purpose of Visit: {purpose}
+
+During this visit, {employeeName} will be attending business meetings and will not be engaging in any employment activities that would require a work visa. All expenses will be covered by Carta, Inc.
+
+{employeeName} is expected to depart Japan on or before {returnDate}.
+
+Contact for verification:
+Carta, Inc.
+333 Bush Street, Floor 23
+San Francisco, CA 94104
+travel@carta.com
+
+Sincerely,
 Carta Travel Team`
 };
 
 const purposeLabels: Record<string, string> = {
-  business_meeting: "Business Meetings",
+  business: "Business Meetings",
   conference: "Conference Attendance",
-  client_visit: "Client Visit",
-  training: "Training Session",
+  client_meeting: "Client Meeting",
+  internal: "Internal Meeting",
   relocation: "Relocation",
-  personal: "Personal Travel"
 };
 
 export function generateLetter(request: LetterRequest): string {

@@ -16,12 +16,11 @@ interface TripInputFormProps {
 }
 
 const purposeOptions = [
-  { value: "business_meeting", label: "Business Meeting" },
+  { value: "business", label: "Business" },
   { value: "conference", label: "Conference" },
-  { value: "client_visit", label: "Client Visit" },
-  { value: "training", label: "Training" },
+  { value: "client_meeting", label: "Client Meeting" },
+  { value: "internal", label: "Internal" },
   { value: "relocation", label: "Relocation" },
-  { value: "personal", label: "Personal Travel" },
 ];
 
 const citizenshipOptions = [
@@ -49,7 +48,7 @@ export function TripInputForm({ onSubmit }: TripInputFormProps) {
       destinationCountry: "",
       departureDate: "",
       returnDate: "",
-      purpose: "business_meeting",
+      purpose: "business",
       citizenship: "US",
       employeeName: "",
       employeeEmail: "",
