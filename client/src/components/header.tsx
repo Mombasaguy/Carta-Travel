@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Globe, Search, Menu, X } from "lucide-react";
+import { Globe, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useState } from "react";
@@ -10,9 +10,7 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/trip", label: "Check Requirements" },
-    { href: "/destinations", label: "Destinations" },
-    { href: "/search", label: "Search" },
+    { href: "/assess", label: "Check Requirements" },
   ];
 
   return (
@@ -43,12 +41,6 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link href="/search">
-              <Button variant="ghost" size="icon" data-testid="button-search">
-                <Search className="h-5 w-5" />
-                <span className="sr-only">Search</span>
-              </Button>
-            </Link>
             <ThemeToggle />
             <Button
               variant="ghost"
