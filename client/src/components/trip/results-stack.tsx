@@ -149,15 +149,15 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
       </motion.div>
 
       <motion.div variants={cardVariants}>
-        <Card className="overflow-visible border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <Card className="overflow-visible border-primary/20 bg-gradient-to-br from-primary/5 to-transparent" data-testid="card-trip-summary">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle className="text-xl flex items-center gap-2">
+                <CardTitle className="text-xl flex items-center gap-2" data-testid="text-destination-name">
                   <MapPin className="w-5 h-5 text-primary" />
                   {result.matchedRule?.countryName || input.destinationCountry}
                 </CardTitle>
-                <CardDescription className="mt-1">
+                <CardDescription className="mt-1" data-testid="text-trip-purpose">
                   {purposeLabels[input.purpose]} Trip
                 </CardDescription>
               </div>
@@ -173,20 +173,20 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-testid="text-result-employee">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span className="truncate">{input.employeeName}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-testid="text-result-departure">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span>{new Date(input.departureDate).toLocaleDateString()}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-testid="text-result-return">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span>{new Date(input.returnDate).toLocaleDateString()}</span>
               </div>
               {result.matchedRule && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" data-testid="text-result-max-stay">
                   <Clock className="w-4 h-4 text-muted-foreground" />
                   <span>{result.matchedRule.output.maxStayDays} days max</span>
                 </div>
@@ -202,9 +202,9 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
         
         return (
           <motion.div key={type} variants={cardVariants}>
-            <Card className="overflow-visible">
+            <Card className="overflow-visible" data-testid={`card-requirements-${type}`}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-lg flex items-center gap-2" data-testid={`text-requirements-title-${type}`}>
                   <TypeIcon className="w-5 h-5 text-primary" />
                   {typeConfig.label}
                 </CardTitle>
@@ -259,13 +259,13 @@ export function ResultsStack({ result, input, onReset }: ResultsStackProps) {
 
       {result.letterEligible && result.letterTemplate && (
         <motion.div variants={cardVariants}>
-          <Card className="overflow-visible border-primary bg-primary/5">
+          <Card className="overflow-visible border-primary bg-primary/5" data-testid="card-invitation-letter">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2" data-testid="text-letter-title">
                 <FileText className="w-5 h-5 text-primary" />
                 Invitation Letter Ready
               </CardTitle>
-              <CardDescription>
+              <CardDescription data-testid="text-letter-description">
                 A formal business invitation letter for {result.matchedRule?.countryName || input.destinationCountry} immigration purposes is available.
               </CardDescription>
             </CardHeader>

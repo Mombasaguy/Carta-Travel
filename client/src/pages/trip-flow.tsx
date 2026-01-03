@@ -71,13 +71,15 @@ export default function TripFlowPage() {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                   className="flex flex-col items-center justify-center py-24"
+                  data-testid="loading-state"
                 >
                   <motion.div
                     className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    data-testid="loading-spinner"
                   />
-                  <p className="mt-4 text-muted-foreground">
+                  <p className="mt-4 text-muted-foreground" data-testid="text-loading-message">
                     Checking requirements...
                   </p>
                 </motion.div>
