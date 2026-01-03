@@ -12,12 +12,14 @@ import CountryDetailPage from "@/pages/country-detail";
 import SearchPage from "@/pages/search";
 import DestinationsPage from "@/pages/destinations";
 import TripFlowPage from "@/pages/trip-flow";
+import AssessPage from "@/pages/assess";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/trip" component={TripFlowPage} />
+      <Route path="/assess" component={AssessPage} />
       <Route path="/country/:id" component={CountryDetailPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/destinations" component={DestinationsPage} />

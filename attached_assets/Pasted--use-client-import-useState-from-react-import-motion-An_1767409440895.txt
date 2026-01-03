@@ -1,0 +1,75 @@
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { EntryForm } from "@/components/EntryForm";
+import { ResultCards } from "@/components/ResultCards";
+
+export default function Page() {
+  const [result, setResult] = useState<any>(null);
+  const [trip, setTrip] = useState<any>(null);
+
+  return (
+    <main className="min-h-screen px-6 py-10 bg-neutral-50">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold tracking-tight">Business Travel Entry Requirements</h1>
+          <p className="mt-2 text-sm text-neutral-500">
+            Determine entry requirements, generate invitation letters, and follow Carta travel policy.
+          </p>
+        </div>
+
+        <motion.div layout className="rounded-2xl border bg-white/70 backdrop-blur p-6 shadow-sm">
+          <AnimatePresence mode="popLayout">
+            {!result ? (
+              <motion.div
+                key="form"
+                initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -8, filter: "blur(6px)" }}
+                transition={{ type: "spring", stiffness: 260, damping: 28 }}
+              >
+                <EntryForm
+                  onSubmit={async (payload) => {
+                    setTrip(payload);
+                    const res = await fetch("/api/assess", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    setResult(json);
+                  }}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="results"
+                initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -8, filter: "blur(6px)" }}
+                transition={{ type: "spring", stiffness: 260, damping: 28 }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-neutral-600">
+                    {trip?.citizenship} → {trip?.destination} · Business · {trip?.durationDays} days
+                  </div>
+                  <button
+                    className="text-sm font-medium text-neutral-900"
+                    onClick={() => setResult(null)}
+                  >
+                    Edit
+                  </button>
+                </div>
+
+                <div className="mt-5">
+                  <ResultCards result={result} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+    </main>
+  );
+}
