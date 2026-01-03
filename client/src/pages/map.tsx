@@ -216,9 +216,10 @@ export default function MapPage() {
 
   return (
     <div className="relative h-[calc(100vh-8rem)]">
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-md p-2 border">
+        <label className="text-sm font-medium whitespace-nowrap">Your Passport:</label>
         <Select value={passport} onValueChange={setPassport}>
-          <SelectTrigger className="w-48 bg-background" data-testid="select-passport">
+          <SelectTrigger className="w-44 bg-background" data-testid="select-passport">
             <SelectValue placeholder="Select passport" />
           </SelectTrigger>
           <SelectContent>
