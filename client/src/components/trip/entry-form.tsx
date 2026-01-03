@@ -1,17 +1,25 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState } from "react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Form,
   FormControl,
@@ -19,8 +27,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
-import { useQuery } from "@tanstack/react-query";
+import { Check, ChevronsUpDown, CalendarIcon, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   citizenship: z.string().min(2, "Select citizenship"),
@@ -244,6 +254,70 @@ const destinationOptions = [
   { value: "JP", label: "Japan" },
 ];
 
+function SearchableCombobox({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  searchPlaceholder,
+  testId,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+  searchPlaceholder: string;
+  testId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedOption = options.find((opt) => opt.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal"
+          data-testid={testId}
+        >
+          {selectedOption ? selectedOption.label : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder} />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.label}
+                  onSelect={() => {
+                    onValueChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function EntryForm({ onSubmit }: EntryFormProps) {
   const form = useForm<EntryFormData>({
     resolver: zodResolver(formSchema),
@@ -262,28 +336,25 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="citizenship"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Citizenship</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger data-testid="select-citizenship">
-                      <SelectValue placeholder="Select citizenship" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {citizenshipOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableCombobox
+                  options={citizenshipOptions}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Search country..."
+                  searchPlaceholder="Type to search..."
+                  testId="select-citizenship"
+                />
+                <FormDescription className="text-xs">
+                  Your passport nationality
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -293,22 +364,19 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
             control={form.control}
             name="destination"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Destination</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger data-testid="select-destination">
-                      <SelectValue placeholder="Select destination" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {destinationOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableCombobox
+                  options={destinationOptions}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Select office..."
+                  searchPlaceholder="Search destination..."
+                  testId="select-destination"
+                />
+                <FormDescription className="text-xs">
+                  Carta office location
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -320,15 +388,44 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
             control={form.control}
             name="travelDate"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Travel Date</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    data-testid="input-travel-date"
-                    {...field}
-                  />
-                </FormControl>
+              <FormItem className="flex flex-col">
+                <FormLabel className="flex items-center gap-2">
+                  <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  Travel Date
+                </FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        data-testid="input-travel-date"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value ? format(new Date(field.value), "PPP") : "Pick a date"}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          field.onChange(format(date, "yyyy-MM-dd"));
+                        }
+                      }}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription className="text-xs">
+                  Must be a future date
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -339,7 +436,10 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
             name="durationDays"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Duration (days)</FormLabel>
+                <FormLabel className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                  Duration
+                </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -349,6 +449,9 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
                     {...field}
                   />
                 </FormControl>
+                <FormDescription className="text-xs">
+                  Number of days
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -359,12 +462,12 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
           control={form.control}
           name="isUSEmployerSponsored"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/50 p-5">
-              <div className="space-y-1">
-                <FormLabel className="text-base font-medium">US Employer Sponsored</FormLabel>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Are you traveling on behalf of a US employer?
-                </p>
+            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/50 p-4 bg-muted/30">
+              <div className="space-y-1 pr-4">
+                <FormLabel className="text-sm font-medium">U.S. employer-sponsored visa holder</FormLabel>
+                <FormDescription className="text-xs leading-relaxed">
+                  Enable if you hold an H-1B, L-1, O-1, or similar U.S. work visa sponsored by Carta. This may affect re-entry requirements and visa interview needs.
+                </FormDescription>
               </div>
               <FormControl>
                 <Switch

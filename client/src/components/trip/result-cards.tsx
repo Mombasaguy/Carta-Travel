@@ -2,6 +2,17 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { 
   Download, 
   CheckCircle, 
@@ -14,7 +25,8 @@ import {
   Building2,
   Plane,
   ExternalLink,
-  BadgeCheck
+  BadgeCheck,
+  FileSignature
 } from "lucide-react";
 import { useState } from "react";
 
@@ -68,6 +80,14 @@ const springTransition = { type: "spring", stiffness: 280, damping: 30 };
 
 export function ResultCards({ result, trip }: ResultCardsProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  
+  const [mergeData, setMergeData] = useState({
+    FULL_NAME: "",
+    EMPLOYEE_EMAIL: "",
+    EMPLOYEE_TITLE: "",
+  });
 
   const handleDownloadLetter = async () => {
     if (!trip) return;
@@ -86,9 +106,9 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
         body: JSON.stringify({
           templateId: trip.destination,
           merge: {
-            FULL_NAME: "Employee Name",
-            EMPLOYEE_EMAIL: "employee@carta.com",
-            EMPLOYEE_TITLE: "Team Member",
+            FULL_NAME: mergeData.FULL_NAME || "Employee Name",
+            EMPLOYEE_EMAIL: mergeData.EMPLOYEE_EMAIL || "employee@carta.com",
+            EMPLOYEE_TITLE: mergeData.EMPLOYEE_TITLE || "Team Member",
             CITIZENSHIP: trip.citizenship,
             DEPARTURE_DATE: new Date(trip.travelDate).toLocaleDateString("en-US", {
               year: "numeric",
@@ -117,14 +137,15 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        setLetterOpen(false);
       } else {
         const fallbackResponse = await fetch("/api/letters/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            employeeName: "Employee Name",
-            employeeEmail: "employee@carta.com",
-            employeeTitle: "Team Member",
+            employeeName: mergeData.FULL_NAME || "Employee Name",
+            employeeEmail: mergeData.EMPLOYEE_EMAIL || "employee@carta.com",
+            employeeTitle: mergeData.EMPLOYEE_TITLE || "Team Member",
             destinationCountry: trip.destination,
             citizenship: trip.citizenship,
             departureDate: trip.travelDate,
@@ -146,6 +167,7 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        setLetterOpen(false);
       }
     } catch (error) {
       console.error("Failed to download letter:", error);
@@ -259,26 +281,26 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
           <CardContent className="pt-0">
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-medium">1</span>
                 </div>
                 <span>Valid passport (see requirements above)</span>
               </li>
               <li className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-medium">2</span>
                 </div>
                 <span>Return or onward travel documentation</span>
               </li>
               <li className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-medium">3</span>
                 </div>
                 <span>Proof of accommodation or hotel booking</span>
               </li>
               {result.required && (
                 <li className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-xs font-medium">4</span>
                   </div>
                   <span>{result.entryType} approval document</span>
@@ -341,15 +363,66 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
               <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                 Download a pre-formatted invitation letter on Carta letterhead. This document confirms your employment and business purpose for travel.
               </p>
-              <Button
-                onClick={handleDownloadLetter}
-                disabled={isDownloading}
-                variant="outline"
-                data-testid="button-download-letter"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {isDownloading ? "Generating..." : "Download Letter"}
-              </Button>
+              <Sheet open={letterOpen} onOpenChange={setLetterOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" data-testid="button-generate-letter">
+                    <FileSignature className="w-4 h-4 mr-2" />
+                    Generate Letter
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="rounded-t-2xl">
+                  <SheetHeader>
+                    <SheetTitle>Invitation Letter Details</SheetTitle>
+                    <SheetDescription>
+                      Enter your information to personalize the letter
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="py-6 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name (as on passport)</Label>
+                      <Input
+                        id="fullName"
+                        placeholder="Enter your full name"
+                        value={mergeData.FULL_NAME}
+                        onChange={(e) => setMergeData({ ...mergeData, FULL_NAME: e.target.value })}
+                        data-testid="input-letter-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Work Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your.name@carta.com"
+                        value={mergeData.EMPLOYEE_EMAIL}
+                        onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_EMAIL: e.target.value })}
+                        data-testid="input-letter-email"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Job Title</Label>
+                      <Input
+                        id="title"
+                        placeholder="e.g. Software Engineer"
+                        value={mergeData.EMPLOYEE_TITLE}
+                        onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_TITLE: e.target.value })}
+                        data-testid="input-letter-title"
+                      />
+                    </div>
+                  </div>
+                  <SheetFooter>
+                    <Button
+                      onClick={handleDownloadLetter}
+                      disabled={isDownloading}
+                      className="w-full"
+                      data-testid="button-download-letter"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {isDownloading ? "Generating..." : "Download Letter"}
+                    </Button>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
             </CardContent>
           </Card>
         </motion.div>
@@ -461,30 +534,46 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
 
       {result.sources && result.sources.length > 0 && (
         <motion.div variants={cardVariants} transition={springTransition}>
-          <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-sources">
-            <CardHeader className="flex flex-row items-start gap-4 pb-4">
-              <div className="p-3 rounded-xl bg-success/10">
-                <BadgeCheck className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-semibold text-foreground">Sources</CardTitle>
-                <CardDescription className="mt-1">Official verification references</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
+          <Sheet open={sourcesOpen} onOpenChange={setSourcesOpen}>
+            <SheetTrigger asChild>
+              <button 
+                className="w-full flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="button-view-sources"
+              >
+                <BadgeCheck className="w-4 h-4" />
+                <span>View {result.sources.length} verified sources</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl max-h-[60vh]">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <BadgeCheck className="w-5 h-5 text-success" />
+                  Sources & Citations
+                </SheetTitle>
+                <SheetDescription>
+                  Official verification references for this information
+                </SheetDescription>
+              </SheetHeader>
+              <div className="py-6 space-y-4 overflow-y-auto">
                 {result.sources.map((source, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-border/30 last:border-b-0" data-testid={`source-${index}`}>
-                    <span className="text-sm font-medium">{source.title}</span>
-                    <Badge variant="outline" className="text-xs gap-1.5">
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/30 border border-border/30"
+                    data-testid={`source-${index}`}
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{source.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{source.sourceId}</p>
+                    </div>
+                    <Badge variant="outline" className="text-xs gap-1.5 shrink-0">
                       <BadgeCheck className="w-3 h-3" />
                       Verified {new Date(source.verifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </Badge>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </SheetContent>
+          </Sheet>
         </motion.div>
       )}
 

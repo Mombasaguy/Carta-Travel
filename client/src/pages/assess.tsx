@@ -2,8 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { EntryForm, type EntryFormData } from "../components/trip/entry-form";
 import { ResultCards } from "../components/trip/result-cards";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Globe, Briefcase, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface AssessResult {
   entryType: "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN";
@@ -24,11 +25,51 @@ interface TripPayload extends EntryFormData {
   purpose: "BUSINESS";
 }
 
+const countryNames: Record<string, string> = {
+  US: "United States",
+  GB: "United Kingdom",
+  CA: "Canada",
+  BR: "Brazil",
+  DE: "Germany",
+  JP: "Japan",
+  AU: "Australia",
+  FR: "France",
+  IT: "Italy",
+  ES: "Spain",
+  NL: "Netherlands",
+  SG: "Singapore",
+  IN: "India",
+  CN: "China",
+  KR: "South Korea",
+  MX: "Mexico",
+  CH: "Switzerland",
+  SE: "Sweden",
+  NO: "Norway",
+  DK: "Denmark",
+  FI: "Finland",
+  IE: "Ireland",
+  NZ: "New Zealand",
+  PL: "Poland",
+  PT: "Portugal",
+  AT: "Austria",
+  BE: "Belgium",
+};
+
 export default function AssessPage() {
   const [result, setResult] = useState<AssessResult | null>(null);
   const [trip, setTrip] = useState<TripPayload | null>(null);
 
   const springTransition = { type: "spring", stiffness: 280, damping: 30 };
+
+  const getCountryName = (code: string) => countryNames[code] || code;
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -92,13 +133,14 @@ export default function AssessPage() {
               transition={springTransition}
             >
               <motion.div 
-                className="rounded-xl bg-surface border border-border/40 px-5 py-4 mb-8 shadow-soft"
+                className="rounded-2xl bg-surface border border-border/40 p-6 mb-8 shadow-soft"
                 initial={{ opacity: 0, y: -10, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ ...springTransition, delay: 0.1 }}
+                data-testid="card-trip-summary"
               >
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="flex items-center gap-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex items-start gap-4">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -108,21 +150,37 @@ export default function AssessPage() {
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
                     <div>
-                      <p className="text-sm font-medium text-foreground" data-testid="text-trip-route">
-                        {trip?.citizenship} → {trip?.destination}
-                      </p>
-                      <p className="text-xs text-muted-foreground" data-testid="text-trip-details">
-                        Business · {trip?.durationDays} days · {trip?.travelDate}
-                      </p>
+                      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2" data-testid="text-trip-route">
+                        <Globe className="w-5 h-5 text-muted-foreground" />
+                        {getCountryName(trip?.citizenship || "")} 
+                        <span className="text-muted-foreground mx-1">to</span>
+                        {getCountryName(trip?.destination || "")}
+                      </h2>
+                      <div className="flex items-center gap-3 mt-2 flex-wrap">
+                        <Badge variant="secondary" className="gap-1.5">
+                          <Briefcase className="w-3 h-3" />
+                          Business
+                        </Badge>
+                        <Badge variant="outline" className="gap-1.5">
+                          <CalendarDays className="w-3 h-3" />
+                          {trip?.durationDays} days
+                        </Badge>
+                        {trip?.travelDate && (
+                          <span className="text-sm text-muted-foreground">
+                            {formatDate(trip.travelDate)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <button
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => setResult(null)}
                     data-testid="button-edit"
                   >
                     Edit trip
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
 
