@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearch } from "wouter";
 import { EntryForm, type EntryFormData } from "../components/trip/entry-form";
 import { ResultCards } from "../components/trip/result-cards";
 import { ArrowLeft, Globe, Briefcase, CalendarDays } from "lucide-react";
@@ -95,6 +96,10 @@ const countryNames: Record<string, string> = {
 };
 
 export default function AssessPage() {
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
+  const defaultDestination = params.get("destination") || "";
+  
   const [result, setResult] = useState<AssessResult | null>(null);
   const [trip, setTrip] = useState<TripPayload | null>(null);
 
@@ -150,6 +155,7 @@ export default function AssessPage() {
                 transition={{ ...springTransition, delay: 0.3 }}
               >
                 <EntryForm
+                  defaultDestination={defaultDestination}
                   onSubmit={async (payload) => {
                     setTrip(payload);
                     const res = await fetch("/api/assess", {

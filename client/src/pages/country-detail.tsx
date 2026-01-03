@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Check, AlertTriangle, FileText, Calendar, Clock, Info, Phone, Building, RefreshCw, AlertCircle } from "lucide-react";
+import { ArrowLeft, Check, AlertTriangle, FileText, Calendar, Clock, Info, Phone, Building, RefreshCw, AlertCircle, ClipboardCheck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -119,6 +119,15 @@ export default function CountryDetailPage() {
               <VisaIcon className="h-4 w-4" />
               {visaStatus.label}
             </div>
+          </div>
+          <div className="mt-4">
+            <Button className="gap-2" asChild data-testid="button-check-requirements">
+              <Link href={`/assess?destination=${country.code}`}>
+                <ClipboardCheck className="h-4 w-4" />
+                Check Visa Requirements
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

@@ -44,6 +44,7 @@ export type EntryFormData = z.infer<typeof formSchema>;
 
 interface EntryFormProps {
   onSubmit: (data: EntryFormData & { purpose: "BUSINESS" }) => Promise<void>;
+  defaultDestination?: string;
 }
 
 const citizenshipOptions = [
@@ -246,12 +247,34 @@ const citizenshipOptions = [
 ];
 
 const destinationOptions = [
-  { value: "US", label: "United States", supported: true },
-  { value: "GB", label: "United Kingdom", supported: true },
-  { value: "CA", label: "Canada", supported: true },
-  { value: "BR", label: "Brazil", supported: true },
-  { value: "DE", label: "Germany", supported: true },
-  { value: "JP", label: "Japan", supported: true },
+  { value: "US", label: "United States" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "CA", label: "Canada" },
+  { value: "BR", label: "Brazil" },
+  { value: "DE", label: "Germany" },
+  { value: "JP", label: "Japan" },
+  { value: "AU", label: "Australia" },
+  { value: "FR", label: "France" },
+  { value: "IT", label: "Italy" },
+  { value: "ES", label: "Spain" },
+  { value: "NL", label: "Netherlands" },
+  { value: "SG", label: "Singapore" },
+  { value: "IN", label: "India" },
+  { value: "CN", label: "China" },
+  { value: "KR", label: "South Korea" },
+  { value: "MX", label: "Mexico" },
+  { value: "CH", label: "Switzerland" },
+  { value: "SE", label: "Sweden" },
+  { value: "NO", label: "Norway" },
+  { value: "DK", label: "Denmark" },
+  { value: "FI", label: "Finland" },
+  { value: "IE", label: "Ireland" },
+  { value: "NZ", label: "New Zealand" },
+  { value: "PL", label: "Poland" },
+  { value: "PT", label: "Portugal" },
+  { value: "AT", label: "Austria" },
+  { value: "BE", label: "Belgium" },
+  { value: "TH", label: "Thailand" },
 ];
 
 function SearchableCombobox({
@@ -318,12 +341,17 @@ function SearchableCombobox({
   );
 }
 
-export function EntryForm({ onSubmit }: EntryFormProps) {
+export function EntryForm({ onSubmit, defaultDestination }: EntryFormProps) {
+  const validatedDestination = defaultDestination && 
+    destinationOptions.some(opt => opt.value === defaultDestination) 
+      ? defaultDestination 
+      : "";
+  
   const form = useForm<EntryFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       citizenship: "",
-      destination: "",
+      destination: validatedDestination,
       durationDays: 7,
       travelDate: "",
       isUSEmployerSponsored: false,
