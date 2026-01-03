@@ -1,0 +1,87 @@
+Visa Check (v2)
+The /v2/visa/check endpoint provides a detailed breakdown of visa and entry requirements for one passport–destination pair. It returns structured information about:
+
+Passport & destination details – country codes, names, continent, capital, currency, exchange info, population, area, phone code, time zone, and passport validity requirements.
+Mandatory registration rules – e.g., e-Arrival, police registration, or other pre-travel forms, including color-coded status and official links.
+Visa rules – primary and secondary entry policies (visa-free, visa required, visa on arrival, eVisa, eTA, etc.), with allowed duration of stay, color-coded category, and links to official sources if available.
+The exception of primary entry policy.
+Example Request
+curl -X POST https://visa-requirement.p.rapidapi.com/v2/visa/check \
+  -H "Content-Type: application/json" \
+  -H "X-RapidAPI-Proxy-Secret: ${RAPIDAPI_SECRET}" \
+  -d '{"passport":"CN","destination":"ID"}'
+Example Response
+
+{
+  "data": {
+    "passport": {
+      "code": "CN",
+      "name": "China",
+      "currency_code": "CNY"
+    },
+    "destination": {
+      "code": "ID",
+      "name": "Indonesia",
+      "continent": "Asia",
+      "capital": "Jakarta",
+      "currency_code": "IDR",
+      "currency": "Indonesian Rupiah",
+      "exchange": "0.00425",
+      "passport_validity": "3 months beyond the period of stay",
+      "phone_code": "+62",
+      "timezone": "+08:00",
+      "population": 277329163,
+      "area_km2": 1916907,
+      "embassy_url": "https://www.embassypages.com/china#titlePlaceholder2"
+    },
+    "mandatory_registration": {
+      "name": "e-Arrival",
+      "color": "yellow",
+      "link": "https://link.travel-buddy.ai/?link=76E321T3"
+    },
+    "visa_rules": {
+      "primary_rule": {
+        "name": "Visa on arrival",
+        "duration": "30 days",
+        "color": "blue"
+      },
+      "secondary_rule": {
+        "name": "eVisa",
+        "duration": "30 days",
+        "color": "blue",
+        "link": "https://link.travel-buddy.ai/?link=76E323T2"
+      }
+    }
+  },
+  "meta": {
+    "version": "2.0",
+    "language": "en",
+    "generated_at": "2025-09-28T11:47:00+00:00"
+  }
+}
+How to display Visa Rules to end users
+Use the primary_rule as the authoritative color (UI badge) and combine it with secondary_rule for a concise customer-facing line such as: “Visa on arrival / eVisa – 30 days”.
+
+Situation	Condition	What to display	Duration used
+Only primary rule exists	secondary_rule is absent	primary_rule – XXX days	primary_rule.duration
+Both rules have durations	Both primary_rule.duration and
+secondary_rule.duration are present	primary_rule / secondary_rule – XXX days	primary_rule.duration
+Primary has no duration	primary_rule.duration is null/empty and secondary_rule.duration exists	primary_rule / secondary_rule – XXX days	secondary_rule.duration
+Notes: “XXX days” is the duration chosen per the rules above. If neither rule has a duration, omit the days suffix (e.g., “Visa required / eTA”).
+
+What is exception_rule?
+An exception is a conditional rule that can override the primary policy for travelers who meet specific criteria (e.g., holding a valid visa/residence for another country, traveling in an organized tour, or meeting transit-waiver conditions). The API may include fields such as:
+
+exception_rule.name and exception_rule.exception_type_name – the exception type.
+exception_rule.full_text – human-readable condition(s).
+exception_rule.country_codes – related countries referred to by the exception.
+exception_rule.link – official source/details.
+Display guidance: Show exceptions as a highlighted notice beneath the combined rule line, e.g., “Exception:  Visa waiver available for holders of US/CA visas”. Do not change the primary color badge unless your UI allows users to confirm they meet the exception criteria.
+
+What is mandatory_registration?
+Some destinations require travelers to complete a pre-arrival immigration/arrival form online (e.g., “e-Arrival”, “pre-registration”, “ED card”). This step is always free but mandatory for all (or most) travelers, and it is separate from visas or eVisas.
+
+Show this near the top of your UI, e.g., “Mandatory registration: e-Arrival”.
+Use the provided mandatory_registration.link so travelers complete the official form.
+This does not replace a visa requirement; it’s an additional step.
+Example: { "name": "e-Arrival", "color": "yellow", "link": "https://link.travel-buddy.ai/?link=...T3" }

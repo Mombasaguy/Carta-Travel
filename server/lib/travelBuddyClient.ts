@@ -1,70 +1,124 @@
 import { z } from "zod";
 
-const TRAVEL_BUDDY_API_URL = "https://travel-buddy-ai.p.rapidapi.com/v2/visa/check";
+const VISA_CHECK_API_URL = "https://visa-requirement.p.rapidapi.com/v2/visa/check";
 const VISA_MAP_API_URL = "https://visa-requirement.p.rapidapi.com/v2/visa/map";
 
 export const visaCheckInputSchema = z.object({
-  nationality: z.string().min(2),
-  destination: z.string().min(2),
-  travelDate: z.string().optional(),
-  secondaryVisaCountry: z.string().optional(),
-  secondaryVisaType: z.string().optional(),
+  passport: z.string().min(2).max(2),
+  destination: z.string().min(2).max(2),
 });
 
 export type VisaCheckInput = z.infer<typeof visaCheckInputSchema>;
 
-// Country name mapping for API (some APIs prefer full names)
-const countryCodeToName: Record<string, string> = {
-  US: "United States", GB: "United Kingdom", CA: "Canada", DE: "Germany",
-  JP: "Japan", BR: "Brazil", FR: "France", IT: "Italy", ES: "Spain",
-  AU: "Australia", NZ: "New Zealand", IN: "India", CN: "China",
-  KR: "South Korea", SG: "Singapore", HK: "Hong Kong", TW: "Taiwan",
-  TH: "Thailand", MY: "Malaysia", ID: "Indonesia", PH: "Philippines",
-  VN: "Vietnam", AE: "United Arab Emirates", SA: "Saudi Arabia",
-  QA: "Qatar", IL: "Israel", TR: "Turkey", ZA: "South Africa",
-  EG: "Egypt", NG: "Nigeria", KE: "Kenya", MA: "Morocco", MX: "Mexico",
-  AR: "Argentina", CL: "Chile", CO: "Colombia", PE: "Peru",
-  NL: "Netherlands", CH: "Switzerland", SE: "Sweden", NO: "Norway",
-  DK: "Denmark", FI: "Finland", IE: "Ireland", AT: "Austria",
-  BE: "Belgium", PT: "Portugal", GR: "Greece", PL: "Poland",
-  CZ: "Czech Republic", HU: "Hungary", RO: "Romania", RU: "Russia", UA: "Ukraine",
-};
+// V2 API Response Types
+export interface VisaCheckV2Response {
+  data: {
+    passport: {
+      code: string;
+      name: string;
+      currency_code: string;
+    };
+    destination: {
+      code: string;
+      name: string;
+      continent: string;
+      capital: string;
+      currency_code: string;
+      currency: string;
+      exchange: string;
+      passport_validity: string;
+      phone_code: string;
+      timezone: string;
+      population: number;
+      area_km2: number;
+      embassy_url?: string;
+    };
+    mandatory_registration?: {
+      name: string;
+      color: string;
+      link?: string;
+    };
+    visa_rules: {
+      primary_rule: {
+        name: string;
+        duration?: string;
+        color: string;
+        link?: string;
+      };
+      secondary_rule?: {
+        name: string;
+        duration?: string;
+        color: string;
+        link?: string;
+      };
+      exception_rule?: {
+        name: string;
+        exception_type_name?: string;
+        full_text?: string;
+        country_codes?: string[];
+        link?: string;
+      };
+    };
+  };
+  meta: {
+    version: string;
+    language: string;
+    generated_at: string;
+  };
+}
 
-export async function checkVisaRequirements(input: VisaCheckInput) {
-  const { nationality, destination, travelDate, secondaryVisaCountry, secondaryVisaType } = input;
-
-  const secondaryVisa = secondaryVisaCountry && secondaryVisaType
-    ? { country: secondaryVisaCountry, type: secondaryVisaType }
-    : undefined;
-
-  // Use full country names for the API
-  const passportName = countryCodeToName[nationality.toUpperCase()] || nationality;
-  const destinationName = countryCodeToName[destination.toUpperCase()] || destination;
-
-  const res = await fetch(TRAVEL_BUDDY_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-RapidAPI-Key": process.env.TRAVEL_BUDDY_API_KEY!,
-      "X-RapidAPI-Host": "travel-buddy-ai.p.rapidapi.com",
-    },
-    body: JSON.stringify({
-      passport: passportName,
-      destination: destinationName,
-      travel_date: travelDate,
-      secondary_visa: secondaryVisa,
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    console.error(`Travel Buddy API error for ${passportName} -> ${destinationName}: ${res.status} ${text}`);
-    throw new Error(`Travel Buddy API request failed: ${res.status}`);
+export async function checkVisaRequirementsV2(passport: string, destination: string): Promise<VisaCheckV2Response | null> {
+  if (!process.env.TRAVEL_BUDDY_API_KEY) {
+    console.log("No TRAVEL_BUDDY_API_KEY configured");
+    return null;
   }
 
-  const result = await res.json();
-  console.log(`Travel Buddy result for ${passportName} -> ${destinationName}:`, result.category || result);
-  return result;
+  try {
+    const res = await fetch(VISA_CHECK_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-RapidAPI-Key": process.env.TRAVEL_BUDDY_API_KEY,
+        "X-RapidAPI-Host": "visa-requirement.p.rapidapi.com",
+      },
+      body: JSON.stringify({
+        passport: passport.toUpperCase(),
+        destination: destination.toUpperCase(),
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error(`Visa Check v2 API error for ${passport} -> ${destination}: ${res.status} ${text}`);
+      return null;
+    }
+
+    const result = await res.json();
+    console.log(`Visa Check v2 result for ${passport} -> ${destination}:`, 
+      result.data?.visa_rules?.primary_rule?.name || "no data");
+    return result as VisaCheckV2Response;
+  } catch (error) {
+    console.error("Visa Check v2 API error:", error);
+    return null;
+  }
+}
+
+// Helper to format visa rules for display
+export function formatVisaRulesDisplay(visaRules: VisaCheckV2Response["data"]["visa_rules"]): string {
+  const { primary_rule, secondary_rule } = visaRules;
+  
+  let display = primary_rule.name;
+  if (secondary_rule) {
+    display += ` / ${secondary_rule.name}`;
+  }
+  
+  // Determine duration to show
+  const duration = primary_rule.duration || secondary_rule?.duration;
+  if (duration) {
+    display += ` - ${duration}`;
+  }
+  
+  return display;
 }
 
 export function mapTravelBuddyToEntryStatus(
