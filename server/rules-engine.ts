@@ -11,6 +11,7 @@ import {
 } from "@shared/schema";
 import rulesData from "./rules.json";
 import { z } from "zod";
+import { checkVisaRequirements, mapTravelBuddyToEntryType } from "./lib/travelBuddyClient";
 
 // Schema for the full rules collection
 const rulesCollectionSchema = z.object({
@@ -178,6 +179,7 @@ export interface AssessResult {
   actions: { label: string; url: string }[] | null;
   letterAvailable: boolean;
   letterTemplate: string | null;
+  dataSource: "policy" | "api" | "unknown";
 }
 
 export function assess(input: AssessInput): AssessResult {
@@ -200,6 +202,7 @@ export function assess(input: AssessInput): AssessResult {
       actions: null,
       letterAvailable: false,
       letterTemplate: null,
+      dataSource: "unknown",
     };
   }
   
@@ -233,7 +236,114 @@ export function assess(input: AssessInput): AssessResult {
     })) ?? null,
     letterAvailable: matchedRule.outputs.invitation_letter?.available ?? false,
     letterTemplate: matchedRule.outputs.invitation_letter?.template_id ?? null,
+    dataSource: "policy",
   };
+}
+
+// Async assess with Travel Buddy API fallback
+export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
+  const parsedInput = assessInputSchema.parse(input);
+  
+  // First try local policy rules
+  const matchedRule = findMatchingRuleForAssess(parsedInput);
+  
+  if (matchedRule) {
+    const entry = matchedRule.outputs.entry_authorization;
+    return {
+      entryType: entry.type,
+      required: entry.required,
+      headline: entry.headline,
+      details: entry.details ?? null,
+      maxStayDays: matchedRule.max_duration_days,
+      fee: entry.fee ? {
+        amount: entry.fee.amount,
+        currency: entry.fee.currency,
+        reimbursable: entry.fee.reimbursable,
+      } : null,
+      isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
+      governance: {
+        status: matchedRule.governance.status,
+        owner: matchedRule.governance.owner,
+        reviewDueAt: matchedRule.governance.review_due_at,
+      },
+      sources: matchedRule.sources.map(s => ({
+        sourceId: s.source_id,
+        title: s.title,
+        verifiedAt: s.verified_at,
+      })),
+      actions: entry.actions?.map(a => ({
+        label: a.label,
+        url: a.url,
+      })) ?? null,
+      letterAvailable: matchedRule.outputs.invitation_letter?.available ?? false,
+      letterTemplate: matchedRule.outputs.invitation_letter?.template_id ?? null,
+      dataSource: "policy",
+    };
+  }
+  
+  // Fallback to Travel Buddy API for live visa intelligence
+  if (process.env.TRAVEL_BUDDY_API_KEY) {
+    try {
+      const apiResult = await checkVisaRequirements({
+        nationality: parsedInput.citizenship,
+        destination: parsedInput.destination,
+        travelDate: parsedInput.travelDate,
+      });
+      
+      const primaryRule = apiResult.primary_rule;
+      const entryType = mapTravelBuddyToEntryType(primaryRule?.category);
+      const isRequired = entryType !== "NONE";
+      
+      return {
+        entryType,
+        required: isRequired,
+        headline: primaryRule?.category ?? "Visa requirements found",
+        details: primaryRule?.notes ?? 
+          (primaryRule?.duration ? `Stay up to ${primaryRule.duration}` : null),
+        maxStayDays: parseDuration(primaryRule?.duration),
+        fee: null,
+        isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
+        governance: null,
+        sources: [{
+          sourceId: "travel-buddy-api",
+          title: "Travel Buddy AI",
+          verifiedAt: new Date().toISOString().split("T")[0],
+        }],
+        actions: primaryRule?.link ? [{
+          label: "Official Application",
+          url: primaryRule.link,
+        }] : null,
+        letterAvailable: false,
+        letterTemplate: null,
+        dataSource: "api",
+      };
+    } catch (error) {
+      console.error("Travel Buddy API error:", error);
+    }
+  }
+  
+  // No rule and no API - return unknown
+  return {
+    entryType: "UNKNOWN",
+    required: true,
+    headline: "Requirements unknown for this destination",
+    details: "Please contact the travel team for guidance on travel to this destination.",
+    maxStayDays: 0,
+    fee: null,
+    isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
+    governance: null,
+    sources: null,
+    actions: null,
+    letterAvailable: false,
+    letterTemplate: null,
+    dataSource: "unknown",
+  };
+}
+
+function parseDuration(duration: string | undefined): number {
+  if (!duration) return 0;
+  const match = duration.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
 }
 
 function findMatchingRuleForAssess(input: AssessInput): TravelRule | null {

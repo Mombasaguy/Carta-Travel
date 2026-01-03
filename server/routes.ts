@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { resolveTrip, getAvailableCountries, getCartaPolicy, assess } from "./rules-engine";
+import { resolveTrip, getAvailableCountries, getCartaPolicy, assess, assessWithApi } from "./rules-engine";
 import { generateLetter, generateLetterBuffer, generateDocxLetter, generateLetterDocx, requestToMergeData } from "./letter-generator";
 import { tripInputSchema, letterRequestSchema, assessInputSchema } from "@shared/schema";
 
@@ -138,7 +138,8 @@ export async function registerRoutes(
   });
 
   // Assess endpoint - simplified API matching Next.js pattern
-  app.post("/api/assess", (req, res) => {
+  // Uses async assessWithApi for live visa intelligence fallback
+  app.post("/api/assess", async (req, res) => {
     try {
       const parsed = assessInputSchema.safeParse(req.body);
       
@@ -149,7 +150,7 @@ export async function registerRoutes(
         });
       }
       
-      const result = assess(parsed.data);
+      const result = await assessWithApi(parsed.data);
       res.json(result);
     } catch (error) {
       console.error("Assess error:", error);
