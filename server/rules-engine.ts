@@ -598,11 +598,9 @@ function getGenericRequirements(): StructuredRequirement[] {
   ];
 }
 
-// Get all available countries from rules
+// Get all available countries for map and travel queries
 export function getAvailableCountries(): Array<{ code: string; name: string }> {
-  const countriesMap = new Map<string, string>();
-  
-  // Map country codes to names
+  // Comprehensive list of common business travel destinations
   const countryNames: Record<string, string> = {
     US: "United States",
     GB: "United Kingdom",
@@ -610,15 +608,57 @@ export function getAvailableCountries(): Array<{ code: string; name: string }> {
     DE: "Germany",
     JP: "Japan",
     BR: "Brazil",
+    FR: "France",
+    IT: "Italy",
+    ES: "Spain",
+    AU: "Australia",
+    NZ: "New Zealand",
+    IN: "India",
+    CN: "China",
+    KR: "South Korea",
+    SG: "Singapore",
+    HK: "Hong Kong",
+    TW: "Taiwan",
+    TH: "Thailand",
+    MY: "Malaysia",
+    ID: "Indonesia",
+    PH: "Philippines",
+    VN: "Vietnam",
+    AE: "United Arab Emirates",
+    SA: "Saudi Arabia",
+    QA: "Qatar",
+    IL: "Israel",
+    TR: "Turkey",
+    ZA: "South Africa",
+    EG: "Egypt",
+    NG: "Nigeria",
+    KE: "Kenya",
+    MA: "Morocco",
+    MX: "Mexico",
+    AR: "Argentina",
+    CL: "Chile",
+    CO: "Colombia",
+    PE: "Peru",
+    NL: "Netherlands",
+    CH: "Switzerland",
+    SE: "Sweden",
+    NO: "Norway",
+    DK: "Denmark",
+    FI: "Finland",
+    IE: "Ireland",
+    AT: "Austria",
+    BE: "Belgium",
+    PT: "Portugal",
+    GR: "Greece",
+    PL: "Poland",
+    CZ: "Czech Republic",
+    HU: "Hungary",
+    RO: "Romania",
+    RU: "Russia",
+    UA: "Ukraine",
   };
   
-  validatedRules.rules.forEach(rule => {
-    if (!countriesMap.has(rule.to_country)) {
-      countriesMap.set(rule.to_country, countryNames[rule.to_country] || rule.to_country);
-    }
-  });
-  
-  return Array.from(countriesMap.entries())
+  return Object.entries(countryNames)
     .map(([code, name]) => ({ code, name }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
