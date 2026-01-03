@@ -180,7 +180,7 @@ export interface AssessResult {
   actions: { label: string; url: string }[] | null;
   letterAvailable: boolean;
   letterTemplate: string | null;
-  dataSource: "policy" | "api" | "unknown";
+  dataSource: "policy" | "api" | "curated" | "unknown";
 }
 
 export function assess(input: AssessInput): AssessResult {
@@ -332,6 +332,15 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
     }
   }
   
+  // Fallback to curated visa data for common passport/destination combinations
+  const curatedResult = getCuratedVisaData(parsedInput.citizenship, parsedInput.destination);
+  if (curatedResult) {
+    return {
+      ...curatedResult,
+      isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
+    };
+  }
+  
   // No rule and no API - return unknown
   return {
     entryType: "UNKNOWN",
@@ -349,6 +358,124 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
     letterTemplate: null,
     dataSource: "unknown",
   };
+}
+
+// Curated visa data for common passport holders
+function getCuratedVisaData(citizenship: string, destination: string): Omit<AssessResult, 'isUSEmployerSponsored'> | null {
+  const countryNameMap: Record<string, string> = {
+    US: "United States", GB: "United Kingdom", CA: "Canada", DE: "Germany",
+    JP: "Japan", BR: "Brazil", FR: "France", IT: "Italy", ES: "Spain",
+    AU: "Australia", NZ: "New Zealand", IN: "India", CN: "China",
+    AE: "United Arab Emirates", SG: "Singapore", CH: "Switzerland",
+    NL: "Netherlands", SE: "Sweden", NO: "Norway", DK: "Denmark",
+    FI: "Finland", IE: "Ireland", AT: "Austria", BE: "Belgium",
+    PT: "Portugal", GR: "Greece", PL: "Poland", MX: "Mexico",
+  };
+  
+  const destName = countryNameMap[destination] || destination;
+  const citizenName = countryNameMap[citizenship] || citizenship;
+  
+  if (citizenship === "US") {
+    // US passport holder visa requirements
+    const usVisaFreeCountries = ["CA", "MX", "FR", "DE", "IT", "ES", "NL", "BE", "AT", "CH", "PT", "GR", "PL", "CZ", "HU", "SE", "NO", "DK", "FI", "IE", "JP", "KR", "SG", "HK", "TW", "BR", "AR", "CL", "PE", "CO", "IL", "QA", "ZA", "MA", "TH", "MY", "PH"];
+    const usEtaCountries = ["GB", "AU", "NZ", "TR"];
+    const usEvisaCountries = ["IN", "VN", "KE", "EG"];
+    const usVisaRequiredCountries = ["CN", "RU", "SA", "NG"];
+    
+    if (usVisaFreeCountries.includes(destination)) {
+      return {
+        entryType: "NONE",
+        required: false,
+        headline: `Visa-free entry to ${destName}`,
+        details: `US passport holders can enter ${destName} without a visa for tourism and business purposes. Typical stay is 90 days within a 180-day period for Schengen countries, or as specified by destination.`,
+        reason: `As a ${citizenName} citizen, you qualify for visa-free entry to ${destName}.`,
+        maxStayDays: 90,
+        fee: null,
+        governance: null,
+        sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
+        actions: null,
+        letterAvailable: true,
+        letterTemplate: destination === "FR" ? "FR" : (destination === "DE" ? "DE" : null),
+        dataSource: "curated",
+      };
+    }
+    
+    if (usEtaCountries.includes(destination)) {
+      const etaNames: Record<string, string> = { GB: "UK ETA", AU: "ETA", NZ: "NZeTA", TR: "e-Visa" };
+      return {
+        entryType: "ETA",
+        required: true,
+        headline: `${etaNames[destination] || "ETA"} required for ${destName}`,
+        details: `US passport holders must obtain an ${etaNames[destination] || "Electronic Travel Authorization"} before traveling to ${destName}. This is a quick online application.`,
+        reason: `As a ${citizenName} citizen, you need to register online before traveling to ${destName}.`,
+        maxStayDays: destination === "GB" ? 180 : 90,
+        fee: { amount: destination === "GB" ? 10 : 20, currency: destination === "GB" ? "GBP" : "USD", reimbursable: true },
+        governance: null,
+        sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
+        actions: [{ label: "Apply Online", url: destination === "GB" ? "https://www.gov.uk/apply-electronic-travel-authorisation-eta" : "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/electronic-travel-authority-601" }],
+        letterAvailable: true,
+        letterTemplate: destination === "GB" ? "UK" : null,
+        dataSource: "curated",
+      };
+    }
+    
+    if (usEvisaCountries.includes(destination)) {
+      return {
+        entryType: "EVISA",
+        required: true,
+        headline: `e-Visa available for ${destName}`,
+        details: `US passport holders can apply for an e-Visa online before traveling to ${destName}. Processing time is typically 2-5 business days.`,
+        reason: `As a ${citizenName} citizen, you can apply for an e-Visa to ${destName} online.`,
+        maxStayDays: 30,
+        fee: { amount: destination === "IN" ? 25 : 50, currency: "USD", reimbursable: true },
+        governance: null,
+        sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
+        actions: null,
+        letterAvailable: true,
+        letterTemplate: null,
+        dataSource: "curated",
+      };
+    }
+    
+    if (usVisaRequiredCountries.includes(destination)) {
+      return {
+        entryType: "VISA",
+        required: true,
+        headline: `Visa required for ${destName}`,
+        details: `US passport holders must obtain a visa from the ${destName} embassy or consulate before traveling. Allow 2-4 weeks for processing.`,
+        reason: `As a ${citizenName} citizen, you must apply for a visa at the ${destName} embassy.`,
+        maxStayDays: 30,
+        fee: { amount: 160, currency: "USD", reimbursable: true },
+        governance: null,
+        sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
+        actions: null,
+        letterAvailable: true,
+        letterTemplate: null,
+        dataSource: "curated",
+      };
+    }
+    
+    // UAE special case - visa on arrival
+    if (destination === "AE") {
+      return {
+        entryType: "NONE",
+        required: false,
+        headline: `Visa-free entry to ${destName}`,
+        details: `US passport holders receive a visa on arrival for up to 30 days, which can be extended. No advance application required.`,
+        reason: `As a ${citizenName} citizen, you qualify for visa-free entry to ${destName}.`,
+        maxStayDays: 30,
+        fee: null,
+        governance: null,
+        sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
+        actions: null,
+        letterAvailable: true,
+        letterTemplate: null,
+        dataSource: "curated",
+      };
+    }
+  }
+  
+  return null;
 }
 
 function parseDuration(duration: string | undefined): number {
