@@ -300,12 +300,6 @@ export default function MapPage() {
             id="country-fills"
             type="fill"
             source-layer="country_boundaries"
-            beforeId="admin-1-boundary"
-            filter={[
-              "any",
-              ["==", "all", ["get", "worldview"]],
-              ["in", "US", ["get", "worldview"]]
-            ]}
             paint={{
               "fill-color": mapLoading ? "#d1d5db" : fillColorExpression,
               "fill-opacity": 0.7,
@@ -315,11 +309,6 @@ export default function MapPage() {
             id="country-borders"
             type="line"
             source-layer="country_boundaries"
-            filter={[
-              "any",
-              ["==", "all", ["get", "worldview"]],
-              ["in", "US", ["get", "worldview"]]
-            ]}
             paint={{
               "line-color": "#374151",
               "line-width": 0.8,
