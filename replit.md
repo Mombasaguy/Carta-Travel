@@ -125,6 +125,7 @@ The application uses a hybrid design approach combining government portal clarit
 
 ## Recent Changes
 
+- 2026-01-03: Implemented hybrid visa data architecture: curated static data for map colors (fast, reliable), Travel Buddy API for individual assessments with curated fallback
 - 2026-01-03: Added real-time notifications with WebSocket support for policy changes and travel advisories
 - 2026-01-03: Added interactive world map (/map) with Mapbox showing visa requirements by passport
 - 2026-01-03: Added NotificationBell component with unread count badge and dropdown panel
