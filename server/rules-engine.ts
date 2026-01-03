@@ -171,6 +171,7 @@ export interface AssessResult {
   required: boolean;
   headline: string;
   details: string | null;
+  reason: string | null;
   maxStayDays: number;
   fee: { amount: number; currency: string; reimbursable: boolean } | null;
   isUSEmployerSponsored: boolean;
@@ -194,6 +195,7 @@ export function assess(input: AssessInput): AssessResult {
       required: true,
       headline: "Requirements unknown for this destination",
       details: "Please contact the travel team for guidance on travel to this destination.",
+      reason: null,
       maxStayDays: 0,
       fee: null,
       isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
@@ -207,12 +209,14 @@ export function assess(input: AssessInput): AssessResult {
   }
   
   const entry = matchedRule.outputs.entry_authorization;
+  const reason = generateReason(parsedInput, matchedRule);
   
   return {
     entryType: entry.type,
     required: entry.required,
     headline: entry.headline,
     details: entry.details ?? null,
+    reason,
     maxStayDays: matchedRule.max_duration_days,
     fee: entry.fee ? {
       amount: entry.fee.amount,
@@ -249,11 +253,13 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
   
   if (matchedRule) {
     const entry = matchedRule.outputs.entry_authorization;
+    const reason = generateReason(parsedInput, matchedRule);
     return {
       entryType: entry.type,
       required: entry.required,
       headline: entry.headline,
       details: entry.details ?? null,
+      reason,
       maxStayDays: matchedRule.max_duration_days,
       fee: entry.fee ? {
         amount: entry.fee.amount,
@@ -293,6 +299,7 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
       const primaryRule = apiResult.primary_rule;
       const entryType = mapTravelBuddyToEntryType(primaryRule?.category);
       const isRequired = entryType !== "NONE";
+      const apiReason = generateApiReason(parsedInput, entryType);
       
       return {
         entryType,
@@ -300,6 +307,7 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
         headline: primaryRule?.category ?? "Visa requirements found",
         details: primaryRule?.notes ?? 
           (primaryRule?.duration ? `Stay up to ${primaryRule.duration}` : null),
+        reason: apiReason,
         maxStayDays: parseDuration(primaryRule?.duration),
         fee: null,
         isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
@@ -328,6 +336,7 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
     required: true,
     headline: "Requirements unknown for this destination",
     details: "Please contact the travel team for guidance on travel to this destination.",
+    reason: null,
     maxStayDays: 0,
     fee: null,
     isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
@@ -344,6 +353,71 @@ function parseDuration(duration: string | undefined): number {
   if (!duration) return 0;
   const match = duration.match(/(\d+)/);
   return match ? parseInt(match[1], 10) : 0;
+}
+
+const countryNames: Record<string, string> = {
+  US: "United States",
+  GB: "United Kingdom",
+  CA: "Canada",
+  DE: "Germany",
+  JP: "Japan",
+  BR: "Brazil",
+  CN: "China",
+  IN: "India",
+  AU: "Australia",
+  FR: "France",
+  MX: "Mexico",
+  IT: "Italy",
+  ES: "Spain",
+};
+
+function getCountryName(code: string): string {
+  return countryNames[code.toUpperCase()] || code;
+}
+
+function generateReason(input: AssessInput, rule: TravelRule): string {
+  const citizenship = getCountryName(input.citizenship);
+  const destination = getCountryName(input.destination);
+  const entryType = rule.outputs.entry_authorization.type;
+  
+  const parts: string[] = [];
+  
+  if (entryType === "NONE") {
+    parts.push(`As a ${citizenship} citizen, you can enter ${destination} without a visa for business trips up to ${rule.max_duration_days} days.`);
+  } else if (entryType === "ETA") {
+    parts.push(`${citizenship} citizens require an Electronic Travel Authorization (ETA) to enter ${destination}.`);
+  } else if (entryType === "EVISA") {
+    parts.push(`${citizenship} citizens can apply for an e-Visa online before traveling to ${destination}.`);
+  } else if (entryType === "VISA") {
+    parts.push(`${citizenship} citizens require a visa to enter ${destination} for business purposes.`);
+  }
+  
+  if (input.durationDays > 0) {
+    parts.push(`Your ${input.durationDays}-day trip is within the ${rule.max_duration_days}-day limit.`);
+  }
+  
+  if (input.isUSEmployerSponsored) {
+    parts.push(`Carta will provide an invitation letter to support your entry.`);
+  }
+  
+  return parts.join(" ");
+}
+
+function generateApiReason(input: AssessInput, entryType: string): string {
+  const citizenship = getCountryName(input.citizenship);
+  const destination = getCountryName(input.destination);
+  
+  if (entryType === "NONE") {
+    return `As a ${citizenship} citizen, you can enter ${destination} without a visa for short business trips.`;
+  } else if (entryType === "ETA") {
+    return `${citizenship} citizens require an Electronic Travel Authorization (ETA) to enter ${destination}. Apply online before your trip.`;
+  } else if (entryType === "EVISA") {
+    return `${citizenship} citizens can apply for an e-Visa online before traveling to ${destination}.`;
+  } else if (entryType === "VISA") {
+    return `${citizenship} citizens require a visa to enter ${destination}. Contact the travel team for guidance on the application process.`;
+  }
+  
+  return `Requirements for ${citizenship} citizens traveling to ${destination} have been retrieved from live visa intelligence.`;
 }
 
 function findMatchingRuleForAssess(input: AssessInput): TravelRule | null {
