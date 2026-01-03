@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const TRAVEL_BUDDY_API_URL = "https://travel-buddy-ai.p.rapidapi.com/v2/visa/check";
+const VISA_MAP_API_URL = "https://visa-requirement.p.rapidapi.com/v2/visa/map";
 
 export const visaCheckInputSchema = z.object({
   nationality: z.string().min(2),
@@ -124,4 +125,55 @@ export function mapTravelBuddyToEntryType(
   }
   
   return undefined;
+}
+
+// Visa Map API response type
+export interface VisaMapResponse {
+  data: {
+    passport: string;
+    colors: {
+      red?: string;
+      green?: string;
+      blue?: string;
+      yellow?: string;
+    };
+  };
+  meta: {
+    version: string;
+    language: string;
+    generated_at: string;
+  };
+}
+
+// Fetch visa map data for all destinations at once
+export async function fetchVisaMap(passport: string): Promise<VisaMapResponse | null> {
+  if (!process.env.TRAVEL_BUDDY_API_KEY) {
+    console.log("No TRAVEL_BUDDY_API_KEY configured");
+    return null;
+  }
+
+  try {
+    const res = await fetch(VISA_MAP_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-RapidAPI-Key": process.env.TRAVEL_BUDDY_API_KEY,
+        "X-RapidAPI-Host": "visa-requirement.p.rapidapi.com",
+      },
+      body: JSON.stringify({ passport: passport.toUpperCase() }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error(`Visa Map API error for ${passport}: ${res.status} ${text}`);
+      return null;
+    }
+
+    const result = await res.json();
+    console.log(`Visa Map API result for ${passport}:`, result.data?.colors ? "colors received" : "no colors");
+    return result as VisaMapResponse;
+  } catch (error) {
+    console.error("Visa Map API error:", error);
+    return null;
+  }
 }

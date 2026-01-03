@@ -151,8 +151,8 @@ export async function registerRoutes(
   });
 
   // Map of visa requirements for all destinations for a given passport
-  // Uses curated visa data for fast map coloring
-  // Travel Buddy AI is used for detailed assessments when clicking individual countries
+  // Uses Travel Buddy Visa Map API for comprehensive 210+ country coverage
+  // Falls back to curated data if API unavailable
   app.get("/api/map", async (req, res) => {
     const passport = (req.query.passport as string)?.toUpperCase();
     
@@ -160,57 +160,96 @@ export async function registerRoutes(
       return res.status(400).json({ error: "Missing or invalid passport query parameter" });
     }
 
-    const destinations = getAvailableCountries();
-    const today = new Date().toISOString().split("T")[0];
-    
     const colorsByIso3: Record<string, MapColor> = {};
+    let dataSource = "curated";
     
-    for (const dest of destinations) {
-      const iso3 = iso2ToIso3[dest.code] || dest.code;
+    // Try the Visa Map API first for comprehensive coverage
+    const { fetchVisaMap } = await import("./lib/travelBuddyClient");
+    const apiResult = await fetchVisaMap(passport);
+    
+    if (apiResult?.data?.colors) {
+      dataSource = "api";
+      const { colors } = apiResult.data;
       
-      // First check curated visa data for common passport holders
-      const curatedColor = getVisaColorForPassport(passport, dest.code);
-      if (curatedColor !== "gray") {
-        colorsByIso3[iso3] = curatedColor;
-        continue;
-      }
-      
-      // Fallback to local rules engine
-      try {
-        const assessment = assess({
-          citizenship: passport,
-          destination: dest.code,
-          purpose: "BUSINESS",
-          durationDays: 14,
-          travelDate: today,
-          isUSEmployerSponsored: false,
-        });
-
-        const entryType = assessment.entryType;
-        let color: MapColor = "gray";
-        
-        if (entryType === "NONE") {
-          color = "green";
-        } else if (entryType === "ETA" || entryType === "EVISA") {
-          color = "yellow";
-        } else if (entryType === "VISA") {
-          color = "red";
+      // Parse comma-separated country codes from API response
+      // API colors: red (visa required), green (visa-free), blue (visa on arrival/eVisa), yellow (ETA)
+      if (colors.green) {
+        for (const code of colors.green.split(",")) {
+          const iso3 = iso2ToIso3[code.trim()] || code.trim();
+          colorsByIso3[iso3] = "green";
         }
+      }
+      if (colors.yellow) {
+        for (const code of colors.yellow.split(",")) {
+          const iso3 = iso2ToIso3[code.trim()] || code.trim();
+          colorsByIso3[iso3] = "yellow";
+        }
+      }
+      if (colors.blue) {
+        for (const code of colors.blue.split(",")) {
+          const iso3 = iso2ToIso3[code.trim()] || code.trim();
+          colorsByIso3[iso3] = "orange"; // Map blue (visa on arrival/eVisa) to orange
+        }
+      }
+      if (colors.red) {
+        for (const code of colors.red.split(",")) {
+          const iso3 = iso2ToIso3[code.trim()] || code.trim();
+          colorsByIso3[iso3] = "red";
+        }
+      }
+    } else {
+      // Fallback to curated visa data
+      const destinations = getAvailableCountries();
+      const today = new Date().toISOString().split("T")[0];
+      
+      for (const dest of destinations) {
+        const iso3 = iso2ToIso3[dest.code] || dest.code;
+        
+        // First check curated visa data for common passport holders
+        const curatedColor = getVisaColorForPassport(passport, dest.code);
+        if (curatedColor !== "gray") {
+          colorsByIso3[iso3] = curatedColor;
+          continue;
+        }
+        
+        // Fallback to local rules engine
+        try {
+          const assessment = assess({
+            citizenship: passport,
+            destination: dest.code,
+            purpose: "BUSINESS",
+            durationDays: 14,
+            travelDate: today,
+            isUSEmployerSponsored: false,
+          });
 
-        colorsByIso3[iso3] = color;
-      } catch (e) {
-        colorsByIso3[iso3] = "gray";
+          const entryType = assessment.entryType;
+          let color: MapColor = "gray";
+          
+          if (entryType === "NONE") {
+            color = "green";
+          } else if (entryType === "ETA" || entryType === "EVISA") {
+            color = "yellow";
+          } else if (entryType === "VISA") {
+            color = "red";
+          }
+
+          colorsByIso3[iso3] = color;
+        } catch (e) {
+          colorsByIso3[iso3] = "gray";
+        }
       }
     }
 
     res.json({
       passport,
       generatedAt: new Date().toISOString(),
+      dataSource,
       colorsByIso3,
       legend: {
         green: "Visa-free",
-        yellow: "Registration required",
-        orange: "eVisa available",
+        yellow: "ETA/Registration required",
+        orange: "Visa on arrival/eVisa",
         red: "Visa required",
         gray: "Unknown",
       },
