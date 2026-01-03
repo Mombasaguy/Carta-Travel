@@ -5,8 +5,6 @@ import { storage } from "./storage";
 import { resolveTrip, getAvailableCountries, getCartaPolicy, assess, assessWithApi } from "./rules-engine";
 import { generateLetter, generateLetterBuffer, generateDocxLetter, generateLetterDocx, requestToMergeData } from "./letter-generator";
 import { tripInputSchema, letterRequestSchema, assessInputSchema, insertNotificationSchema } from "@shared/schema";
-import { checkVisaRequirements } from "./lib/travelBuddyClient";
-import pLimit from "p-limit";
 
 // ISO2 to ISO3 country code mapping
 const iso2ToIso3: Record<string, string> = {
@@ -24,6 +22,46 @@ const iso2ToIso3: Record<string, string> = {
   KW: "KWT", BH: "BHR", OM: "OMN", JO: "JOR", LB: "LBN", PK: "PAK",
   BD: "BGD", LK: "LKA", NP: "NPL", MM: "MMR", KH: "KHM", LA: "LAO",
 };
+
+// Cache for map data (expires after 10 minutes)
+type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
+
+// Static visa requirement data for US passport holders (most common use case)
+// This avoids rate-limiting issues with the Travel Buddy API for map coloring
+const usPassportVisaData: Record<string, MapColor> = {
+  // Visa-free (green)
+  CA: "green", MX: "green", // North America
+  GB: "yellow", // UK now requires ETA
+  FR: "green", DE: "green", IT: "green", ES: "green", NL: "green", BE: "green", // EU Schengen
+  AT: "green", CH: "green", PT: "green", GR: "green", PL: "green", CZ: "green", // More EU
+  HU: "green", SE: "green", NO: "green", DK: "green", FI: "green", IE: "green", // Nordic + IE
+  JP: "green", KR: "green", SG: "green", HK: "green", TW: "green", // Asia visa-free
+  AU: "yellow", NZ: "yellow", // Oceania (ETA required)
+  BR: "green", AR: "green", CL: "green", PE: "green", CO: "green", // South America
+  IL: "green", // Israel
+  AE: "green", QA: "green", // Gulf (visa on arrival/visa-free)
+  ZA: "green", MA: "green", // Africa visa-free
+  TR: "yellow", // Turkey eVisa
+  TH: "green", MY: "green", PH: "green", // Southeast Asia visa-free
+  // eVisa available (orange)
+  IN: "orange", VN: "orange", KE: "orange", EG: "orange", // eVisa countries
+  // Visa required (red)
+  CN: "red", RU: "red", SA: "red", NG: "red", // Visa required
+};
+
+// Generic visa requirements for other passports (simplified)
+const genericVisaData: Record<string, MapColor> = {
+  // Most countries require visas for most passports by default
+  // This is a fallback
+};
+
+function getVisaColorForPassport(passport: string, destination: string): MapColor {
+  if (passport === "US") {
+    return usPassportVisaData[destination] || "gray";
+  }
+  // For other passports, use the local rules engine or return gray
+  return "gray";
+}
 
 const wsClients = new Set<WebSocket>();
 
@@ -113,7 +151,8 @@ export async function registerRoutes(
   });
 
   // Map of visa requirements for all destinations for a given passport
-  // Uses Travel Buddy AI for visa intelligence
+  // Uses curated visa data for fast map coloring
+  // Travel Buddy AI is used for detailed assessments when clicking individual countries
   app.get("/api/map", async (req, res) => {
     const passport = (req.query.passport as string)?.toUpperCase();
     
@@ -124,43 +163,16 @@ export async function registerRoutes(
     const destinations = getAvailableCountries();
     const today = new Date().toISOString().split("T")[0];
     
-    type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
     const colorsByIso3: Record<string, MapColor> = {};
     
-    // Rate limit API calls to avoid overwhelming the service
-    const limit = pLimit(5);
-    
-    const apiKey = process.env.TRAVEL_BUDDY_API_KEY;
-    
-    const checkDestination = async (dest: { code: string; name: string }) => {
+    for (const dest of destinations) {
       const iso3 = iso2ToIso3[dest.code] || dest.code;
       
-      // Try Travel Buddy API if key is configured
-      if (apiKey) {
-        try {
-          const result = await checkVisaRequirements({
-            nationality: passport,
-            destination: dest.code,
-            travelDate: today,
-          });
-          
-          const category = result?.category?.toLowerCase() || "";
-          let color: MapColor = "gray";
-          
-          if (category.includes("visa-free") || category.includes("visa not required") || category.includes("freedom of movement")) {
-            color = "green";
-          } else if (category.includes("eta") || category.includes("electronic travel") || category.includes("registration")) {
-            color = "yellow";
-          } else if (category.includes("evisa") || category.includes("e-visa") || category.includes("visa on arrival")) {
-            color = "orange";
-          } else if (category.includes("visa required")) {
-            color = "red";
-          }
-          
-          return { iso3, color };
-        } catch (e) {
-          // Fall back to local rules engine on API error
-        }
+      // First check curated visa data for common passport holders
+      const curatedColor = getVisaColorForPassport(passport, dest.code);
+      if (curatedColor !== "gray") {
+        colorsByIso3[iso3] = curatedColor;
+        continue;
       }
       
       // Fallback to local rules engine
@@ -185,20 +197,10 @@ export async function registerRoutes(
           color = "red";
         }
 
-        return { iso3, color };
+        colorsByIso3[iso3] = color;
       } catch (e) {
-        return { iso3, color: "gray" as MapColor };
+        colorsByIso3[iso3] = "gray";
       }
-    };
-    
-    // Process all destinations in parallel with rate limiting
-    const results = await Promise.all(
-      destinations.map(dest => limit(() => checkDestination(dest)))
-    );
-    
-    // Build the response object
-    for (const { iso3, color } of results) {
-      colorsByIso3[iso3] = color;
     }
 
     res.json({

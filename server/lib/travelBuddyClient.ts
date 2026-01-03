@@ -12,12 +12,33 @@ export const visaCheckInputSchema = z.object({
 
 export type VisaCheckInput = z.infer<typeof visaCheckInputSchema>;
 
+// Country name mapping for API (some APIs prefer full names)
+const countryCodeToName: Record<string, string> = {
+  US: "United States", GB: "United Kingdom", CA: "Canada", DE: "Germany",
+  JP: "Japan", BR: "Brazil", FR: "France", IT: "Italy", ES: "Spain",
+  AU: "Australia", NZ: "New Zealand", IN: "India", CN: "China",
+  KR: "South Korea", SG: "Singapore", HK: "Hong Kong", TW: "Taiwan",
+  TH: "Thailand", MY: "Malaysia", ID: "Indonesia", PH: "Philippines",
+  VN: "Vietnam", AE: "United Arab Emirates", SA: "Saudi Arabia",
+  QA: "Qatar", IL: "Israel", TR: "Turkey", ZA: "South Africa",
+  EG: "Egypt", NG: "Nigeria", KE: "Kenya", MA: "Morocco", MX: "Mexico",
+  AR: "Argentina", CL: "Chile", CO: "Colombia", PE: "Peru",
+  NL: "Netherlands", CH: "Switzerland", SE: "Sweden", NO: "Norway",
+  DK: "Denmark", FI: "Finland", IE: "Ireland", AT: "Austria",
+  BE: "Belgium", PT: "Portugal", GR: "Greece", PL: "Poland",
+  CZ: "Czech Republic", HU: "Hungary", RO: "Romania", RU: "Russia", UA: "Ukraine",
+};
+
 export async function checkVisaRequirements(input: VisaCheckInput) {
   const { nationality, destination, travelDate, secondaryVisaCountry, secondaryVisaType } = input;
 
   const secondaryVisa = secondaryVisaCountry && secondaryVisaType
     ? { country: secondaryVisaCountry, type: secondaryVisaType }
     : undefined;
+
+  // Use full country names for the API
+  const passportName = countryCodeToName[nationality.toUpperCase()] || nationality;
+  const destinationName = countryCodeToName[destination.toUpperCase()] || destination;
 
   const res = await fetch(TRAVEL_BUDDY_API_URL, {
     method: "POST",
@@ -27,18 +48,22 @@ export async function checkVisaRequirements(input: VisaCheckInput) {
       "X-RapidAPI-Host": "travel-buddy-ai.p.rapidapi.com",
     },
     body: JSON.stringify({
-      passport: nationality,
-      destination,
+      passport: passportName,
+      destination: destinationName,
       travel_date: travelDate,
       secondary_visa: secondaryVisa,
     }),
   });
 
   if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.error(`Travel Buddy API error for ${passportName} -> ${destinationName}: ${res.status} ${text}`);
     throw new Error(`Travel Buddy API request failed: ${res.status}`);
   }
 
-  return res.json();
+  const result = await res.json();
+  console.log(`Travel Buddy result for ${passportName} -> ${destinationName}:`, result.category || result);
+  return result;
 }
 
 export function mapTravelBuddyToEntryStatus(
