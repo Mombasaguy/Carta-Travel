@@ -192,9 +192,9 @@ export default function MapPage() {
 
   const handleCountryClick = useCallback((e: MapMouseEvent) => {
     const feature = e.features?.[0];
-    // GeoJSON uses "ISO_A2" for 2-letter country codes
-    if (feature?.properties?.ISO_A2) {
-      const countryCode = feature.properties.ISO_A2;
+    // GeoJSON uses "ISO3166-1-Alpha-2" for 2-letter country codes
+    const countryCode = feature?.properties?.["ISO3166-1-Alpha-2"];
+    if (countryCode) {
       setSelectedCountry(countryCode);
       setAssessResult(null);
       assessMutation.mutate(countryCode);
@@ -209,10 +209,10 @@ export default function MapPage() {
   // Use ISO2 colors directly from API (Mapbox uses iso_3166_1_alpha_2)
   const colorsByIso2 = mapData?.colorsByIso2 ?? {};
 
-  // GeoJSON uses "ISO_A2" for 2-letter country codes
+  // GeoJSON uses "ISO3166-1-Alpha-2" for 2-letter country codes
   const fillColorExpression = [
     "match",
-    ["get", "ISO_A2"],
+    ["get", "ISO3166-1-Alpha-2"],
     ...Object.entries(colorsByIso2).flatMap(([code, color]) => [
       code,
       colorMap[color],
