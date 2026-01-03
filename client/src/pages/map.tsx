@@ -28,9 +28,31 @@ type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
 interface MapColorResponse {
   passport: string;
   generatedAt: string;
-  colorsByCountry: Record<string, MapColor>;
+  colorsByIso3: Record<string, MapColor>;
   legend: Record<MapColor, string>;
 }
+
+// ISO2 to ISO3 mapping for converting between country code formats
+const iso2ToIso3: Record<string, string> = {
+  US: "USA", GB: "GBR", DE: "DEU", FR: "FRA", CA: "CAN", AU: "AUS",
+  JP: "JPN", CN: "CHN", IN: "IND", BR: "BRA", MX: "MEX", IT: "ITA",
+  ES: "ESP", NL: "NLD", CH: "CHE", SE: "SWE", NO: "NOR", DK: "DNK",
+  FI: "FIN", BE: "BEL", AT: "AUT", IE: "IRL", PT: "PRT", PL: "POL",
+  CZ: "CZE", HU: "HUN", RO: "ROU", BG: "BGR", HR: "HRV", SK: "SVK",
+  SI: "SVN", EE: "EST", LV: "LVA", LT: "LTU", GR: "GRC", CY: "CYP",
+  MT: "MLT", LU: "LUX", IS: "ISL", NZ: "NZL", SG: "SGP", HK: "HKG",
+  KR: "KOR", TW: "TWN", MY: "MYS", TH: "THA", VN: "VNM", PH: "PHL",
+  ID: "IDN", AE: "ARE", SA: "SAU", IL: "ISR", TR: "TUR", ZA: "ZAF",
+  EG: "EGY", NG: "NGA", KE: "KEN", MA: "MAR", AR: "ARG", CL: "CHL",
+  CO: "COL", PE: "PER", VE: "VEN", RU: "RUS", UA: "UKR", QA: "QAT",
+  KW: "KWT", BH: "BHR", OM: "OMN", JO: "JOR", LB: "LBN", PK: "PAK",
+  BD: "BGD", LK: "LKA", NP: "NPL", MM: "MMR", KH: "KHM", LA: "LAO",
+};
+
+// Reverse mapping: ISO3 to ISO2
+const iso3ToIso2: Record<string, string> = Object.fromEntries(
+  Object.entries(iso2ToIso3).map(([iso2, iso3]) => [iso3, iso2])
+);
 
 interface AssessResult {
   entryType: string;
@@ -183,10 +205,19 @@ export default function MapPage() {
     setAssessResult(null);
   };
 
+  // Convert ISO3 colors to ISO2 for Mapbox layer matching
+  const colorsByIso2: Record<string, MapColor> = {};
+  if (mapData?.colorsByIso3) {
+    for (const [iso3, color] of Object.entries(mapData.colorsByIso3)) {
+      const iso2 = iso3ToIso2[iso3] || iso3;
+      colorsByIso2[iso2] = color;
+    }
+  }
+
   const fillColorExpression: unknown = [
     "match",
     ["get", "iso_3166_1_alpha_2"],
-    ...Object.entries(mapData?.colorsByCountry ?? {}).flatMap(([code, color]) => [
+    ...Object.entries(colorsByIso2).flatMap(([code, color]) => [
       code,
       colorMap[color],
     ]),
@@ -305,7 +336,7 @@ export default function MapPage() {
               </p>
               <div className="space-y-1">
                 {topDestinations.map((dest) => {
-                  const color = mapData?.colorsByCountry?.[dest.code];
+                  const color = colorsByIso2[dest.code];
                   return (
                     <button
                       key={dest.code}
