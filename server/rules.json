@@ -315,6 +315,34 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
+      "rule_id": "US_NONE_CA_BUSINESS",
+      "from_citizenship_group": ["CA"],
+      "to_country": "US",
+      "purpose": "BUSINESS",
+      "max_duration_days": 180,
+      "effective_start": "2025-01-01",
+      "effective_end": null,
+      "outputs": {
+        "entry_authorization": {
+          "type": "NONE",
+          "required": false,
+          "headline": "Canadian citizens do not need ESTA or a visa for the United States.",
+          "details": "Present valid Canadian passport at the border. Entry granted at CBP officer's discretion.",
+          "validity": "Up to 6 months per visit."
+        },
+        "passport_validity": { "rule": "Passport must be valid for the duration of stay." },
+        "required_documents": ["Valid Canadian passport"],
+        "recommended_documents": ["Carta business invitation letter", "Proof of return travel", "Business meeting details"],
+        "invitation_letter": { "available": true, "template_id": "US" },
+        "notes": ["NEXUS card holders can use expedited lanes at land borders and airports.", "Business visitor activities only - cannot enter US labor market."]
+      },
+      "sources": [
+        { "source_id": "CBP_CANADIAN", "title": "Canadian Visitors to the US", "verified_at": "2025-07-28" },
+        { "source_id": "CARTA_TRAVEL_POLICY", "title": "Carta Global Travel Policy", "verified_at": "2025-07-28" }
+      ],
+      "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
+    },
+    {
       "rule_id": "BR_EVISA_EU_BUSINESS",
       "from_citizenship_group": ["GB", "DE", "FR", "IT", "ES", "NL", "BE", "AT", "PT", "SE", "DK", "FI", "NO", "CH", "PL", "CZ", "HU", "GR", "IE"],
       "to_country": "BR",

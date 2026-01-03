@@ -360,8 +360,11 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+              <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
                 Carta-branded business invitation letters are available. Generate and download below if requested by border officials.
+              </p>
+              <p className="text-xs text-muted-foreground/80 mb-4 italic">
+                Present to immigration only if requested. Do not offer proactively.
               </p>
               <Sheet open={letterOpen} onOpenChange={setLetterOpen}>
                 <SheetTrigger asChild>

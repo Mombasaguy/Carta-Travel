@@ -246,12 +246,12 @@ const citizenshipOptions = [
 ];
 
 const destinationOptions = [
-  { value: "US", label: "United States" },
-  { value: "GB", label: "United Kingdom" },
-  { value: "CA", label: "Canada" },
-  { value: "BR", label: "Brazil" },
-  { value: "DE", label: "Germany" },
-  { value: "JP", label: "Japan" },
+  { value: "US", label: "United States", supported: true },
+  { value: "GB", label: "United Kingdom", supported: true },
+  { value: "CA", label: "Canada", supported: true },
+  { value: "BR", label: "Brazil", supported: true },
+  { value: "DE", label: "Germany", supported: true },
+  { value: "JP", label: "Japan", supported: true },
 ];
 
 function SearchableCombobox({
@@ -375,7 +375,7 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
                   testId="select-destination"
                 />
                 <FormDescription className="text-xs">
-                  Carta office location
+                  Supported Carta office locations
                 </FormDescription>
                 <FormMessage />
               </FormItem>
