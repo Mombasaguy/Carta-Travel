@@ -28,7 +28,7 @@ type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
 interface MapColorResponse {
   passport: string;
   generatedAt: string;
-  colorsByIso3: Record<string, MapColor>;
+  colorsByIso2: Record<string, MapColor>;
   legend: Record<MapColor, string>;
 }
 
@@ -205,14 +205,8 @@ export default function MapPage() {
     setAssessResult(null);
   };
 
-  // Convert ISO3 colors to ISO2 for Mapbox layer matching
-  const colorsByIso2: Record<string, MapColor> = {};
-  if (mapData?.colorsByIso3) {
-    for (const [iso3, color] of Object.entries(mapData.colorsByIso3)) {
-      const iso2 = iso3ToIso2[iso3] || iso3;
-      colorsByIso2[iso2] = color;
-    }
-  }
+  // Use ISO2 colors directly from API (Mapbox uses iso_3166_1_alpha_2)
+  const colorsByIso2 = mapData?.colorsByIso2 ?? {};
 
   const fillColorExpression = [
     "match",

@@ -160,7 +160,7 @@ export async function registerRoutes(
       return res.status(400).json({ error: "Missing or invalid passport query parameter" });
     }
 
-    const colorsByIso3: Record<string, MapColor> = {};
+    const colorsByIso2: Record<string, MapColor> = {};
     let dataSource = "curated";
     
     // Try the Visa Map API first for comprehensive coverage
@@ -171,30 +171,26 @@ export async function registerRoutes(
       dataSource = "api";
       const { colors } = apiResult.data;
       
-      // Parse comma-separated country codes from API response
+      // Parse comma-separated country codes from API response (already ISO2)
       // API colors: red (visa required), green (visa-free), blue (visa on arrival/eVisa), yellow (ETA)
       if (colors.green) {
         for (const code of colors.green.split(",")) {
-          const iso3 = iso2ToIso3[code.trim()] || code.trim();
-          colorsByIso3[iso3] = "green";
+          colorsByIso2[code.trim()] = "green";
         }
       }
       if (colors.yellow) {
         for (const code of colors.yellow.split(",")) {
-          const iso3 = iso2ToIso3[code.trim()] || code.trim();
-          colorsByIso3[iso3] = "yellow";
+          colorsByIso2[code.trim()] = "yellow";
         }
       }
       if (colors.blue) {
         for (const code of colors.blue.split(",")) {
-          const iso3 = iso2ToIso3[code.trim()] || code.trim();
-          colorsByIso3[iso3] = "orange"; // Map blue (visa on arrival/eVisa) to orange
+          colorsByIso2[code.trim()] = "orange"; // Map blue (visa on arrival/eVisa) to orange
         }
       }
       if (colors.red) {
         for (const code of colors.red.split(",")) {
-          const iso3 = iso2ToIso3[code.trim()] || code.trim();
-          colorsByIso3[iso3] = "red";
+          colorsByIso2[code.trim()] = "red";
         }
       }
     } else {
@@ -203,12 +199,10 @@ export async function registerRoutes(
       const today = new Date().toISOString().split("T")[0];
       
       for (const dest of destinations) {
-        const iso3 = iso2ToIso3[dest.code] || dest.code;
-        
         // First check curated visa data for common passport holders
         const curatedColor = getVisaColorForPassport(passport, dest.code);
         if (curatedColor !== "gray") {
-          colorsByIso3[iso3] = curatedColor;
+          colorsByIso2[dest.code] = curatedColor;
           continue;
         }
         
@@ -234,9 +228,9 @@ export async function registerRoutes(
             color = "red";
           }
 
-          colorsByIso3[iso3] = color;
+          colorsByIso2[dest.code] = color;
         } catch (e) {
-          colorsByIso3[iso3] = "gray";
+          colorsByIso2[dest.code] = "gray";
         }
       }
     }
@@ -245,7 +239,7 @@ export async function registerRoutes(
       passport,
       generatedAt: new Date().toISOString(),
       dataSource,
-      colorsByIso3,
+      colorsByIso2,
       legend: {
         green: "Visa-free",
         yellow: "ETA/Registration required",
