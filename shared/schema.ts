@@ -1,10 +1,10 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 
+// User table for authentication (kept from original)
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
@@ -17,74 +17,151 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-// Country schema
-export const countrySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  code: z.string(),
-  region: z.string(),
-  flagEmoji: z.string(),
-  imageUrl: z.string().optional(),
-  visaRequired: z.boolean(),
-  visaOnArrival: z.boolean(),
-  eVisaAvailable: z.boolean(),
-  maxStayDays: z.number().optional(),
-  processingTime: z.string().optional(),
-  lastUpdated: z.string(),
+// Trip Input Schema
+export const tripPurposeSchema = z.enum([
+  "business_meeting",
+  "conference",
+  "client_visit",
+  "training",
+  "relocation",
+  "personal"
+]);
+
+export const citizenshipSchema = z.enum([
+  "US", "UK", "CA", "BR", "DE", "FR", "JP", "IN", "AU", "MX", "OTHER"
+]);
+
+export const tripInputSchema = z.object({
+  destinationCountry: z.string().min(2, "Please select a destination"),
+  departureDate: z.string().min(1, "Please enter departure date"),
+  returnDate: z.string().min(1, "Please enter return date"),
+  purpose: tripPurposeSchema,
+  citizenship: citizenshipSchema,
+  employeeName: z.string().min(2, "Please enter your name"),
+  employeeEmail: z.string().email("Please enter a valid email"),
+  needsInvitationLetter: z.boolean().default(false),
 });
 
-export type Country = z.infer<typeof countrySchema>;
+export type TripInput = z.infer<typeof tripInputSchema>;
 
-// Requirement types
-export const requirementTypeSchema = z.enum([
-  "entry",
-  "document",
-  "health",
-  "customs",
-  "stay",
+// Rule Severity
+export const severitySchema = z.enum(["required", "recommended", "optional"]);
+export type Severity = z.infer<typeof severitySchema>;
+
+// Visa Types
+export const visaTypeSchema = z.enum([
+  "visa_free",
+  "visa_required",
+  "visa_on_arrival",
+  "e_visa",
+  "eta"
 ]);
+export type VisaType = z.infer<typeof visaTypeSchema>;
 
-export type RequirementType = z.infer<typeof requirementTypeSchema>;
-
-// Requirement severity
-export const requirementSeveritySchema = z.enum([
-  "required",
-  "recommended",
-  "optional",
-]);
-
-export type RequirementSeverity = z.infer<typeof requirementSeveritySchema>;
-
-// Individual requirement
+// Requirement Schema
 export const requirementSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
-  type: requirementTypeSchema,
-  severity: requirementSeveritySchema,
+  type: z.enum(["entry", "document", "health", "customs", "stay", "policy"]),
+  severity: severitySchema,
   details: z.array(z.string()).optional(),
 });
 
 export type Requirement = z.infer<typeof requirementSchema>;
 
-// Country details with requirements
-export const countryDetailsSchema = countrySchema.extend({
+// Rule Output Schema
+export const ruleOutputSchema = z.object({
+  visaType: visaTypeSchema,
+  maxStayDays: z.number(),
+  processingTime: z.string().optional(),
+  documents: z.array(z.string()),
+  entryNotes: z.array(z.string()),
+  letterTemplate: z.enum(["US", "UK", "CA", "BR"]).optional(),
+});
+
+export type RuleOutput = z.infer<typeof ruleOutputSchema>;
+
+// Rule Schema (for rules.json)
+export const ruleSchema = z.object({
+  id: z.string(),
+  countryCode: z.string(),
+  countryName: z.string(),
+  purposes: z.array(tripPurposeSchema),
+  citizenships: z.array(citizenshipSchema).optional(), // if undefined, applies to all
   requirements: z.array(requirementSchema),
-  tips: z.array(z.string()).optional(),
-  emergencyContacts: z.object({
-    police: z.string().optional(),
-    ambulance: z.string().optional(),
-    embassy: z.string().optional(),
-  }).optional(),
+  output: ruleOutputSchema,
+  lastUpdated: z.string(),
 });
 
-export type CountryDetails = z.infer<typeof countryDetailsSchema>;
+export type Rule = z.infer<typeof ruleSchema>;
 
-// Search params
-export const searchParamsSchema = z.object({
-  query: z.string().optional(),
-  region: z.string().optional(),
-  visaRequired: z.boolean().optional(),
+// Rules Collection Schema
+export const rulesCollectionSchema = z.object({
+  version: z.string(),
+  lastUpdated: z.string(),
+  rules: z.array(ruleSchema),
 });
 
-export type SearchParams = z.infer<typeof searchParamsSchema>;
+export type RulesCollection = z.infer<typeof rulesCollectionSchema>;
+
+// Carta Policy Guidance (static)
+export const cartaPolicySchema = z.object({
+  bookingGuidance: z.string(),
+  approvalWorkflow: z.string(),
+  expensePolicy: z.string(),
+  travelInsurance: z.string(),
+});
+
+export type CartaPolicy = z.infer<typeof cartaPolicySchema>;
+
+// Resolved Trip Result
+export const tripResultSchema = z.object({
+  input: tripInputSchema,
+  matchedRule: ruleSchema.nullable(),
+  requirements: z.array(requirementSchema),
+  cartaPolicy: cartaPolicySchema,
+  letterEligible: z.boolean(),
+  letterTemplate: z.enum(["US", "UK", "CA", "BR"]).nullable(),
+  resolvedAt: z.string(),
+});
+
+export type TripResult = z.infer<typeof tripResultSchema>;
+
+// Letter Generation Request
+export const letterRequestSchema = z.object({
+  employeeName: z.string(),
+  employeeEmail: z.string(),
+  destinationCountry: z.string(),
+  departureDate: z.string(),
+  returnDate: z.string(),
+  purpose: tripPurposeSchema,
+  template: z.enum(["US", "UK", "CA", "BR"]),
+});
+
+export type LetterRequest = z.infer<typeof letterRequestSchema>;
+
+// Country for display
+export interface Country {
+  id: string;
+  name: string;
+  code: string;
+  region: string;
+  flagEmoji: string;
+  visaRequired: boolean;
+  visaOnArrival: boolean;
+  eVisaAvailable: boolean;
+  maxStayDays: number;
+  processingTime: string;
+  lastUpdated: string;
+}
+
+export interface CountryDetails extends Country {
+  requirements: Requirement[];
+  tips: string[];
+  emergencyContacts: {
+    police: string;
+    ambulance: string;
+    embassy: string;
+  };
+}

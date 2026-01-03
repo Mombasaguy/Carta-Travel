@@ -1,0 +1,464 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-03",
+  "cartaPolicy": {
+    "bookingGuidance": "Book all international travel through Navan (TripActions). Direct bookings require manager approval and may not be reimbursed.",
+    "approvalWorkflow": "International trips require manager approval 14+ days in advance. Executive-level trips (C-suite meetings) require VP approval.",
+    "expensePolicy": "Per diem rates apply based on destination. See Carta Travel Policy for daily limits. Premium economy approved for flights over 6 hours.",
+    "travelInsurance": "All international travel is automatically covered under Carta's corporate travel insurance. Carry your insurance card."
+  },
+  "rules": [
+    {
+      "id": "us-business-all",
+      "countryCode": "US",
+      "countryName": "United States",
+      "purposes": ["business_meeting", "conference", "client_visit", "training"],
+      "requirements": [
+        {
+          "id": "us-visa-waiver",
+          "title": "ESTA Authorization",
+          "description": "Electronic System for Travel Authorization required for Visa Waiver Program countries.",
+          "type": "entry",
+          "severity": "required",
+          "details": [
+            "Apply at esta.cbp.dhs.gov at least 72 hours before travel",
+            "Valid for 2 years or until passport expires",
+            "Costs $21 USD",
+            "Covers stays up to 90 days"
+          ]
+        },
+        {
+          "id": "us-passport",
+          "title": "Valid Passport",
+          "description": "Machine-readable passport valid for 6 months beyond your stay.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Must be machine-readable (MRP)",
+            "Valid for 6 months beyond planned stay",
+            "Biometric/e-passport recommended"
+          ]
+        },
+        {
+          "id": "us-return-ticket",
+          "title": "Return Ticket",
+          "description": "Proof of onward or return travel from the United States.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Round-trip ticket or onward travel proof",
+            "Must show departure within 90 days"
+          ]
+        },
+        {
+          "id": "us-business-docs",
+          "title": "Business Documentation",
+          "description": "Documents proving business purpose of visit.",
+          "type": "document",
+          "severity": "recommended",
+          "details": [
+            "Invitation letter from US company (if applicable)",
+            "Conference registration confirmation",
+            "Meeting schedule or agenda"
+          ]
+        },
+        {
+          "id": "us-travel-insurance",
+          "title": "Travel Insurance",
+          "description": "Comprehensive travel and health insurance.",
+          "type": "health",
+          "severity": "recommended",
+          "details": [
+            "US healthcare is expensive - ensure adequate coverage",
+            "Minimum $100,000 medical coverage recommended",
+            "Emergency evacuation coverage included in Carta policy"
+          ]
+        }
+      ],
+      "output": {
+        "visaType": "eta",
+        "maxStayDays": 90,
+        "processingTime": "Usually instant, up to 72 hours",
+        "documents": ["ESTA", "Valid passport", "Return ticket", "Business invitation letter"],
+        "entryNotes": [
+          "ESTA is NOT a visa - it's travel authorization",
+          "Can be denied entry even with valid ESTA",
+          "CBP officer makes final entry decision"
+        ],
+        "letterTemplate": "US"
+      },
+      "lastUpdated": "2026-01-03"
+    },
+    {
+      "id": "uk-business-all",
+      "countryCode": "UK",
+      "countryName": "United Kingdom",
+      "purposes": ["business_meeting", "conference", "client_visit", "training"],
+      "requirements": [
+        {
+          "id": "uk-eta",
+          "title": "UK Electronic Travel Authorisation",
+          "description": "ETA required for visa-free visitors from 2024.",
+          "type": "entry",
+          "severity": "required",
+          "details": [
+            "Apply via UK ETA app or online",
+            "Costs £10",
+            "Valid for 2 years",
+            "Allows stays up to 6 months"
+          ]
+        },
+        {
+          "id": "uk-passport",
+          "title": "Valid Passport",
+          "description": "Passport valid for the duration of your stay.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Valid for entire trip duration",
+            "Machine-readable required"
+          ]
+        },
+        {
+          "id": "uk-business-activities",
+          "title": "Permitted Business Activities",
+          "description": "Understand what business activities are allowed without a work visa.",
+          "type": "policy",
+          "severity": "required",
+          "details": [
+            "Meetings, conferences, negotiations allowed",
+            "Cannot take employment or provide services",
+            "Cannot receive payment from UK sources",
+            "Training must be company-internal only"
+          ]
+        },
+        {
+          "id": "uk-invitation",
+          "title": "Business Invitation Letter",
+          "description": "Letter from UK host company or event organizer.",
+          "type": "document",
+          "severity": "recommended",
+          "details": [
+            "On company letterhead",
+            "Include visit purpose and dates",
+            "Confirm accommodation arrangements"
+          ]
+        }
+      ],
+      "output": {
+        "visaType": "eta",
+        "maxStayDays": 180,
+        "processingTime": "Usually within 3 working days",
+        "documents": ["UK ETA", "Valid passport", "Business invitation letter"],
+        "entryNotes": [
+          "UK is NOT part of Schengen - separate entry rules apply",
+          "Border officer may ask about business purpose",
+          "Have accommodation details ready"
+        ],
+        "letterTemplate": "UK"
+      },
+      "lastUpdated": "2026-01-03"
+    },
+    {
+      "id": "ca-business-all",
+      "countryCode": "CA",
+      "countryName": "Canada",
+      "purposes": ["business_meeting", "conference", "client_visit", "training"],
+      "requirements": [
+        {
+          "id": "ca-eta",
+          "title": "Electronic Travel Authorization (eTA)",
+          "description": "Required for visa-exempt foreign nationals flying to Canada.",
+          "type": "entry",
+          "severity": "required",
+          "details": [
+            "Apply online at canada.ca/eta",
+            "Costs CAD $7",
+            "Valid for 5 years or until passport expires",
+            "Usually approved within minutes"
+          ]
+        },
+        {
+          "id": "ca-passport",
+          "title": "Valid Passport",
+          "description": "Machine-readable passport required.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Valid for duration of stay",
+            "Machine-readable required for eTA",
+            "Good condition without damage"
+          ]
+        },
+        {
+          "id": "ca-business-visitor",
+          "title": "Business Visitor Status",
+          "description": "Understand business visitor rules vs. work permit requirements.",
+          "type": "policy",
+          "severity": "required",
+          "details": [
+            "Business meetings and site visits allowed",
+            "After-sales service for equipment allowed",
+            "Cannot enter Canadian labor market",
+            "Primary income source must be outside Canada"
+          ]
+        },
+        {
+          "id": "ca-invitation",
+          "title": "Invitation Letter",
+          "description": "Letter from Canadian host organization.",
+          "type": "document",
+          "severity": "recommended",
+          "details": [
+            "Purpose of visit clearly stated",
+            "Meeting dates and locations",
+            "Host company contact information"
+          ]
+        },
+        {
+          "id": "ca-arrivecan",
+          "title": "ArriveCAN (Optional)",
+          "description": "Optional digital declaration for faster border processing.",
+          "type": "document",
+          "severity": "optional",
+          "details": [
+            "Available on iOS and Android",
+            "Submit travel info before arrival",
+            "Speeds up customs process"
+          ]
+        }
+      ],
+      "output": {
+        "visaType": "eta",
+        "maxStayDays": 180,
+        "processingTime": "Usually instant, up to 72 hours",
+        "documents": ["eTA", "Valid passport", "Business invitation letter"],
+        "entryNotes": [
+          "eTA linked electronically to passport",
+          "Print confirmation for your records",
+          "Border officer determines length of stay"
+        ],
+        "letterTemplate": "CA"
+      },
+      "lastUpdated": "2026-01-03"
+    },
+    {
+      "id": "br-business-all",
+      "countryCode": "BR",
+      "countryName": "Brazil",
+      "purposes": ["business_meeting", "conference", "client_visit", "training"],
+      "requirements": [
+        {
+          "id": "br-evisa",
+          "title": "e-Visa (VIVIS)",
+          "description": "Electronic visa required for US, Canadian, and Australian citizens.",
+          "type": "entry",
+          "severity": "required",
+          "details": [
+            "Apply at least 72 hours before travel",
+            "Valid for 2 years with multiple entries",
+            "90 days per year maximum stay",
+            "Costs approximately $80 USD"
+          ]
+        },
+        {
+          "id": "br-passport",
+          "title": "Valid Passport",
+          "description": "Passport must be valid for at least 6 months.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Valid for 6 months from entry date",
+            "At least one blank page required",
+            "Good condition"
+          ]
+        },
+        {
+          "id": "br-yellow-fever",
+          "title": "Yellow Fever Vaccination",
+          "description": "May be required depending on origin and travel areas.",
+          "type": "health",
+          "severity": "recommended",
+          "details": [
+            "Required if visiting Amazon region",
+            "Required if arriving from endemic countries",
+            "Get vaccinated 10+ days before travel",
+            "Bring International Certificate of Vaccination"
+          ]
+        },
+        {
+          "id": "br-invitation",
+          "title": "Business Invitation Letter",
+          "description": "Letter from Brazilian host company.",
+          "type": "document",
+          "severity": "recommended",
+          "details": [
+            "On company letterhead",
+            "Include meeting purpose and dates",
+            "Host company CNPJ number helpful"
+          ]
+        },
+        {
+          "id": "br-currency",
+          "title": "Currency Declaration",
+          "description": "Declare amounts over R$10,000 or equivalent.",
+          "type": "customs",
+          "severity": "required",
+          "details": [
+            "Complete e-DBV form if carrying over R$10,000",
+            "Applies to cash and traveler's checks",
+            "No limit on credit/debit card use"
+          ]
+        }
+      ],
+      "output": {
+        "visaType": "e_visa",
+        "maxStayDays": 90,
+        "processingTime": "3-5 business days typical",
+        "documents": ["e-Visa", "Valid passport", "Yellow fever certificate (if applicable)", "Business invitation"],
+        "entryNotes": [
+          "Print e-Visa confirmation",
+          "Keep vaccination records handy",
+          "Portuguese is the official language"
+        ],
+        "letterTemplate": "BR"
+      },
+      "lastUpdated": "2026-01-03"
+    },
+    {
+      "id": "de-business-schengen",
+      "countryCode": "DE",
+      "countryName": "Germany",
+      "purposes": ["business_meeting", "conference", "client_visit", "training"],
+      "requirements": [
+        {
+          "id": "de-passport",
+          "title": "Valid Passport",
+          "description": "Passport valid for 3+ months beyond planned stay.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Valid for 3 months after departure",
+            "Issued within last 10 years",
+            "At least 2 blank pages"
+          ]
+        },
+        {
+          "id": "de-schengen",
+          "title": "Schengen Area Rules",
+          "description": "90 days per 180-day period across all Schengen countries.",
+          "type": "stay",
+          "severity": "required",
+          "details": [
+            "90/180 day rule applies",
+            "Time in other Schengen countries counts",
+            "Calculate carefully if multi-country trip"
+          ]
+        },
+        {
+          "id": "de-etias",
+          "title": "ETIAS (Coming Soon)",
+          "description": "European Travel Information and Authorization System launching 2025.",
+          "type": "entry",
+          "severity": "recommended",
+          "details": [
+            "Check current requirements before travel",
+            "Will cost approximately €7",
+            "Valid for 3 years"
+          ]
+        },
+        {
+          "id": "de-insurance",
+          "title": "Travel Insurance",
+          "description": "Health insurance with €30,000 minimum coverage recommended.",
+          "type": "health",
+          "severity": "recommended",
+          "details": [
+            "Minimum €30,000 medical coverage",
+            "Should cover emergency repatriation",
+            "Carta policy provides adequate coverage"
+          ]
+        }
+      ],
+      "output": {
+        "visaType": "visa_free",
+        "maxStayDays": 90,
+        "processingTime": "N/A",
+        "documents": ["Valid passport", "Travel insurance", "Business invitation (recommended)"],
+        "entryNotes": [
+          "No visa required for US/UK citizens",
+          "Schengen 90/180 rule strictly enforced",
+          "Cash still widely used in Germany"
+        ]
+      },
+      "lastUpdated": "2026-01-03"
+    },
+    {
+      "id": "jp-business-all",
+      "countryCode": "JP",
+      "countryName": "Japan",
+      "purposes": ["business_meeting", "conference", "client_visit", "training"],
+      "requirements": [
+        {
+          "id": "jp-passport",
+          "title": "Valid Passport",
+          "description": "Passport must be valid for duration of stay.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Valid for entire stay",
+            "At least one blank page",
+            "Machine-readable recommended"
+          ]
+        },
+        {
+          "id": "jp-vjw",
+          "title": "Visit Japan Web",
+          "description": "Pre-register immigration and customs information online.",
+          "type": "document",
+          "severity": "recommended",
+          "details": [
+            "Complete at visit-japan.digital.go.jp",
+            "Receive QR code for faster processing",
+            "Can add after arrival but slower"
+          ]
+        },
+        {
+          "id": "jp-return",
+          "title": "Return/Onward Ticket",
+          "description": "Proof of departure within visa-free period.",
+          "type": "document",
+          "severity": "required",
+          "details": [
+            "Must show departure within 90 days",
+            "Connecting flight acceptable"
+          ]
+        },
+        {
+          "id": "jp-business-purpose",
+          "title": "Business Purpose Documentation",
+          "description": "Documents supporting business visit purpose.",
+          "type": "document",
+          "severity": "recommended",
+          "details": [
+            "Meeting invitations",
+            "Conference registration",
+            "Business cards (essential in Japan)"
+          ]
+        }
+      ],
+      "output": {
+        "visaType": "visa_free",
+        "maxStayDays": 90,
+        "processingTime": "N/A",
+        "documents": ["Valid passport", "Return ticket", "Visit Japan Web registration"],
+        "entryNotes": [
+          "Visa-free for most Western passport holders",
+          "Register on Visit Japan Web before travel",
+          "Business cards are very important in Japan"
+        ]
+      },
+      "lastUpdated": "2026-01-03"
+    }
+  ]
+}
