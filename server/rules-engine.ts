@@ -359,7 +359,9 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
         
         // Map v2 API color to entry type
         const entryType = mapV2ColorToEntryType(primaryRule.color);
-        const isRequired = primaryRule.color !== "green";
+        // Only red (visa required before travel) means "required = true"
+        // Green = visa-free, yellow = ETA/registration, blue = visa on arrival/eVisa
+        const isRequired = primaryRule.color.toLowerCase() === "red";
         
         // Build headline from rules display format
         const rulesDisplay = formatVisaRulesDisplay(visa_rules);

@@ -26,9 +26,52 @@ import {
   Plane,
   ExternalLink,
   BadgeCheck,
-  FileSignature
+  FileSignature,
+  MapPin,
+  Globe2,
+  Landmark,
+  Coins,
+  ClipboardCheck
 } from "lucide-react";
 import { useState } from "react";
+
+interface V2VisaData {
+  destination: {
+    name: string;
+    continent: string;
+    capital: string;
+    currency: string;
+    passportValidity: string;
+    timezone: string;
+    embassyUrl?: string;
+  };
+  mandatoryRegistration: {
+    name: string;
+    color: string;
+    link?: string;
+  } | null;
+  visaRules: {
+    primaryRule: {
+      name: string;
+      duration?: string;
+      color: string;
+      link?: string;
+    };
+    secondaryRule: {
+      name: string;
+      duration?: string;
+      color: string;
+      link?: string;
+    } | null;
+    exceptionRule: {
+      name: string;
+      exceptionTypeName?: string;
+      fullText?: string;
+      countryCodes?: string[];
+      link?: string;
+    } | null;
+  };
+}
 
 interface AssessResult {
   entryType: "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN";
@@ -43,6 +86,7 @@ interface AssessResult {
   actions: { label: string; url: string }[] | null;
   letterAvailable: boolean;
   letterTemplate: string | null;
+  v2Data?: V2VisaData;
 }
 
 interface ResultCardsProps {
@@ -236,6 +280,125 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
           </CardContent>
         </Card>
       </motion.div>
+
+      {result.v2Data && (
+        <motion.div variants={cardVariants} transition={springTransition}>
+          <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-destination-info">
+            <CardHeader className="flex flex-row items-start gap-4 pb-4">
+              <div className="p-3 rounded-xl bg-accent/10">
+                <Globe2 className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-foreground">Destination Information</CardTitle>
+                <CardDescription className="mt-1">{result.v2Data.destination.name}, {result.v2Data.destination.continent}</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">Capital:</span>
+                  <span className="font-medium">{result.v2Data.destination.capital}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">Currency:</span>
+                  <span className="font-medium">{result.v2Data.destination.currency}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">Timezone:</span>
+                  <span className="font-medium">{result.v2Data.destination.timezone}</span>
+                </div>
+                {result.v2Data.destination.passportValidity && (
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">Passport:</span>
+                    <span className="font-medium">{result.v2Data.destination.passportValidity}</span>
+                  </div>
+                )}
+              </div>
+              
+              {result.v2Data.mandatoryRegistration && (
+                <div className="pt-4 border-t border-border/30">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-warning/10">
+                      <ClipboardCheck className="w-4 h-4 text-warning" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Mandatory Registration</p>
+                      <p className="text-sm text-muted-foreground mt-1">{result.v2Data.mandatoryRegistration.name}</p>
+                      {result.v2Data.mandatoryRegistration.link && (
+                        <a
+                          href={result.v2Data.mandatoryRegistration.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm text-accent mt-2"
+                          data-testid="link-mandatory-registration"
+                        >
+                          Complete registration
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {result.v2Data.visaRules.secondaryRule && (
+                <div className="pt-4 border-t border-border/30">
+                  <p className="text-sm font-medium text-foreground mb-2">Alternative Entry Option</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Badge variant="outline" className="capitalize">{result.v2Data.visaRules.secondaryRule.name}</Badge>
+                    {result.v2Data.visaRules.secondaryRule.duration && (
+                      <span className="text-muted-foreground">- {result.v2Data.visaRules.secondaryRule.duration}</span>
+                    )}
+                    {result.v2Data.visaRules.secondaryRule.link && (
+                      <a
+                        href={result.v2Data.visaRules.secondaryRule.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-accent"
+                        data-testid="link-secondary-rule"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {result.v2Data.visaRules.exceptionRule?.fullText && (
+                <div className="pt-4 border-t border-border/30">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Exception Note</p>
+                      <p className="text-sm text-muted-foreground mt-1">{result.v2Data.visaRules.exceptionRule.fullText}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {result.v2Data.destination.embassyUrl && (
+                <div className="pt-4 border-t border-border/30">
+                  <a
+                    href={result.v2Data.destination.embassyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-accent"
+                    data-testid="link-embassy"
+                  >
+                    <Building2 className="w-4 h-4" />
+                    Embassy / Consulate Information
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       <motion.div variants={cardVariants} transition={springTransition}>
         <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-passport">

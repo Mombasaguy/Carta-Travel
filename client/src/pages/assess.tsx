@@ -6,6 +6,44 @@ import { ArrowLeft, Globe, Briefcase, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+interface V2VisaData {
+  destination: {
+    name: string;
+    continent: string;
+    capital: string;
+    currency: string;
+    passportValidity: string;
+    timezone: string;
+    embassyUrl?: string;
+  };
+  mandatoryRegistration: {
+    name: string;
+    color: string;
+    link?: string;
+  } | null;
+  visaRules: {
+    primaryRule: {
+      name: string;
+      duration?: string;
+      color: string;
+      link?: string;
+    };
+    secondaryRule: {
+      name: string;
+      duration?: string;
+      color: string;
+      link?: string;
+    } | null;
+    exceptionRule: {
+      name: string;
+      exceptionTypeName?: string;
+      fullText?: string;
+      countryCodes?: string[];
+      link?: string;
+    } | null;
+  };
+}
+
 interface AssessResult {
   entryType: "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN";
   required: boolean;
@@ -19,6 +57,7 @@ interface AssessResult {
   actions: { label: string; url: string }[] | null;
   letterAvailable: boolean;
   letterTemplate: string | null;
+  v2Data?: V2VisaData;
 }
 
 interface TripPayload extends EntryFormData {
