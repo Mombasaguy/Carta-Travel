@@ -28,10 +28,10 @@ interface ResultCardsProps {
 
 const entryTypeBadgeVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   NONE: "secondary",
-  ETA: "outline",
+  ETA: "secondary",
   EVISA: "outline",
-  VISA: "destructive",
-  UNKNOWN: "destructive",
+  VISA: "outline",
+  UNKNOWN: "outline",
 };
 
 const entryTypeLabels: Record<string, string> = {
@@ -147,26 +147,26 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
       }}
     >
       <motion.div variants={cardVariants}>
-        <Card className="overflow-visible" data-testid="card-entry-result">
-          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-            <div className="flex items-center gap-2">
+        <Card className="overflow-visible border-border/50" data-testid="card-entry-result">
+          <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3">
+            <div className="flex items-center gap-3">
               {result.required ? (
-                <AlertCircle className="w-5 h-5 text-amber-500" />
+                <AlertCircle className="w-5 h-5 text-warning" />
               ) : (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-5 h-5 text-success" />
               )}
-              <CardTitle className="text-lg" data-testid="text-entry-type">
+              <CardTitle className="text-lg font-medium" data-testid="text-entry-type">
                 {entryTypeLabels[result.entryType] || result.entryType}
               </CardTitle>
             </div>
-            <Badge variant={entryTypeBadgeVariants[result.entryType] || "default"}>
+            <Badge variant={entryTypeBadgeVariants[result.entryType] || "secondary"}>
               {result.entryType}
             </Badge>
           </CardHeader>
           <CardContent>
-            <p className="text-sm" data-testid="text-headline">{result.headline}</p>
+            <p className="text-sm text-foreground" data-testid="text-headline">{result.headline}</p>
             {result.details && (
-              <p className="mt-2 text-sm text-muted-foreground" data-testid="text-details">
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed" data-testid="text-details">
                 {result.details}
               </p>
             )}
@@ -176,16 +176,16 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
 
       {result.fee && (
         <motion.div variants={cardVariants}>
-          <Card className="overflow-visible" data-testid="card-fee">
+          <Card className="overflow-visible border-border/50" data-testid="card-fee">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Fee</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Fee</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-semibold" data-testid="text-fee-amount">
+              <p className="text-lg font-medium" data-testid="text-fee-amount">
                 {result.fee.currency} {result.fee.amount}
               </p>
               {result.fee.reimbursable && (
-                <p className="text-xs text-green-600 mt-1">Reimbursable per Carta policy</p>
+                <p className="text-xs text-success mt-2">Reimbursable per Carta policy</p>
               )}
             </CardContent>
           </Card>
@@ -194,12 +194,12 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
 
       {result.maxStayDays > 0 && (
         <motion.div variants={cardVariants}>
-          <Card className="overflow-visible" data-testid="card-max-stay">
+          <Card className="overflow-visible border-border/50" data-testid="card-max-stay">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Maximum Stay</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Maximum Stay</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-semibold" data-testid="text-max-stay">
+              <p className="text-lg font-medium" data-testid="text-max-stay">
                 {result.maxStayDays} days
               </p>
             </CardContent>
@@ -209,13 +209,13 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
 
       {trip && ["US", "GB", "CA", "BR", "DE", "JP"].includes(trip.destination) && (
         <motion.div variants={cardVariants}>
-          <Card className="overflow-visible" data-testid="card-invitation-letter">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                <CardTitle className="text-base">Invitation Letter</CardTitle>
+          <Card className="overflow-visible border-border/50" data-testid="card-invitation-letter">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <CardTitle className="text-base font-medium">Invitation Letter</CardTitle>
               </div>
-              <CardDescription>
+              <CardDescription className="mt-1">
                 Business invitation letter for {trip.destination} immigration purposes
               </CardDescription>
             </CardHeader>
@@ -224,6 +224,7 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
                 onClick={handleDownloadLetter}
                 disabled={isDownloading}
                 variant="outline"
+                size="sm"
                 data-testid="button-download-letter"
               >
                 <Download className="w-4 h-4 mr-2" />
@@ -236,16 +237,16 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
 
       {result.governance && (
         <motion.div variants={cardVariants}>
-          <Card className="overflow-visible bg-muted/50" data-testid="card-governance">
+          <Card className="overflow-visible border-border/30 bg-muted/30" data-testid="card-governance">
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
-                <Info className="w-4 h-4 text-muted-foreground" />
-                <CardTitle className="text-sm text-muted-foreground">Governance</CardTitle>
+                <Info className="w-4 h-4 text-subtle" />
+                <CardTitle className="text-sm font-medium text-muted-foreground">Governance</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant={result.governance.status === "VERIFIED" ? "secondary" : "outline"}>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Badge variant="secondary" className="text-xs">
                   {result.governance.status}
                 </Badge>
                 <span className="text-xs text-muted-foreground">

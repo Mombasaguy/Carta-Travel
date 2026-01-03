@@ -16,14 +16,14 @@
   --surface: 0 0% 98%;
   --surface-2: 0 0% 96%;
   --fg: 0 0% 9%;
-  --subtle: 0 0% 55%;
-  /* Carta brand accent (deep teal/ink) */
-  --accent-2: 195 80% 30%;
+  --subtle: 0 0% 45%;
+  /* Carta brand accent (deep teal/navy) */
+  --accent-2: 195 75% 28%;
   --accent-fg: 0 0% 100%;
-  /* Status colors */
-  --success: 145 65% 42%;
-  --warning: 38 92% 50%;
-  --danger: 0 84% 45%;
+  /* Status colors (restrained) */
+  --success: 145 55% 42%;
+  --warning: 38 85% 52%;
+  --danger: 0 70% 50%;
   --border: 0 0% 91%;
   --card: 0 0% 98%;
   --card-foreground: 0 0% 9%;
@@ -113,14 +113,14 @@
   --surface: 0 0% 9%;
   --surface-2: 0 0% 11%;
   --fg: 0 0% 98%;
-  --subtle: 0 0% 55%;
-  /* Carta brand accent (deep teal/ink) */
-  --accent-2: 195 80% 40%;
+  --subtle: 0 0% 50%;
+  /* Carta brand accent (deep teal/navy) */
+  --accent-2: 195 70% 38%;
   --accent-fg: 0 0% 100%;
-  /* Status colors */
-  --success: 145 65% 50%;
-  --warning: 38 92% 55%;
-  --danger: 0 84% 55%;
+  /* Status colors (restrained, slightly more saturated for dark) */
+  --success: 145 55% 48%;
+  --warning: 38 85% 55%;
+  --danger: 0 70% 55%;
   --border: 0 0% 15%;
   --card: 0 0% 9%;
   --card-foreground: 0 0% 98%;

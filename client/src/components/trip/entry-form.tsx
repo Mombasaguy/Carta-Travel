@@ -262,7 +262,7 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -359,10 +359,10 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
           control={form.control}
           name="isUSEmployerSponsored"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">US Employer Sponsored</FormLabel>
-                <p className="text-sm text-muted-foreground">
+            <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border/50 p-5">
+              <div className="space-y-1">
+                <FormLabel className="text-base font-medium">US Employer Sponsored</FormLabel>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Are you traveling on behalf of a US employer?
                 </p>
               </div>
@@ -380,6 +380,7 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
         <Button
           type="submit"
           className="w-full"
+          size="lg"
           disabled={form.formState.isSubmitting}
           data-testid="button-check-requirements"
         >
