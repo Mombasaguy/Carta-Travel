@@ -12,7 +12,9 @@ import {
   FileCheck, 
   Clock,
   Building2,
-  Plane
+  Plane,
+  ExternalLink,
+  BadgeCheck
 } from "lucide-react";
 import { useState } from "react";
 
@@ -24,7 +26,11 @@ interface AssessResult {
   maxStayDays: number;
   fee: { amount: number; currency: string; reimbursable: boolean } | null;
   isUSEmployerSponsored: boolean;
-  governance: { status: string; owner: string } | null;
+  governance: { status: string; owner: string; reviewDueAt: string } | null;
+  sources: { sourceId: string; title: string; verifiedAt: string }[] | null;
+  actions: { label: string; url: string }[] | null;
+  letterAvailable: boolean;
+  letterTemplate: string | null;
 }
 
 interface ResultCardsProps {
@@ -383,6 +389,38 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
         </Card>
       </motion.div>
 
+      {result.actions && result.actions.length > 0 && (
+        <motion.div variants={cardVariants} transition={springTransition}>
+          <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-actions">
+            <CardHeader className="flex flex-row items-start gap-4 pb-4">
+              <div className="p-3 rounded-xl bg-accent-2/10">
+                <ExternalLink className="w-5 h-5 text-accent-2" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-foreground">Quick Actions</CardTitle>
+                <CardDescription className="mt-1">Official application links</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex flex-wrap gap-3">
+                {result.actions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(action.url, "_blank", "noopener,noreferrer")}
+                    data-testid={`button-action-${index}`}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 mr-2" />
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {result.maxStayDays > 0 && (
         <motion.div variants={cardVariants} transition={springTransition}>
           <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-notes">
@@ -402,15 +440,48 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
                   <span className="font-medium" data-testid="text-max-stay">{result.maxStayDays} days</span>
                 </div>
                 {result.governance && (
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-muted-foreground">Data verification</span>
-                    <div className="flex items-center gap-2">
+                  <>
+                    <div className="flex items-center justify-between py-2 border-b border-border/30">
+                      <span className="text-muted-foreground">Data verification</span>
                       <Badge variant="secondary" className="text-xs">
                         {result.governance.status}
                       </Badge>
                     </div>
-                  </div>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-muted-foreground">Next review due</span>
+                      <span className="font-medium text-xs">{new Date(result.governance.reviewDueAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                    </div>
+                  </>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {result.sources && result.sources.length > 0 && (
+        <motion.div variants={cardVariants} transition={springTransition}>
+          <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-sources">
+            <CardHeader className="flex flex-row items-start gap-4 pb-4">
+              <div className="p-3 rounded-xl bg-success/10">
+                <BadgeCheck className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-foreground">Sources</CardTitle>
+                <CardDescription className="mt-1">Official verification references</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-3">
+                {result.sources.map((source, index) => (
+                  <div key={index} className="flex items-center justify-between py-2 border-b border-border/30 last:border-b-0" data-testid={`source-${index}`}>
+                    <span className="text-sm font-medium">{source.title}</span>
+                    <Badge variant="outline" className="text-xs gap-1.5">
+                      <BadgeCheck className="w-3 h-3" />
+                      Verified {new Date(source.verifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </Badge>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

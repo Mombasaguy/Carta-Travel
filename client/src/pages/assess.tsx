@@ -13,7 +13,11 @@ interface AssessResult {
   maxStayDays: number;
   fee: { amount: number; currency: string; reimbursable: boolean } | null;
   isUSEmployerSponsored: boolean;
-  governance: { status: string; owner: string } | null;
+  governance: { status: string; owner: string; reviewDueAt: string } | null;
+  sources: { sourceId: string; title: string; verifiedAt: string }[] | null;
+  actions: { label: string; url: string }[] | null;
+  letterAvailable: boolean;
+  letterTemplate: string | null;
 }
 
 interface TripPayload extends EntryFormData {

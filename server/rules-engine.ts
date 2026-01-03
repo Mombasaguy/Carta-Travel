@@ -173,7 +173,11 @@ export interface AssessResult {
   maxStayDays: number;
   fee: { amount: number; currency: string; reimbursable: boolean } | null;
   isUSEmployerSponsored: boolean;
-  governance: { status: string; owner: string } | null;
+  governance: { status: string; owner: string; reviewDueAt: string } | null;
+  sources: { sourceId: string; title: string; verifiedAt: string }[] | null;
+  actions: { label: string; url: string }[] | null;
+  letterAvailable: boolean;
+  letterTemplate: string | null;
 }
 
 export function assess(input: AssessInput): AssessResult {
@@ -192,6 +196,10 @@ export function assess(input: AssessInput): AssessResult {
       fee: null,
       isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
       governance: null,
+      sources: null,
+      actions: null,
+      letterAvailable: false,
+      letterTemplate: null,
     };
   }
   
@@ -212,7 +220,19 @@ export function assess(input: AssessInput): AssessResult {
     governance: {
       status: matchedRule.governance.status,
       owner: matchedRule.governance.owner,
+      reviewDueAt: matchedRule.governance.review_due_at,
     },
+    sources: matchedRule.sources.map(s => ({
+      sourceId: s.source_id,
+      title: s.title,
+      verifiedAt: s.verified_at,
+    })),
+    actions: entry.actions?.map(a => ({
+      label: a.label,
+      url: a.url,
+    })) ?? null,
+    letterAvailable: matchedRule.outputs.invitation_letter?.available ?? false,
+    letterTemplate: matchedRule.outputs.invitation_letter?.template_id ?? null,
   };
 }
 
