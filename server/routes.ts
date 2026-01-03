@@ -9,6 +9,38 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Health check for visa/travel requirements system
+  app.get("/api/visa-health", async (req, res) => {
+    const health: {
+      status: "healthy" | "degraded" | "unhealthy";
+      rulesEngine: { status: string; countriesCount: number };
+      travelBuddyApi: { status: string; message?: string };
+      timestamp: string;
+    } = {
+      status: "healthy",
+      rulesEngine: { status: "ok", countriesCount: 0 },
+      travelBuddyApi: { status: "unknown", message: undefined },
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      const countries = getAvailableCountries();
+      health.rulesEngine = { status: "ok", countriesCount: countries.length };
+    } catch (e) {
+      health.rulesEngine = { status: "error", countriesCount: 0 };
+      health.status = "degraded";
+    }
+
+    const apiKey = process.env.TRAVEL_BUDDY_API_KEY;
+    if (!apiKey) {
+      health.travelBuddyApi = { status: "not_configured", message: "API key not set" };
+    } else {
+      health.travelBuddyApi = { status: "configured" };
+    }
+
+    res.json(health);
+  });
+
   // Get all countries (from storage - original functionality)
   app.get("/api/countries", async (req, res) => {
     try {
