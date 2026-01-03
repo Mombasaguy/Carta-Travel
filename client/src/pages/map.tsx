@@ -214,7 +214,7 @@ export default function MapPage() {
     }
   }
 
-  const fillColorExpression: unknown = [
+  const fillColorExpression = [
     "match",
     ["get", "iso_3166_1_alpha_2"],
     ...Object.entries(colorsByIso2).flatMap(([code, color]) => [
@@ -222,7 +222,7 @@ export default function MapPage() {
       colorMap[color],
     ]),
     "#d1d5db",
-  ];
+  ] as unknown as string;
 
   if (configLoading) {
     return (
@@ -300,18 +300,28 @@ export default function MapPage() {
             id="country-fills"
             type="fill"
             source-layer="country_boundaries"
+            filter={[
+              "all",
+              ["==", ["get", "worldview"], "US"],
+              ["!=", ["get", "disputed"], "true"]
+            ]}
             paint={{
-              "fill-color": mapLoading ? "#d1d5db" : (fillColorExpression as string),
-              "fill-opacity": 0.7,
+              "fill-color": mapLoading ? "#d1d5db" : fillColorExpression,
+              "fill-opacity": 0.8,
             }}
           />
           <Layer
             id="country-borders"
             type="line"
             source-layer="country_boundaries"
+            filter={[
+              "all",
+              ["==", ["get", "worldview"], "US"],
+              ["!=", ["get", "disputed"], "true"]
+            ]}
             paint={{
-              "line-color": "#9ca3af",
-              "line-width": 0.5,
+              "line-color": "#4b5563",
+              "line-width": 1,
             }}
           />
         </Source>
