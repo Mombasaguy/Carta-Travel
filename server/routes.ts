@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { resolveTrip, getAvailableCountries, getCartaPolicy, assess } from "./rules-engine";
-import { generateLetter, generateLetterBuffer } from "./letter-generator";
+import { generateLetter, generateLetterBuffer, generateDocxLetter, generateLetterDocx, requestToMergeData } from "./letter-generator";
 import { tripInputSchema, letterRequestSchema, assessInputSchema } from "@shared/schema";
 
 export async function registerRoutes(
@@ -154,6 +154,39 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Assess error:", error);
       res.status(500).json({ error: "Failed to assess trip requirements" });
+    }
+  });
+
+  // DOCX letter generation endpoint - matches Next.js pattern
+  app.post("/api/letters/docx", (req, res) => {
+    try {
+      const { templateId, merge } = req.body;
+      
+      if (!templateId || typeof templateId !== "string") {
+        return res.status(400).json({ error: "templateId is required" });
+      }
+      
+      if (!merge || typeof merge !== "object") {
+        return res.status(400).json({ error: "merge object is required" });
+      }
+      
+      try {
+        const result = generateDocxLetter(templateId, merge);
+        res.setHeader("Content-Type", result.contentType);
+        res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+        res.send(result.buffer);
+      } catch (templateError: any) {
+        if (templateError.message?.includes("Template not found")) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+        return res.status(400).json({ 
+          error: "Template render failed", 
+          details: templateError.message 
+        });
+      }
+    } catch (error) {
+      console.error("DOCX generation error:", error);
+      res.status(500).json({ error: "Failed to generate DOCX letter" });
     }
   });
 
