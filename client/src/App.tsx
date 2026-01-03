@@ -13,6 +13,7 @@ import SearchPage from "@/pages/search";
 import DestinationsPage from "@/pages/destinations";
 import TripFlowPage from "@/pages/trip-flow";
 import AssessPage from "@/pages/assess";
+import MapPage from "@/pages/map";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/trip" component={TripFlowPage} />
       <Route path="/assess" component={AssessPage} />
+      <Route path="/map" component={MapPage} />
       <Route path="/country/:id" component={CountryDetailPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/destinations" component={DestinationsPage} />
