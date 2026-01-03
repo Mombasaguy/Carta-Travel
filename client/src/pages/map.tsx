@@ -54,6 +54,107 @@ const iso3ToIso2: Record<string, string> = Object.fromEntries(
   Object.entries(iso2ToIso3).map(([iso2, iso3]) => [iso3, iso2])
 );
 
+// Country name to ISO2 mapping for fallback when ISO codes are missing (-99)
+const nameToIso2: Record<string, string> = {
+  "France": "FR",
+  "Norway": "NO",
+  "United States of America": "US",
+  "United States": "US",
+  "United Kingdom": "GB",
+  "Germany": "DE",
+  "Canada": "CA",
+  "Australia": "AU",
+  "Japan": "JP",
+  "China": "CN",
+  "India": "IN",
+  "Brazil": "BR",
+  "Mexico": "MX",
+  "Italy": "IT",
+  "Spain": "ES",
+  "Netherlands": "NL",
+  "Switzerland": "CH",
+  "Sweden": "SE",
+  "Denmark": "DK",
+  "Finland": "FI",
+  "Belgium": "BE",
+  "Austria": "AT",
+  "Ireland": "IE",
+  "Portugal": "PT",
+  "Poland": "PL",
+  "Czech Republic": "CZ",
+  "Czechia": "CZ",
+  "Hungary": "HU",
+  "Romania": "RO",
+  "Bulgaria": "BG",
+  "Croatia": "HR",
+  "Slovakia": "SK",
+  "Slovenia": "SI",
+  "Estonia": "EE",
+  "Latvia": "LV",
+  "Lithuania": "LT",
+  "Greece": "GR",
+  "Cyprus": "CY",
+  "Malta": "MT",
+  "Luxembourg": "LU",
+  "Iceland": "IS",
+  "New Zealand": "NZ",
+  "Singapore": "SG",
+  "Hong Kong": "HK",
+  "South Korea": "KR",
+  "Republic of Korea": "KR",
+  "Korea": "KR",
+  "Taiwan": "TW",
+  "Thailand": "TH",
+  "Vietnam": "VN",
+  "Viet Nam": "VN",
+  "Philippines": "PH",
+  "Indonesia": "ID",
+  "Malaysia": "MY",
+  "United Arab Emirates": "AE",
+  "Saudi Arabia": "SA",
+  "Israel": "IL",
+  "Turkey": "TR",
+  "South Africa": "ZA",
+  "Egypt": "EG",
+  "Nigeria": "NG",
+  "Kenya": "KE",
+  "Morocco": "MA",
+  "Argentina": "AR",
+  "Chile": "CL",
+  "Colombia": "CO",
+  "Peru": "PE",
+  "Venezuela": "VE",
+  "Russia": "RU",
+  "Russian Federation": "RU",
+  "Ukraine": "UA",
+  "Qatar": "QA",
+  "Kuwait": "KW",
+  "Bahrain": "BH",
+  "Oman": "OM",
+  "Jordan": "JO",
+  "Lebanon": "LB",
+  "Pakistan": "PK",
+  "Bangladesh": "BD",
+  "Sri Lanka": "LK",
+  "Nepal": "NP",
+  "Myanmar": "MM",
+  "Cambodia": "KH",
+  "Laos": "LA",
+  "Lao PDR": "LA",
+  "Serbia": "RS",
+  "Kosovo": "XK",
+  "Montenegro": "ME",
+  "Bosnia and Herzegovina": "BA",
+  "North Macedonia": "MK",
+  "Macedonia": "MK",
+  "Albania": "AL",
+  "Moldova": "MD",
+  "Belarus": "BY",
+  "Georgia": "GE",
+  "Armenia": "AM",
+  "Azerbaijan": "AZ",
+};
+
 interface AssessResult {
   entryType: string;
   required: boolean;
@@ -379,9 +480,29 @@ export default function MapPage() {
 
   const handleCountryClick = useCallback((e: MapMouseEvent) => {
     const feature = e.features?.[0];
-    // GeoJSON uses "ISO3166-1-Alpha-2" for 2-letter country codes
-    const countryCode = feature?.properties?.["ISO3166-1-Alpha-2"];
-    if (countryCode) {
+    const props = feature?.properties;
+    // Try multiple property names - different GeoJSON sources use different conventions
+    // Some use -99 for countries with complex territories (like France)
+    let countryCode = props?.["ISO3166-1-Alpha-2"];
+    // Fallback: try ISO_A2 (common in Natural Earth data)
+    if (!countryCode || countryCode === "-99") {
+      countryCode = props?.["ISO_A2"];
+    }
+    // Fallback: derive from ISO_A3 if available
+    if (!countryCode || countryCode === "-99") {
+      const iso3 = props?.["ISO3166-1-Alpha-3"] || props?.["ISO_A3"];
+      if (iso3 && iso3ToIso2[iso3]) {
+        countryCode = iso3ToIso2[iso3];
+      }
+    }
+    // Final fallback: try to match by country name
+    if (!countryCode || countryCode === "-99") {
+      const name = props?.["ADMIN"] || props?.["name"];
+      if (name && nameToIso2[name]) {
+        countryCode = nameToIso2[name];
+      }
+    }
+    if (countryCode && countryCode !== "-99") {
       setSelectedCountry(countryCode);
       setAssessResult(null);
       assessMutation.mutate(countryCode);
