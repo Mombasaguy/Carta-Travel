@@ -12,6 +12,7 @@ import {
 import rulesData from "./rules.json";
 import { z } from "zod";
 import { checkVisaRequirementsV2, formatVisaRulesDisplay, type VisaCheckV2Response } from "./lib/travelBuddyClient";
+import { getVisaApplicationUrl, getVisaLink } from "./data/visaLinks";
 
 // Schema for the full rules collection
 const rulesCollectionSchema = z.object({
@@ -410,7 +411,7 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
             title: "Travel Buddy Visa API v2",
             verifiedAt: new Date().toISOString().split("T")[0],
           }],
-          actions: actions.length > 0 ? actions : null,
+          actions: actions.length > 0 ? actions : getFallbackActions(parsedInput.destination, entryType),
           letterAvailable: false,
           letterTemplate: null,
           dataSource: "api",
@@ -520,7 +521,7 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         fee: null,
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
-        actions: null,
+        actions: getFallbackActions(destination, "NONE"),
         letterAvailable: true,
         letterTemplate: destination === "FR" ? "FR" : (destination === "DE" ? "DE" : null),
         dataSource: "curated",
@@ -557,7 +558,7 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         fee: { amount: destination === "IN" ? 25 : 50, currency: "USD", reimbursable: true },
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
-        actions: null,
+        actions: getFallbackActions(destination, "EVISA"),
         letterAvailable: true,
         letterTemplate: null,
         dataSource: "curated",
@@ -575,7 +576,7 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         fee: { amount: 160, currency: "USD", reimbursable: true },
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
-        actions: null,
+        actions: getFallbackActions(destination, "VISA"),
         letterAvailable: true,
         letterTemplate: null,
         dataSource: "curated",
@@ -594,7 +595,7 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         fee: null,
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
-        actions: null,
+        actions: getFallbackActions(destination, "NONE"),
         letterAvailable: true,
         letterTemplate: null,
         dataSource: "curated",
@@ -603,6 +604,29 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
   }
   
   return null;
+}
+
+function getFallbackActions(destination: string, entryType: string): { label: string; url: string }[] | null {
+  const visaLink = getVisaLink(destination);
+  if (!visaLink) return null;
+  
+  const actions: { label: string; url: string }[] = [];
+  
+  // Add appropriate link based on entry type
+  if (entryType === "ETA" && visaLink.etaUrl) {
+    actions.push({ label: "Apply for ETA", url: visaLink.etaUrl });
+  } else if (entryType === "EVISA" && visaLink.eVisaUrl) {
+    actions.push({ label: "Apply for e-Visa", url: visaLink.eVisaUrl });
+  } else if (entryType === "VISA") {
+    actions.push({ label: "Visa Information", url: visaLink.officialVisaUrl });
+  }
+  
+  // Always add official visa info as secondary link if not already added
+  if (actions.length === 0 || (actions[0].url !== visaLink.officialVisaUrl)) {
+    actions.push({ label: "Official Visa Info", url: visaLink.officialVisaUrl });
+  }
+  
+  return actions.length > 0 ? actions : null;
 }
 
 function parseDuration(duration: string | undefined): number {
