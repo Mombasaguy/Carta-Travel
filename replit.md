@@ -20,10 +20,17 @@ Preferred communication style: Simple, everyday language.
 - **Build Tool**: Vite with React plugin
 
 The frontend follows a page-based structure with reusable components:
-- Pages: Home, Country Detail, Search, Destinations, Trip Flow, Not Found
-- Core components: CountryCard, RequirementCard, HeroSection, SearchInput
+- Pages: Home, Country Detail, Search, Destinations, Trip Flow, Assess, Map, Not Found
+- Core components: CountryCard, RequirementCard, HeroSection, SearchInput, NotificationBell
 - Trip components: TripInputForm, ResultsStack (with governance display)
 - UI components from shadcn/ui for consistent design patterns
+
+### Real-time Notifications
+- **WebSocket Server**: Real-time push notifications via `/ws` endpoint
+- **Notification Types**: POLICY_CHANGE, TRAVEL_ADVISORY, SYSTEM_ANNOUNCEMENT, RULE_UPDATE
+- **Severity Levels**: info, warning, critical
+- **UI Component**: NotificationBell in header with badge count and dropdown panel
+- **Features**: Mark as read, mark all as read, auto-refresh, WebSocket reconnection
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express
@@ -39,6 +46,12 @@ API endpoints:
 - `POST /api/trip/resolve` - Resolve trip requirements based on input
 - `POST /api/letters/generate` - Generate invitation letter content
 - `POST /api/letters/download` - Download invitation letter as file
+- `GET /api/map?passport=XX` - Get visa requirement colors for world map
+- `GET /api/notifications` - Get all notifications with unread count
+- `POST /api/notifications` - Create new notification (broadcasts via WebSocket)
+- `POST /api/notifications/:id/read` - Mark notification as read
+- `POST /api/notifications/read-all` - Mark all notifications as read
+- `GET /api/config/mapbox` - Get Mapbox token for map visualization
 
 ### Rules Engine
 - **Location**: `server/rules-engine.ts` with rules in `server/rules.json`
@@ -112,6 +125,9 @@ The application uses a hybrid design approach combining government portal clarit
 
 ## Recent Changes
 
+- 2026-01-03: Added real-time notifications with WebSocket support for policy changes and travel advisories
+- 2026-01-03: Added interactive world map (/map) with Mapbox showing visa requirements by passport
+- 2026-01-03: Added NotificationBell component with unread count badge and dropdown panel
 - 2025-07-28: Integrated authentic Carta Global Travel Policy
 - 2025-07-28: Added official business invitation letter templates (US, UK, CA, BR, DE, JP)
 - 2025-07-28: Implemented strict schema validation with DateString regex and literal BUSINESS purpose

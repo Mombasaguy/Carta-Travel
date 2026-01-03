@@ -2,6 +2,20 @@ import { pgTable, text, serial, integer, boolean, json } from "drizzle-orm/pg-co
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// ============= USER SCHEMAS =============
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+// ============= COUNTRY SCHEMAS =============
+
 export const countries = pgTable("countries", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -27,6 +41,40 @@ export interface Requirement {
   title: string;
   description: string;
   required: boolean;
+}
+
+export interface DetailedRequirement {
+  id: string;
+  title: string;
+  description: string;
+  type: "entry" | "document" | "health" | "customs" | "stay";
+  severity: "required" | "recommended" | "info" | "warning" | "optional";
+  details: string[];
+}
+
+export interface EmergencyContacts {
+  police: string;
+  ambulance: string;
+  embassy: string;
+}
+
+export interface CountryDetails {
+  id: string;
+  name: string;
+  code: string;
+  region: string;
+  flagEmoji: string;
+  visaRequired: boolean;
+  visaOnArrival: boolean;
+  eVisaAvailable: boolean;
+  maxStayDays: number | null;
+  processingTime: string | null;
+  lastUpdated: string | null;
+  requirements: DetailedRequirement[];
+  tips: string[];
+  emergencyContacts: EmergencyContacts;
+  healthReqs?: HealthRequirement[] | null;
+  customsInfo?: CustomsInfo | null;
 }
 
 export interface HealthRequirement {
@@ -182,3 +230,33 @@ export const letterRequestSchema = z.object({
   template: z.string(),
 });
 export type LetterRequest = z.infer<typeof letterRequestSchema>;
+
+// ============= NOTIFICATION SCHEMAS =============
+
+export const notificationTypeEnum = z.enum([
+  "POLICY_CHANGE",
+  "TRAVEL_ADVISORY", 
+  "SYSTEM_ANNOUNCEMENT",
+  "RULE_UPDATE"
+]);
+export type NotificationType = z.infer<typeof notificationTypeEnum>;
+
+export const notificationSeverityEnum = z.enum(["info", "warning", "critical"]);
+export type NotificationSeverity = z.infer<typeof notificationSeverityEnum>;
+
+export const notificationSchema = z.object({
+  id: z.string(),
+  type: notificationTypeEnum,
+  severity: notificationSeverityEnum,
+  title: z.string(),
+  message: z.string(),
+  countryCode: z.string().nullable().optional(),
+  createdAt: z.string(),
+  expiresAt: z.string().nullable().optional(),
+  read: z.boolean().default(false),
+  actionUrl: z.string().nullable().optional(),
+});
+export type Notification = z.infer<typeof notificationSchema>;
+
+export const insertNotificationSchema = notificationSchema.omit({ id: true, createdAt: true, read: true });
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

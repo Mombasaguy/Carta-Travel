@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Country, type CountryDetails, type Requirement } from "@shared/schema";
+import { type User, type InsertUser, type Country, type CountryDetails, type Requirement, type Notification, type InsertNotification } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -8,16 +8,69 @@ export interface IStorage {
   getAllCountries(): Promise<Country[]>;
   getCountryById(id: string): Promise<CountryDetails | undefined>;
   searchCountries(query: string): Promise<Country[]>;
+  getNotifications(): Promise<Notification[]>;
+  getUnreadNotifications(): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationRead(id: string): Promise<Notification | undefined>;
+  markAllNotificationsRead(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private countries: Map<string, CountryDetails>;
+  private notifications: Map<string, Notification>;
 
   constructor() {
     this.users = new Map();
     this.countries = new Map();
+    this.notifications = new Map();
     this.initializeCountries();
+    this.initializeNotifications();
+  }
+
+  private initializeNotifications() {
+    const sampleNotifications: Notification[] = [
+      {
+        id: "notif-1",
+        type: "TRAVEL_ADVISORY",
+        severity: "warning",
+        title: "UK ETA Requirement Update",
+        message: "Starting January 8, 2025, travelers from the US, Canada, and other visa-exempt countries will need an Electronic Travel Authorisation (ETA) to visit the UK.",
+        countryCode: "GB",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        expiresAt: null,
+        read: false,
+        actionUrl: "/assess",
+      },
+      {
+        id: "notif-2",
+        type: "POLICY_CHANGE",
+        severity: "info",
+        title: "Carta Travel Policy Updated",
+        message: "The advance booking requirement has been updated. Domestic flights now require 21 days notice, international flights require 35 days.",
+        countryCode: null,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        expiresAt: null,
+        read: false,
+        actionUrl: null,
+      },
+      {
+        id: "notif-3",
+        type: "RULE_UPDATE",
+        severity: "info",
+        title: "Japan Entry Rules Verified",
+        message: "Business travel rules for Japan have been reviewed and verified as current. No changes to visa-free entry for US passport holders.",
+        countryCode: "JP",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        expiresAt: null,
+        read: true,
+        actionUrl: null,
+      },
+    ];
+
+    for (const notif of sampleNotifications) {
+      this.notifications.set(notif.id, notif);
+    }
   }
 
   private initializeCountries() {
@@ -830,7 +883,22 @@ export class MemStorage implements IStorage {
   }
 
   async getAllCountries(): Promise<Country[]> {
-    return Array.from(this.countries.values()).map(({ requirements, tips, emergencyContacts, ...country }) => country);
+    return Array.from(this.countries.values()).map((country) => ({
+      id: country.id,
+      name: country.name,
+      code: country.code,
+      region: country.region,
+      flagEmoji: country.flagEmoji,
+      visaRequired: country.visaRequired,
+      visaOnArrival: country.visaOnArrival,
+      eVisaAvailable: country.eVisaAvailable,
+      maxStayDays: country.maxStayDays,
+      processingTime: country.processingTime,
+      requirements: null,
+      healthReqs: country.healthReqs ?? null,
+      customsInfo: country.customsInfo ?? null,
+      lastUpdated: country.lastUpdated,
+    }));
   }
 
   async getCountryById(id: string): Promise<CountryDetails | undefined> {
@@ -845,7 +913,60 @@ export class MemStorage implements IStorage {
         country.code.toLowerCase().includes(lowerQuery) ||
         country.region.toLowerCase().includes(lowerQuery)
       )
-      .map(({ requirements, tips, emergencyContacts, ...country }) => country);
+      .map((country) => ({
+        id: country.id,
+        name: country.name,
+        code: country.code,
+        region: country.region,
+        flagEmoji: country.flagEmoji,
+        visaRequired: country.visaRequired,
+        visaOnArrival: country.visaOnArrival,
+        eVisaAvailable: country.eVisaAvailable,
+        maxStayDays: country.maxStayDays,
+        processingTime: country.processingTime,
+        requirements: null,
+        healthReqs: country.healthReqs ?? null,
+        customsInfo: country.customsInfo ?? null,
+        lastUpdated: country.lastUpdated,
+      }));
+  }
+
+  async getNotifications(): Promise<Notification[]> {
+    return Array.from(this.notifications.values())
+      .filter(n => !n.expiresAt || new Date(n.expiresAt) > new Date())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getUnreadNotifications(): Promise<Notification[]> {
+    return (await this.getNotifications()).filter(n => !n.read);
+  }
+
+  async createNotification(insert: InsertNotification): Promise<Notification> {
+    const id = `notif-${randomUUID()}`;
+    const notification: Notification = {
+      ...insert,
+      id,
+      createdAt: new Date().toISOString(),
+      read: false,
+    };
+    this.notifications.set(id, notification);
+    return notification;
+  }
+
+  async markNotificationRead(id: string): Promise<Notification | undefined> {
+    const notification = this.notifications.get(id);
+    if (notification) {
+      notification.read = true;
+      this.notifications.set(id, notification);
+    }
+    return notification;
+  }
+
+  async markAllNotificationsRead(): Promise<void> {
+    Array.from(this.notifications.entries()).forEach(([id, notification]) => {
+      notification.read = true;
+      this.notifications.set(id, notification);
+    });
   }
 }
 

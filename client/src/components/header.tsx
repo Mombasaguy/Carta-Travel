@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Globe, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
+import { NotificationBell } from "./notification-bell";
 import { useState } from "react";
 
 export function Header() {
@@ -41,6 +42,7 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <ThemeToggle />
             <Button
               variant="ghost"

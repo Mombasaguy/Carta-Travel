@@ -1,14 +1,89 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { resolveTrip, getAvailableCountries, getCartaPolicy, assess, assessWithApi } from "./rules-engine";
 import { generateLetter, generateLetterBuffer, generateDocxLetter, generateLetterDocx, requestToMergeData } from "./letter-generator";
-import { tripInputSchema, letterRequestSchema, assessInputSchema } from "@shared/schema";
+import { tripInputSchema, letterRequestSchema, assessInputSchema, insertNotificationSchema } from "@shared/schema";
+
+const wsClients = new Set<WebSocket>();
+
+export function broadcastNotification(notification: any) {
+  const message = JSON.stringify({ type: "notification", data: notification });
+  Array.from(wsClients).forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // WebSocket server for real-time notifications
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+  
+  wss.on("connection", (ws) => {
+    wsClients.add(ws);
+    ws.on("close", () => {
+      wsClients.delete(ws);
+    });
+    ws.on("error", () => {
+      wsClients.delete(ws);
+    });
+  });
+
+  // Notification endpoints
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const notifications = await storage.getNotifications();
+      const unreadCount = notifications.filter(n => !n.read).length;
+      res.json({ notifications, unreadCount });
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const notification = await storage.markNotificationRead(req.params.id);
+      if (!notification) {
+        return res.status(404).json({ error: "Notification not found" });
+      }
+      res.json(notification);
+    } catch (error) {
+      console.error("Error marking notification read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/read-all", async (req, res) => {
+    try {
+      await storage.markAllNotificationsRead();
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications read:", error);
+      res.status(500).json({ error: "Failed to mark all notifications as read" });
+    }
+  });
+
+  app.post("/api/notifications", async (req, res) => {
+    try {
+      const parsed = insertNotificationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid notification data", details: parsed.error.errors });
+      }
+      const notification = await storage.createNotification(parsed.data);
+      broadcastNotification(notification);
+      res.status(201).json(notification);
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
   // Mapbox token endpoint for frontend
   app.get("/api/config/mapbox", (req, res) => {
     const token = process.env.MAPBOX_PUBLIC_KEY;
