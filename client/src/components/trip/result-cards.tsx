@@ -200,7 +200,7 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
               </div>
               <div>
                 <CardTitle className="text-lg font-semibold text-foreground" data-testid="text-entry-type">
-                  Entry Authorization
+                  Visa / Travel Authorization
                 </CardTitle>
                 <CardDescription className="mt-1">
                   {entryTypeLabels[result.entryType] || result.entryType}
@@ -355,13 +355,13 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
               <div className="flex-1">
                 <CardTitle className="text-lg font-semibold text-foreground">Invitation Letter</CardTitle>
                 <CardDescription className="mt-1">
-                  Official Carta business invitation for {trip.destination} immigration
+                  Carta-branded business invitation
                 </CardDescription>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
               <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                Download a pre-formatted invitation letter on Carta letterhead. This document confirms your employment and business purpose for travel.
+                Carta-branded business invitation letters are available. Generate and download below if requested by border officials.
               </p>
               <Sheet open={letterOpen} onOpenChange={setLetterOpen}>
                 <SheetTrigger asChild>
@@ -435,29 +435,29 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
               <Building2 className="w-5 h-5 text-muted-foreground" />
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold text-foreground">Carta Policy Requirements</CardTitle>
-              <CardDescription className="mt-1">Internal travel guidelines</CardDescription>
+              <CardTitle className="text-lg font-semibold text-foreground">Carta Requirements</CardTitle>
+              <CardDescription className="mt-1">Corporate travel policy</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Book through Navan for flights and hotels</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Obtain manager approval before booking</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Book at least 21 days in advance (35 for international)</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                <span>Economy class for flights under 6 hours</span>
-              </li>
-            </ul>
+            <div className="space-y-4 text-sm">
+              <p className="text-muted-foreground leading-relaxed">
+                Travel must be booked via Navan and approved by your manager.
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                Visa and permit costs are reimbursable; passport renewals are not.
+              </p>
+              <ul className="space-y-2 pt-2 border-t border-border/30">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                  <span>Book at least 21 days in advance (35 for international)</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                  <span>Economy class for flights under 6 hours</span>
+                </li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
