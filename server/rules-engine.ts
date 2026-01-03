@@ -11,7 +11,7 @@ import {
 } from "@shared/schema";
 import rulesData from "./rules.json";
 import { z } from "zod";
-import { checkVisaRequirements, mapTravelBuddyToEntryType, mapTravelBuddyToEntryStatus } from "./lib/travelBuddyClient";
+import { checkVisaRequirementsV2, formatVisaRulesDisplay, type VisaCheckV2Response } from "./lib/travelBuddyClient";
 
 // Schema for the full rules collection
 const rulesCollectionSchema = z.object({
@@ -165,6 +165,61 @@ export function resolveTrip(input: TripInput): TripResult {
   };
 }
 
+// Map v2 API color to entry type
+function mapV2ColorToEntryType(color: string): "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN" {
+  switch (color.toLowerCase()) {
+    case "green":
+      return "NONE"; // Visa-free
+    case "yellow":
+      return "ETA"; // ETA/Registration required
+    case "blue":
+      return "EVISA"; // Visa on arrival/eVisa
+    case "red":
+      return "VISA"; // Visa required
+    default:
+      return "UNKNOWN";
+  }
+}
+
+// V2 API enhanced data structure
+export interface V2VisaData {
+  destination: {
+    name: string;
+    continent: string;
+    capital: string;
+    currency: string;
+    passportValidity: string;
+    timezone: string;
+    embassyUrl?: string;
+  };
+  mandatoryRegistration: {
+    name: string;
+    color: string;
+    link?: string;
+  } | null;
+  visaRules: {
+    primaryRule: {
+      name: string;
+      duration?: string;
+      color: string;
+      link?: string;
+    };
+    secondaryRule: {
+      name: string;
+      duration?: string;
+      color: string;
+      link?: string;
+    } | null;
+    exceptionRule: {
+      name: string;
+      exceptionTypeName?: string;
+      fullText?: string;
+      countryCodes?: string[];
+      link?: string;
+    } | null;
+  };
+}
+
 // Simplified assess function matching Next.js API pattern
 export interface AssessResult {
   entryType: "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN";
@@ -181,6 +236,7 @@ export interface AssessResult {
   letterAvailable: boolean;
   letterTemplate: string | null;
   dataSource: "policy" | "api" | "curated" | "unknown";
+  v2Data?: V2VisaData;
 }
 
 export function assess(input: AssessInput): AssessResult {
@@ -287,48 +343,117 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
     };
   }
   
-  // Fallback to Travel Buddy API for live visa intelligence
+  // Fallback to Travel Buddy v2 API for live visa intelligence
   if (process.env.TRAVEL_BUDDY_API_KEY) {
     try {
-      const apiResult = await checkVisaRequirements({
-        nationality: parsedInput.citizenship,
-        destination: parsedInput.destination,
-        travelDate: parsedInput.travelDate,
-      });
+      const apiResult = await checkVisaRequirementsV2(
+        parsedInput.citizenship,
+        parsedInput.destination
+      );
       
-      const primaryRule = apiResult.primary_rule;
-      const entryType = mapTravelBuddyToEntryType(primaryRule?.category);
-      const entryStatus = mapTravelBuddyToEntryStatus(primaryRule?.category);
-      const isRequired = entryStatus === "visa_required";
-      const legacyEntryType = entryType?.toUpperCase() as "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN" ?? "UNKNOWN";
-      const apiReason = generateApiReason(parsedInput, legacyEntryType);
-      
-      return {
-        entryType: legacyEntryType,
-        required: isRequired,
-        headline: primaryRule?.category ?? "Visa requirements found",
-        details: primaryRule?.notes ?? 
-          (primaryRule?.duration ? `Stay up to ${primaryRule.duration}` : null),
-        reason: apiReason,
-        maxStayDays: parseDuration(primaryRule?.duration),
-        fee: null,
-        isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
-        governance: null,
-        sources: [{
-          sourceId: "travel-buddy-api",
-          title: "Travel Buddy AI",
-          verifiedAt: new Date().toISOString().split("T")[0],
-        }],
-        actions: primaryRule?.link ? [{
-          label: "Official Application",
-          url: primaryRule.link,
-        }] : null,
-        letterAvailable: false,
-        letterTemplate: null,
-        dataSource: "api",
-      };
+      if (apiResult?.data?.visa_rules) {
+        const { visa_rules, mandatory_registration, destination } = apiResult.data;
+        const primaryRule = visa_rules.primary_rule;
+        const secondaryRule = visa_rules.secondary_rule;
+        const exceptionRule = visa_rules.exception_rule;
+        
+        // Map v2 API color to entry type
+        const entryType = mapV2ColorToEntryType(primaryRule.color);
+        const isRequired = primaryRule.color !== "green";
+        
+        // Build headline from rules display format
+        const rulesDisplay = formatVisaRulesDisplay(visa_rules);
+        
+        // Build details including mandatory registration and exception info
+        let detailsParts: string[] = [];
+        if (mandatory_registration) {
+          detailsParts.push(`Mandatory: ${mandatory_registration.name}`);
+        }
+        if (destination.passport_validity) {
+          detailsParts.push(`Passport validity: ${destination.passport_validity}`);
+        }
+        if (exceptionRule?.full_text) {
+          detailsParts.push(`Exception: ${exceptionRule.full_text}`);
+        }
+        
+        const apiReason = generateApiReason(parsedInput, entryType);
+        
+        // Collect action links
+        const actions: { label: string; url: string }[] = [];
+        if (primaryRule.link) {
+          actions.push({ label: primaryRule.name, url: primaryRule.link });
+        }
+        if (secondaryRule?.link) {
+          actions.push({ label: secondaryRule.name, url: secondaryRule.link });
+        }
+        if (mandatory_registration?.link) {
+          actions.push({ label: `Complete ${mandatory_registration.name}`, url: mandatory_registration.link });
+        }
+        if (exceptionRule?.link) {
+          actions.push({ label: "Exception Details", url: exceptionRule.link });
+        }
+        
+        return {
+          entryType,
+          required: isRequired,
+          headline: rulesDisplay,
+          details: detailsParts.length > 0 ? detailsParts.join(". ") : null,
+          reason: apiReason,
+          maxStayDays: parseDuration(primaryRule.duration || secondaryRule?.duration),
+          fee: null,
+          isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
+          governance: null,
+          sources: [{
+            sourceId: "travel-buddy-v2-api",
+            title: "Travel Buddy Visa API v2",
+            verifiedAt: new Date().toISOString().split("T")[0],
+          }],
+          actions: actions.length > 0 ? actions : null,
+          letterAvailable: false,
+          letterTemplate: null,
+          dataSource: "api",
+          // Enhanced v2 data
+          v2Data: {
+            destination: {
+              name: destination.name,
+              continent: destination.continent,
+              capital: destination.capital,
+              currency: destination.currency,
+              passportValidity: destination.passport_validity,
+              timezone: destination.timezone,
+              embassyUrl: destination.embassy_url,
+            },
+            mandatoryRegistration: mandatory_registration ? {
+              name: mandatory_registration.name,
+              color: mandatory_registration.color,
+              link: mandatory_registration.link,
+            } : null,
+            visaRules: {
+              primaryRule: {
+                name: primaryRule.name,
+                duration: primaryRule.duration,
+                color: primaryRule.color,
+                link: primaryRule.link,
+              },
+              secondaryRule: secondaryRule ? {
+                name: secondaryRule.name,
+                duration: secondaryRule.duration,
+                color: secondaryRule.color,
+                link: secondaryRule.link,
+              } : null,
+              exceptionRule: exceptionRule ? {
+                name: exceptionRule.name,
+                exceptionTypeName: exceptionRule.exception_type_name,
+                fullText: exceptionRule.full_text,
+                countryCodes: exceptionRule.country_codes,
+                link: exceptionRule.link,
+              } : null,
+            },
+          },
+        };
+      }
     } catch (error) {
-      console.error("Travel Buddy API error:", error);
+      console.error("Travel Buddy v2 API error:", error);
     }
   }
   
