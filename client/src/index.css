@@ -4,53 +4,61 @@
 
 /* LIGHT MODE */
 :root {
+  /* Carta Brand Tokens */
+  --carta-ink: 180 8% 15%;           /* #232B2B - Primary text/buttons */
+  --carta-slate: 180 2% 49%;         /* #7B8080 - Secondary text */
+  --carta-paper: 0 0% 96%;           /* #F4F4F4 - Page backgrounds */
+  --carta-border: 180 4% 92%;        /* #EBECEC - Table/card borders */
+  --carta-success: 171 56% 44%;      /* #32B0A0 - Approved status/accent */
+  --carta-error: 349 77% 48%;        /* #DA1C3C - Required action */
+  
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
   --background: 0 0% 100%;
-  --foreground: 0 0% 9%;
+  --foreground: var(--carta-ink);
   /* Carta surfaces / text (tokenized) */
   --bg: 0 0% 100%;
-  --surface: 0 0% 98%;
-  --surface-2: 0 0% 96%;
-  --fg: 0 0% 9%;
-  --subtle: 0 0% 45%;
-  /* Carta brand accent (deep teal/navy) */
-  --accent-2: 195 75% 28%;
+  --surface: var(--carta-paper);
+  --surface-2: 0 0% 94%;
+  --fg: var(--carta-ink);
+  --subtle: var(--carta-slate);
+  /* Carta brand accent (deep teal) */
+  --accent-2: var(--carta-success);
   --accent-fg: 0 0% 100%;
-  /* Status colors (restrained) */
-  --success: 145 55% 42%;
+  /* Status colors (Carta palette) */
+  --success: var(--carta-success);
   --warning: 38 85% 52%;
-  --danger: 0 70% 50%;
-  --border: 0 0% 91%;
-  --card: 0 0% 98%;
-  --card-foreground: 0 0% 9%;
-  --card-border: 0 0% 94%;
-  --sidebar: 0 0% 96%;
-  --sidebar-foreground: 0 0% 9%;
-  --sidebar-border: 0 0% 92%;
-  --sidebar-primary: 210 100% 45%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 210 8% 88%;
-  --sidebar-accent-foreground: 0 0% 9%;
-  --sidebar-ring: 210 100% 45%;
-  --popover: 0 0% 94%;
-  --popover-foreground: 0 0% 9%;
-  --popover-border: 0 0% 89%;
-  --primary: 210 100% 45%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 90%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 210 5% 88%;
-  --muted-foreground: 0 0% 40%;
-  --accent: 210 7% 92%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 84% 45%;
-  --destructive-foreground: 0 0% 98%;
-  --input: 0 0% 80%;
-  --ring: 210 100% 45%;
+  --danger: var(--carta-error);
+  --border: var(--carta-border);
+  --card: 0 0% 100%;
+  --card-foreground: var(--carta-ink);
+  --card-border: var(--carta-border);
+  --sidebar: var(--carta-paper);
+  --sidebar-foreground: var(--carta-ink);
+  --sidebar-border: var(--carta-border);
+  --sidebar-primary: var(--carta-success);
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 171 20% 92%;
+  --sidebar-accent-foreground: var(--carta-ink);
+  --sidebar-ring: var(--carta-success);
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--carta-ink);
+  --popover-border: var(--carta-border);
+  --primary: var(--carta-success);
+  --primary-foreground: 0 0% 100%;
+  --secondary: var(--carta-paper);
+  --secondary-foreground: var(--carta-ink);
+  --muted: 180 3% 92%;
+  --muted-foreground: var(--carta-slate);
+  --accent: 171 15% 94%;
+  --accent-foreground: var(--carta-ink);
+  --destructive: var(--carta-error);
+  --destructive-foreground: 0 0% 100%;
+  --input: var(--carta-border);
+  --ring: var(--carta-success);
   --chart-1: 210 100% 35%;
   --chart-2: 180 80% 35%;
   --chart-3: 280 70% 40%;
@@ -101,53 +109,61 @@
 }
 
 .dark {
+  /* Carta Brand Tokens (Dark Mode) */
+  --carta-ink: 0 0% 98%;              /* Light text on dark backgrounds */
+  --carta-slate: 180 2% 60%;          /* Secondary text (lighter for dark) */
+  --carta-paper: 0 0% 9%;             /* Dark page backgrounds */
+  --carta-border: 180 3% 18%;         /* Subtle borders for dark */
+  --carta-success: 171 56% 48%;       /* #32B0A0 slightly brighter */
+  --carta-error: 349 77% 55%;         /* #DA1C3C slightly brighter */
+  
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
   --background: 0 0% 7%;
-  --foreground: 0 0% 98%;
+  --foreground: var(--carta-ink);
   /* Carta surfaces / text (tokenized) */
   --bg: 0 0% 7%;
-  --surface: 0 0% 9%;
+  --surface: var(--carta-paper);
   --surface-2: 0 0% 11%;
-  --fg: 0 0% 98%;
-  --subtle: 0 0% 50%;
-  /* Carta brand accent (deep teal/navy) */
-  --accent-2: 195 70% 38%;
+  --fg: var(--carta-ink);
+  --subtle: var(--carta-slate);
+  /* Carta brand accent (deep teal) */
+  --accent-2: var(--carta-success);
   --accent-fg: 0 0% 100%;
-  /* Status colors (restrained, slightly more saturated for dark) */
-  --success: 145 55% 48%;
+  /* Status colors (Carta palette, adjusted for dark) */
+  --success: var(--carta-success);
   --warning: 38 85% 55%;
-  --danger: 0 70% 55%;
-  --border: 0 0% 15%;
-  --card: 0 0% 9%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 0 0% 12%;
+  --danger: var(--carta-error);
+  --border: var(--carta-border);
+  --card: 0 0% 10%;
+  --card-foreground: var(--carta-ink);
+  --card-border: var(--carta-border);
   --sidebar: 0 0% 11%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 14%;
-  --sidebar-primary: 210 100% 50%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 210 8% 16%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-ring: 210 100% 50%;
-  --popover: 0 0% 13%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 0 0% 16%;
-  --primary: 210 100% 45%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 17%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 210 5% 18%;
-  --muted-foreground: 0 0% 65%;
-  --accent: 210 7% 15%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 84% 45%;
-  --destructive-foreground: 0 0% 98%;
-  --input: 0 0% 25%;
-  --ring: 210 100% 50%;
+  --sidebar-foreground: var(--carta-ink);
+  --sidebar-border: var(--carta-border);
+  --sidebar-primary: var(--carta-success);
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 171 15% 16%;
+  --sidebar-accent-foreground: var(--carta-ink);
+  --sidebar-ring: var(--carta-success);
+  --popover: 0 0% 12%;
+  --popover-foreground: var(--carta-ink);
+  --popover-border: var(--carta-border);
+  --primary: var(--carta-success);
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: var(--carta-ink);
+  --muted: 180 3% 18%;
+  --muted-foreground: var(--carta-slate);
+  --accent: 171 10% 14%;
+  --accent-foreground: var(--carta-ink);
+  --destructive: var(--carta-error);
+  --destructive-foreground: 0 0% 100%;
+  --input: var(--carta-border);
+  --ring: var(--carta-success);
   --chart-1: 210 100% 65%;
   --chart-2: 180 80% 65%;
   --chart-3: 280 70% 70%;
