@@ -55,8 +55,20 @@ export const tripInputSchema = z.object({
   purpose: z.literal("BUSINESS"),
   citizenship: z.string().min(2, "Citizenship is required"),
   needsInvitationLetter: z.boolean().default(false),
+  isUSEmployerSponsored: z.boolean().optional().default(false),
 });
 export type TripInput = z.infer<typeof tripInputSchema>;
+
+// Simplified assess input schema (matches Next.js API pattern)
+export const assessInputSchema = z.object({
+  citizenship: z.string().min(2),
+  destination: z.string().min(2),
+  purpose: z.literal("BUSINESS"),
+  durationDays: z.number().int().positive(),
+  travelDate: DateString,
+  isUSEmployerSponsored: z.boolean().default(false),
+});
+export type AssessInput = z.infer<typeof assessInputSchema>;
 
 // Enhanced Rule Schema matching governance requirements
 export const actionSchema = z.object({

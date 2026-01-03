@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { resolveTrip, getAvailableCountries, getCartaPolicy } from "./rules-engine";
+import { resolveTrip, getAvailableCountries, getCartaPolicy, assess } from "./rules-engine";
 import { generateLetter, generateLetterBuffer } from "./letter-generator";
-import { tripInputSchema, letterRequestSchema } from "@shared/schema";
+import { tripInputSchema, letterRequestSchema, assessInputSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -134,6 +134,26 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Letter download error:", error);
       res.status(500).json({ error: "Failed to download letter" });
+    }
+  });
+
+  // Assess endpoint - simplified API matching Next.js pattern
+  app.post("/api/assess", (req, res) => {
+    try {
+      const parsed = assessInputSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "Invalid assess request",
+          details: parsed.error.flatten()
+        });
+      }
+      
+      const result = assess(parsed.data);
+      res.json(result);
+    } catch (error) {
+      console.error("Assess error:", error);
+      res.status(500).json({ error: "Failed to assess trip requirements" });
     }
   });
 

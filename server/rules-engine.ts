@@ -4,8 +4,10 @@ import {
   type TripResult, 
   type StructuredRequirement,
   type Source,
+  type AssessInput,
   tripInputSchema, 
-  travelRuleSchema 
+  travelRuleSchema,
+  assessInputSchema
 } from "@shared/schema";
 import rulesData from "./rules.json";
 import { z } from "zod";
@@ -160,6 +162,103 @@ export function resolveTrip(input: TripInput): TripResult {
     sources: sources.length > 0 ? sources : undefined,
     governance: matchedRule?.governance,
   };
+}
+
+// Simplified assess function matching Next.js API pattern
+export interface AssessResult {
+  entryType: "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN";
+  required: boolean;
+  headline: string;
+  details: string | null;
+  maxStayDays: number;
+  fee: { amount: number; currency: string; reimbursable: boolean } | null;
+  isUSEmployerSponsored: boolean;
+  governance: { status: string; owner: string } | null;
+}
+
+export function assess(input: AssessInput): AssessResult {
+  const parsedInput = assessInputSchema.parse(input);
+  
+  // Find matching rule using simplified input
+  const matchedRule = findMatchingRuleForAssess(parsedInput);
+  
+  if (!matchedRule) {
+    return {
+      entryType: "UNKNOWN",
+      required: true,
+      headline: "Requirements unknown for this destination",
+      details: "Please contact the travel team for guidance on travel to this destination.",
+      maxStayDays: 0,
+      fee: null,
+      isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
+      governance: null,
+    };
+  }
+  
+  const entry = matchedRule.outputs.entry_authorization;
+  
+  return {
+    entryType: entry.type,
+    required: entry.required,
+    headline: entry.headline,
+    details: entry.details ?? null,
+    maxStayDays: matchedRule.max_duration_days,
+    fee: entry.fee ? {
+      amount: entry.fee.amount,
+      currency: entry.fee.currency,
+      reimbursable: entry.fee.reimbursable,
+    } : null,
+    isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
+    governance: {
+      status: matchedRule.governance.status,
+      owner: matchedRule.governance.owner,
+    },
+  };
+}
+
+function findMatchingRuleForAssess(input: AssessInput): TravelRule | null {
+  const rules = validatedRules.rules;
+  const normalizedCitizenship = input.citizenship.toUpperCase();
+  
+  const matched = rules.find(rule => {
+    // Match destination country
+    if (rule.to_country.toLowerCase() !== input.destination.toLowerCase()) {
+      return false;
+    }
+    
+    // Match purpose
+    if (rule.purpose !== input.purpose) {
+      return false;
+    }
+    
+    // Match citizenship group
+    if (!rule.from_citizenship_group.includes(normalizedCitizenship)) {
+      return false;
+    }
+    
+    // Check duration within max allowed
+    if (input.durationDays > rule.max_duration_days) {
+      return false;
+    }
+    
+    // Check if rule is currently effective
+    const travelDate = new Date(input.travelDate);
+    const effectiveStart = new Date(rule.effective_start);
+    if (travelDate < effectiveStart) {
+      return false;
+    }
+    
+    if (rule.effective_end) {
+      const effectiveEnd = new Date(rule.effective_end);
+      if (travelDate > effectiveEnd) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+  
+  return matched ?? null;
 }
 
 function findMatchingRule(input: TripInput): TravelRule | null {
