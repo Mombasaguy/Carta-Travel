@@ -9,8 +9,45 @@ export default {
         lg: ".5625rem", /* 9px */
         md: ".375rem", /* 6px */
         sm: ".1875rem", /* 3px */
+        xl: "14px",
+        "2xl": "18px",
+        "3xl": "22px",
+      },
+      boxShadow: {
+        soft: "0 1px 1px rgba(0,0,0,0.04), 0 6px 18px rgba(0,0,0,0.06)",
+        raised: "0 2px 2px rgba(0,0,0,0.05), 0 14px 40px rgba(0,0,0,0.10)",
+      },
+      spacing: {
+        18: "4.5rem",
+        22: "5.5rem",
+        26: "6.5rem",
+      },
+      fontSize: {
+        xs: ["0.75rem", { lineHeight: "1.1rem" }],
+        sm: ["0.875rem", { lineHeight: "1.35rem" }],
+        base: ["1rem", { lineHeight: "1.6rem" }],
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],
+        xl: ["1.25rem", { lineHeight: "1.85rem" }],
+        "2xl": ["1.5rem", { lineHeight: "2.1rem" }],
+        "3xl": ["1.875rem", { lineHeight: "2.35rem" }],
+      },
+      letterSpacing: {
+        tightish: "-0.015em",
       },
       colors: {
+        // Carta surfaces / text (tokenized)
+        bg: "hsl(var(--bg))",
+        surface: "hsl(var(--surface))",
+        surface2: "hsl(var(--surface-2))",
+        fg: "hsl(var(--fg))",
+        subtle: "hsl(var(--subtle))",
+        // Carta brand accent (deep teal/ink)
+        "accent-2": "hsl(var(--accent-2))",
+        "accent-fg": "hsl(var(--accent-fg))",
+        // Status (kept restrained)
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        danger: "hsl(var(--danger))",
         // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
