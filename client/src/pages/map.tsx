@@ -6,9 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plane, FileText, Clock, AlertCircle } from "lucide-react";
+import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import "mapbox-gl/dist/mapbox-gl.css";
+
+const topDestinations = [
+  { code: "US", name: "United States", region: "North America" },
+  { code: "GB", name: "United Kingdom", region: "Europe" },
+  { code: "DE", name: "Germany", region: "Europe" },
+  { code: "FR", name: "France", region: "Europe" },
+  { code: "CA", name: "Canada", region: "North America" },
+  { code: "AE", name: "United Arab Emirates", region: "Middle East" },
+  { code: "SG", name: "Singapore", region: "Asia" },
+  { code: "JP", name: "Japan", region: "Asia" },
+  { code: "AU", name: "Australia", region: "Oceania" },
+  { code: "CH", name: "Switzerland", region: "Europe" },
+];
 
 type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
 
@@ -272,17 +285,61 @@ export default function MapPage() {
         </Source>
       </Map>
 
-      <AnimatePresence>
-        {selectedCountry && (
-          <motion.div
-            initial={{ x: "100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute top-0 right-0 h-full w-96 bg-background border-l shadow-xl overflow-y-auto"
-          >
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
+      <div className="absolute top-0 right-0 h-full w-80 bg-background/95 backdrop-blur-sm border-l overflow-y-auto">
+        <AnimatePresence mode="wait">
+          {!selectedCountry ? (
+            <motion.div
+              key="destinations"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="p-4"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <MapPin className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold">Top Destinations</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Popular business travel destinations. Click to see requirements for your passport.
+              </p>
+              <div className="space-y-1">
+                {topDestinations.map((dest) => {
+                  const color = mapData?.colorsByCountry?.[dest.code];
+                  return (
+                    <button
+                      key={dest.code}
+                      onClick={() => {
+                        setSelectedCountry(dest.code);
+                        setAssessResult(null);
+                        assessMutation.mutate(dest.code);
+                      }}
+                      className="w-full flex items-center gap-3 p-3 rounded-md hover-elevate text-left group"
+                      data-testid={`button-destination-${dest.code}`}
+                    >
+                      <div 
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color ? colorMap[color] : "#d1d5db" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{dest.name}</div>
+                        <div className="text-xs text-muted-foreground">{dest.region}</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="assessment"
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="p-4"
+            >
+              <div className="flex items-center justify-between gap-2 mb-4">
                 <h2 className="text-lg font-semibold">
                   {countryNameMap[selectedCountry] || selectedCountry}
                 </h2>
@@ -405,10 +462,10 @@ export default function MapPage() {
                   <p>Could not load requirements for this destination.</p>
                 </div>
               )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
