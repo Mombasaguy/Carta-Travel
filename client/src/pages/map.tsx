@@ -192,8 +192,9 @@ export default function MapPage() {
 
   const handleCountryClick = useCallback((e: MapMouseEvent) => {
     const feature = e.features?.[0];
-    if (feature?.properties?.iso_3166_1_alpha_2) {
-      const countryCode = feature.properties.iso_3166_1_alpha_2;
+    // GeoJSON uses "ISO_A2" for 2-letter country codes
+    if (feature?.properties?.ISO_A2) {
+      const countryCode = feature.properties.ISO_A2;
       setSelectedCountry(countryCode);
       setAssessResult(null);
       assessMutation.mutate(countryCode);
@@ -208,9 +209,10 @@ export default function MapPage() {
   // Use ISO2 colors directly from API (Mapbox uses iso_3166_1_alpha_2)
   const colorsByIso2 = mapData?.colorsByIso2 ?? {};
 
+  // GeoJSON uses "ISO_A2" for 2-letter country codes
   const fillColorExpression = [
     "match",
-    ["get", "iso_3166_1_alpha_2"],
+    ["get", "ISO_A2"],
     ...Object.entries(colorsByIso2).flatMap(([code, color]) => [
       code,
       colorMap[color],
@@ -287,13 +289,12 @@ export default function MapPage() {
       >
         <Source
           id="countries"
-          type="vector"
-          url="mapbox://mapbox.country-boundaries-v1"
+          type="geojson"
+          data="https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
         >
           <Layer
             id="country-fills"
             type="fill"
-            source-layer="country_boundaries"
             paint={{
               "fill-color": mapLoading ? "#d1d5db" : fillColorExpression,
               "fill-opacity": 0.7,
@@ -302,7 +303,6 @@ export default function MapPage() {
           <Layer
             id="country-borders"
             type="line"
-            source-layer="country_boundaries"
             paint={{
               "line-color": "#374151",
               "line-width": 0.8,
