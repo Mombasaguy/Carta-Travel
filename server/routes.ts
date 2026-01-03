@@ -20,12 +20,8 @@ export async function registerRoutes(
     const destinations = getAvailableCountries();
     const today = new Date().toISOString().split("T")[0];
     
-    const results: Record<string, {
-      status: "visa_required" | "visa_not_required" | "unknown";
-      type?: string;
-      headline?: string;
-      maxStayDays?: number;
-    }> = {};
+    type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
+    const colorsByCountry: Record<string, MapColor> = {};
 
     for (const dest of destinations) {
       try {
@@ -39,31 +35,35 @@ export async function registerRoutes(
         });
 
         const entryType = assessment.entryType;
-        let status: "visa_required" | "visa_not_required" | "unknown" = "unknown";
+        let color: MapColor = "gray";
         
         if (entryType === "NONE") {
-          status = "visa_not_required";
+          color = "green";
+        } else if (entryType === "ETA" || entryType === "EVISA") {
+          color = "yellow";
+        } else if (entryType === "VISA") {
+          color = "orange";
         } else if (entryType === "UNKNOWN") {
-          status = "unknown";
-        } else {
-          status = "visa_required";
+          color = "gray";
         }
 
-        results[dest.code] = {
-          status,
-          type: entryType.toLowerCase(),
-          headline: assessment.headline,
-          maxStayDays: assessment.maxStayDays,
-        };
+        colorsByCountry[dest.code] = color;
       } catch (e) {
-        results[dest.code] = { status: "unknown" };
+        colorsByCountry[dest.code] = "gray";
       }
     }
 
     res.json({
       passport,
       generatedAt: new Date().toISOString(),
-      destinations: results,
+      colorsByCountry,
+      legend: {
+        green: "No visa required",
+        yellow: "ETA or e-Visa available online",
+        orange: "Visa required (embassy/consulate)",
+        red: "Entry restricted or banned",
+        gray: "Unknown or no data",
+      },
     });
   });
 
