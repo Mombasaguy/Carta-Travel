@@ -11,7 +11,7 @@ import {
 } from "@shared/schema";
 import rulesData from "./rules.json";
 import { z } from "zod";
-import { checkVisaRequirements, mapTravelBuddyToEntryType } from "./lib/travelBuddyClient";
+import { checkVisaRequirements, mapTravelBuddyToEntryType, mapTravelBuddyToEntryStatus } from "./lib/travelBuddyClient";
 
 // Schema for the full rules collection
 const rulesCollectionSchema = z.object({
@@ -298,11 +298,13 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
       
       const primaryRule = apiResult.primary_rule;
       const entryType = mapTravelBuddyToEntryType(primaryRule?.category);
-      const isRequired = entryType !== "NONE";
-      const apiReason = generateApiReason(parsedInput, entryType);
+      const entryStatus = mapTravelBuddyToEntryStatus(primaryRule?.category);
+      const isRequired = entryStatus === "visa_required";
+      const legacyEntryType = entryType?.toUpperCase() as "VISA" | "ETA" | "EVISA" | "NONE" | "UNKNOWN" ?? "UNKNOWN";
+      const apiReason = generateApiReason(parsedInput, legacyEntryType);
       
       return {
-        entryType,
+        entryType: legacyEntryType,
         required: isRequired,
         headline: primaryRule?.category ?? "Visa requirements found",
         details: primaryRule?.notes ?? 
