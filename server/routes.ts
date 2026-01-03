@@ -9,6 +9,64 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Map of visa requirements for all destinations for a given passport
+  app.get("/api/map", async (req, res) => {
+    const passport = (req.query.passport as string)?.toUpperCase();
+    
+    if (!passport || passport.length < 2) {
+      return res.status(400).json({ error: "Missing or invalid passport query parameter" });
+    }
+
+    const destinations = getAvailableCountries();
+    const today = new Date().toISOString().split("T")[0];
+    
+    const results: Record<string, {
+      status: "visa_required" | "visa_not_required" | "unknown";
+      type?: string;
+      headline?: string;
+      maxStayDays?: number;
+    }> = {};
+
+    for (const dest of destinations) {
+      try {
+        const assessment = assess({
+          citizenship: passport,
+          destination: dest.code,
+          purpose: "BUSINESS",
+          durationDays: 14,
+          travelDate: today,
+          isUSEmployerSponsored: false,
+        });
+
+        const entryType = assessment.entryType;
+        let status: "visa_required" | "visa_not_required" | "unknown" = "unknown";
+        
+        if (entryType === "NONE") {
+          status = "visa_not_required";
+        } else if (entryType === "UNKNOWN") {
+          status = "unknown";
+        } else {
+          status = "visa_required";
+        }
+
+        results[dest.code] = {
+          status,
+          type: entryType.toLowerCase(),
+          headline: assessment.headline,
+          maxStayDays: assessment.maxStayDays,
+        };
+      } catch (e) {
+        results[dest.code] = { status: "unknown" };
+      }
+    }
+
+    res.json({
+      passport,
+      generatedAt: new Date().toISOString(),
+      destinations: results,
+    });
+  });
+
   // Health check for visa/travel requirements system
   app.get("/api/visa-health", async (req, res) => {
     const health: {
