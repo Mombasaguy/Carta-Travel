@@ -123,14 +123,14 @@ export default function HomePage() {
                 and travel tips. Plan your next adventure with confidence.
               </p>
               <div className="flex gap-4 flex-wrap">
-                <Link href="/destinations">
-                  <Button size="lg" data-testid="button-explore-destinations">
-                    Explore Destinations
+                <Link href="/trip">
+                  <Button size="lg" data-testid="button-check-requirements">
+                    Check Requirements
                   </Button>
                 </Link>
-                <Link href="/search">
-                  <Button size="lg" variant="outline" data-testid="button-search-countries">
-                    Search Countries
+                <Link href="/destinations">
+                  <Button size="lg" variant="outline" data-testid="button-explore-destinations">
+                    Explore Destinations
                   </Button>
                 </Link>
               </div>

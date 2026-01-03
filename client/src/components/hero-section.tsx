@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
-import { Search, MapPin, Plane, Shield } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Search, MapPin, Plane, Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -71,6 +71,15 @@ export function HeroSection() {
             </Button>
           </div>
         </form>
+
+        <div className="flex flex-wrap justify-center gap-4 mb-10">
+          <Link href="/trip">
+            <Button size="lg" className="bg-white text-primary" data-testid="button-hero-check">
+              Check Requirements
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </div>
 
         <div className="flex flex-wrap justify-center gap-8">
           {stats.map((stat, index) => (
