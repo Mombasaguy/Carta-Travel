@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSearch } from "wouter";
 import { EntryForm, type EntryFormData } from "../components/trip/entry-form";
 import { ResultCards } from "../components/trip/result-cards";
+import { AdvisoryAlert } from "../components/trip/advisory-alert";
 import { ArrowLeft, Globe, Briefcase, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -228,6 +229,13 @@ export default function AssessPage() {
                   </Button>
                 </div>
               </motion.div>
+
+              {trip && (
+                <AdvisoryAlert 
+                  destinationCode={trip.destination} 
+                  destinationName={getCountryName(trip.destination)}
+                />
+              )}
 
               <ResultCards result={result} trip={trip || undefined} />
             </motion.div>

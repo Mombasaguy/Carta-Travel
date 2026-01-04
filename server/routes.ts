@@ -158,7 +158,8 @@ export async function registerRoutes(
       const level = req.query.level as string | undefined;
       const source = req.query.source as string | undefined;
       
-      let advisories = getAllAdvisoriesSorted();
+      const allAdvisories = getAllAdvisoriesSorted();
+      let advisories = allAdvisories;
       
       // Filter by level if provided
       if (level && ["LEVEL_1", "LEVEL_2", "LEVEL_3", "LEVEL_4"].includes(level)) {
@@ -170,14 +171,16 @@ export async function registerRoutes(
         advisories = advisories.filter(a => a.source === source);
       }
       
+      // Level counts should always show total counts (not filtered counts)
+      // so filter buttons reflect the full dataset
       res.json({
         advisories,
         count: advisories.length,
         levels: {
-          LEVEL_4: advisories.filter(a => a.level === "LEVEL_4").length,
-          LEVEL_3: advisories.filter(a => a.level === "LEVEL_3").length,
-          LEVEL_2: advisories.filter(a => a.level === "LEVEL_2").length,
-          LEVEL_1: advisories.filter(a => a.level === "LEVEL_1").length,
+          LEVEL_4: allAdvisories.filter(a => a.level === "LEVEL_4").length,
+          LEVEL_3: allAdvisories.filter(a => a.level === "LEVEL_3").length,
+          LEVEL_2: allAdvisories.filter(a => a.level === "LEVEL_2").length,
+          LEVEL_1: allAdvisories.filter(a => a.level === "LEVEL_1").length,
         },
       });
     } catch (error) {

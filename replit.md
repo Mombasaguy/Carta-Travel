@@ -20,7 +20,7 @@ Preferred communication style: Simple, everyday language.
 - **Build Tool**: Vite with React plugin
 
 The frontend follows a page-based structure with reusable components:
-- Pages: Home, Country Detail, Search, Destinations, Trip Flow, Assess, Map, Not Found
+- Pages: Home, Country Detail, Search, Destinations, Trip Flow, Assess, Map, Advisories, Not Found
 - Core components: CountryCard, RequirementCard, HeroSection, SearchInput, NotificationBell
 - Trip components: TripInputForm, ResultsStack (with governance display)
 - UI components from shadcn/ui for consistent design patterns
@@ -52,6 +52,15 @@ API endpoints:
 - `POST /api/notifications/:id/read` - Mark notification as read
 - `POST /api/notifications/read-all` - Mark all notifications as read
 - `GET /api/config/mapbox` - Get Mapbox token for map visualization
+- `GET /api/advisories` - Get all travel advisories (filterable by level/source)
+- `GET /api/advisories/:countryCode` - Get advisories for specific country
+
+### Travel Advisories System
+- **Location**: `server/data/advisories.ts` with curated advisory data
+- **Sources**: US State Department, CDC, Carta internal policies
+- **Levels**: Level 1-4 matching State Dept advisory system
+- **Features**: Dedicated /advisories page, inline alerts on /assess, push notifications
+- **Integration**: Advisories display in assessment results with severity-based styling
 
 ### Rules Engine
 - **Location**: `server/rules-engine.ts` with rules in `server/rules.json`
@@ -125,6 +134,10 @@ The application uses a hybrid design approach combining government portal clarit
 
 ## Recent Changes
 
+- 2026-01-04: Added Live Travel Advisories feature with dedicated /advisories page and inline alerts
+- 2026-01-04: Integrated advisory display into /assess page showing warnings for risky destinations
+- 2026-01-04: Added curated advisory data from US State Dept, CDC, and Carta internal policies
+- 2026-01-04: Enhanced notifications with critical travel advisory alerts and actionable links
 - 2026-01-03: Implemented hybrid visa data architecture: curated static data for map colors (fast, reliable), Travel Buddy API for individual assessments with curated fallback
 - 2026-01-03: Added real-time notifications with WebSocket support for policy changes and travel advisories
 - 2026-01-03: Added interactive world map (/map) with Mapbox showing visa requirements by passport
