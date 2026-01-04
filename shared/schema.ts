@@ -261,3 +261,41 @@ export type Notification = z.infer<typeof notificationSchema>;
 
 export const insertNotificationSchema = notificationSchema.omit({ id: true, createdAt: true, read: true });
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+// ============= TRAVEL ADVISORY SCHEMAS =============
+
+export const advisoryLevelEnum = z.enum([
+  "LEVEL_1", // Exercise Normal Precautions
+  "LEVEL_2", // Exercise Increased Caution
+  "LEVEL_3", // Reconsider Travel
+  "LEVEL_4", // Do Not Travel
+]);
+export type AdvisoryLevel = z.infer<typeof advisoryLevelEnum>;
+
+export const advisorySourceEnum = z.enum([
+  "STATE_DEPT",  // US Department of State
+  "CDC",         // Centers for Disease Control
+  "CARTA",       // Internal Carta policy
+]);
+export type AdvisorySource = z.infer<typeof advisorySourceEnum>;
+
+export const travelAdvisorySchema = z.object({
+  id: z.string(),
+  countryCode: z.string().length(2),
+  countryName: z.string(),
+  level: advisoryLevelEnum,
+  source: advisorySourceEnum,
+  title: z.string(),
+  summary: z.string(),
+  details: z.string().nullable().optional(),
+  regions: z.array(z.string()).optional(), // Specific regions affected
+  issuedAt: z.string(),
+  updatedAt: z.string(),
+  expiresAt: z.string().nullable().optional(),
+  url: z.string().url().optional(), // Link to official source
+  tags: z.array(z.string()).optional(), // e.g., "terrorism", "health", "civil unrest"
+});
+export type TravelAdvisory = z.infer<typeof travelAdvisorySchema>;
+
+export const insertTravelAdvisorySchema = travelAdvisorySchema.omit({ id: true });
+export type InsertTravelAdvisory = z.infer<typeof insertTravelAdvisorySchema>;
