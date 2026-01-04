@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { Globe, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { NotificationBell } from "./notification-bell";
 import { useState } from "react";
+import cartaLogo from "@assets/stock_images/carta_company_logo_cc5ef282.jpg";
 
 export function Header() {
   const [location] = useLocation();
@@ -20,11 +21,14 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center justify-center w-9 h-9 rounded-md bg-primary text-primary-foreground">
-              <Globe className="h-5 w-5" />
-            </div>
+            <img 
+              src={cartaLogo} 
+              alt="Carta" 
+              className="h-8 w-auto object-contain"
+              data-testid="img-carta-logo"
+            />
             <span className="font-semibold text-lg hidden sm:inline-block" data-testid="text-logo">
-              Carta Travel
+              Travel
             </span>
           </Link>
 
