@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { NotificationBell } from "./notification-bell";
 import { useState } from "react";
-import cartaLogo from "@assets/stock_images/carta_company_logo_cc5ef282.jpg";
+import cartaLogo from "@assets/image_1767488150902.png";
 
 export function Header() {
   const [location] = useLocation();
