@@ -138,6 +138,7 @@ export const entryAuthorizationSchema = z.object({
   validity: z.string().nullable().optional(),
   fee: feeSchema.optional(),
   actions: z.array(actionSchema).optional(),
+  application_url: z.string().optional(),
 });
 
 export const passportValiditySchema = z.object({

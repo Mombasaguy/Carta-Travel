@@ -294,7 +294,7 @@ export function assess(input: AssessInput): AssessResult {
     actions: entry.actions?.map(a => ({
       label: a.label,
       url: a.url,
-    })) ?? null,
+    })) ?? (entry.application_url ? [{ label: "Apply for e-Visa", url: entry.application_url }] : null),
     letterAvailable: matchedRule.outputs.invitation_letter?.available ?? false,
     letterTemplate: matchedRule.outputs.invitation_letter?.template_id ?? null,
     dataSource: "policy",
@@ -337,7 +337,7 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
       actions: entry.actions?.map(a => ({
         label: a.label,
         url: a.url,
-      })) ?? null,
+      })) ?? (entry.application_url ? [{ label: "Apply for e-Visa", url: entry.application_url }] : null),
       letterAvailable: matchedRule.outputs.invitation_letter?.available ?? false,
       letterTemplate: matchedRule.outputs.invitation_letter?.template_id ?? null,
       dataSource: "policy",

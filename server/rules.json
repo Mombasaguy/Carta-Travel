@@ -287,8 +287,38 @@
       "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
     },
     {
-      "rule_id": "BR_NONE_VWP_BUSINESS",
-      "from_citizenship_group": ["US", "CA", "AU", "JP"],
+      "rule_id": "BR_EVISA_VWP_BUSINESS",
+      "from_citizenship_group": ["US", "CA", "AU"],
+      "to_country": "BR",
+      "purpose": "BUSINESS",
+      "max_duration_days": 90,
+      "effective_start": "2025-04-10",
+      "effective_end": null,
+      "outputs": {
+        "entry_authorization": {
+          "type": "EVISA",
+          "required": true,
+          "headline": "e-Visa required for US, Canadian, and Australian citizens.",
+          "details": "As of April 10, 2025, US, Canadian, and Australian citizens must obtain an e-Visa before traveling to Brazil. Apply online at brazil.vfsevisa.com. Processing time is approximately 5 business days. Fee is $80.90 USD.",
+          "validity": "Up to 10 years, 90 days per entry.",
+          "application_url": "https://brazil.vfsevisa.com/",
+          "fee": { "amount": 81, "currency": "USD", "reimbursable": true }
+        },
+        "passport_validity": { "rule": "Passport must be valid for at least 6 months." },
+        "required_documents": ["Valid passport (6+ months validity)", "Approved e-Visa", "Return ticket"],
+        "recommended_documents": ["Carta business invitation letter (signed by Brazil-based manager)", "Yellow fever vaccination certificate (if from affected areas)", "Hotel confirmation", "Business meeting details", "Two printed copies of e-Visa"],
+        "invitation_letter": { "available": true, "template_id": "BR" },
+        "notes": ["Apply at least 15 days before travel.", "e-Visa valid for multiple entries up to 10 years.", "Yellow fever vaccination may be required depending on origin country.", "Daily meal allowance in Rio: $40 (when lunch provided), $50 (when not provided)."]
+      },
+      "sources": [
+        { "source_id": "BR_EVISA_2025", "title": "Brazil e-Visa Requirements (April 2025)", "verified_at": "2025-04-10" },
+        { "source_id": "CARTA_BR_LETTER", "title": "Carta Brazil Invitation Letter Template", "verified_at": "2025-07-28" }
+      ],
+      "governance": { "owner": "Immigration & Mobility", "review_due_at": "2026-01-31", "status": "VERIFIED" }
+    },
+    {
+      "rule_id": "BR_NONE_JP_BUSINESS",
+      "from_citizenship_group": ["JP"],
       "to_country": "BR",
       "purpose": "BUSINESS",
       "max_duration_days": 90,
@@ -298,7 +328,7 @@
         "entry_authorization": {
           "type": "NONE",
           "required": false,
-          "headline": "No visa required for US, Canadian, Australian, and Japanese citizens.",
+          "headline": "No visa required for Japanese citizens.",
           "details": "Visa exemption for tourism and business visits up to 90 days. Can be extended to 180 days per year.",
           "validity": "90 days, extendable to 180 days per year."
         },
@@ -306,7 +336,7 @@
         "required_documents": ["Valid passport (6+ months validity)", "Return ticket"],
         "recommended_documents": ["Carta business invitation letter (signed by Brazil-based manager)", "Yellow fever vaccination certificate (if from affected areas)", "Hotel confirmation", "Business meeting details"],
         "invitation_letter": { "available": true, "template_id": "BR" },
-        "notes": ["Yellow fever vaccination may be required depending on origin country.", "Register with Federal Police if staying over 90 days.", "Daily meal allowance in Rio: $40 (when lunch provided), $50 (when not provided)."]
+        "notes": ["Yellow fever vaccination may be required depending on origin country.", "Register with Federal Police if staying over 90 days."]
       },
       "sources": [
         { "source_id": "BR_CONSULATE", "title": "Brazil Visa Requirements", "verified_at": "2025-07-28" },
