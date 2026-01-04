@@ -1,7 +1,8 @@
 import { Link } from "wouter";
-import { Globe, Mail, Twitter, Github } from "lucide-react";
+import { Mail, Twitter, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import cartaLogo from "@assets/image_1767488150902.png";
 
 export function Footer() {
   return (
@@ -10,10 +11,12 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground">
-                <Globe className="h-4 w-4" />
-              </div>
-              <span className="font-semibold">Carta Travel</span>
+              <img 
+                src={cartaLogo} 
+                alt="Carta" 
+                className="h-6 w-auto object-contain"
+              />
+              <span className="font-semibold">Travel</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Your trusted source for visa requirements and travel regulations worldwide.
