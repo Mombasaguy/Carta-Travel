@@ -505,9 +505,9 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
   
   if (citizenship === "US") {
     // US passport holder visa requirements
-    const usVisaFreeCountries = ["CA", "MX", "FR", "DE", "IT", "ES", "NL", "BE", "AT", "CH", "PT", "GR", "PL", "CZ", "HU", "SE", "NO", "DK", "FI", "IE", "JP", "KR", "SG", "HK", "TW", "BR", "AR", "CL", "PE", "CO", "IL", "QA", "ZA", "MA", "TH", "MY", "PH"];
+    const usVisaFreeCountries = ["CA", "MX", "FR", "DE", "IT", "ES", "NL", "BE", "AT", "CH", "PT", "GR", "PL", "CZ", "HU", "SE", "NO", "DK", "FI", "IE", "JP", "KR", "SG", "HK", "TW", "AR", "CL", "PE", "CO", "IL", "QA", "ZA", "MA", "TH", "MY", "PH"];
     const usEtaCountries = ["GB", "AU", "NZ", "TR"];
-    const usEvisaCountries = ["IN", "VN", "KE", "EG"];
+    const usEvisaCountries = ["IN", "VN", "KE", "EG", "BR"];
     const usVisaRequiredCountries = ["CN", "RU", "SA", "NG"];
     
     if (usVisaFreeCountries.includes(destination)) {
