@@ -14,6 +14,7 @@ import DestinationsPage from "@/pages/destinations";
 import TripFlowPage from "@/pages/trip-flow";
 import AssessPage from "@/pages/assess";
 import MapPage from "@/pages/map";
+import AdvisoriesPage from "@/pages/advisories";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/trip" component={TripFlowPage} />
       <Route path="/assess" component={AssessPage} />
       <Route path="/map" component={MapPage} />
+      <Route path="/advisories" component={AdvisoriesPage} />
       <Route path="/country/:id" component={CountryDetailPage} />
       <Route path="/search" component={SearchPage} />
       <Route path="/destinations" component={DestinationsPage} />

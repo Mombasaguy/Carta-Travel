@@ -141,6 +141,70 @@ export async function registerRoutes(
     }
   });
 
+  // Travel Advisory endpoints
+  const { 
+    travelAdvisories, 
+    getAdvisoriesByCountry, 
+    getHighestAdvisory, 
+    getAllAdvisoriesSorted,
+    getAdvisoriesByLevel,
+    getAdvisoryLevelLabel,
+    getSourceLabel 
+  } = await import("./data/advisories");
+
+  // Get all travel advisories (sorted by severity)
+  app.get("/api/advisories", async (req, res) => {
+    try {
+      const level = req.query.level as string | undefined;
+      const source = req.query.source as string | undefined;
+      
+      let advisories = getAllAdvisoriesSorted();
+      
+      // Filter by level if provided
+      if (level && ["LEVEL_1", "LEVEL_2", "LEVEL_3", "LEVEL_4"].includes(level)) {
+        advisories = advisories.filter(a => a.level === level);
+      }
+      
+      // Filter by source if provided
+      if (source && ["STATE_DEPT", "CDC", "CARTA"].includes(source)) {
+        advisories = advisories.filter(a => a.source === source);
+      }
+      
+      res.json({
+        advisories,
+        count: advisories.length,
+        levels: {
+          LEVEL_4: advisories.filter(a => a.level === "LEVEL_4").length,
+          LEVEL_3: advisories.filter(a => a.level === "LEVEL_3").length,
+          LEVEL_2: advisories.filter(a => a.level === "LEVEL_2").length,
+          LEVEL_1: advisories.filter(a => a.level === "LEVEL_1").length,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching advisories:", error);
+      res.status(500).json({ error: "Failed to fetch advisories" });
+    }
+  });
+
+  // Get advisories for a specific country
+  app.get("/api/advisories/:countryCode", async (req, res) => {
+    try {
+      const countryCode = req.params.countryCode.toUpperCase();
+      const advisories = getAdvisoriesByCountry(countryCode);
+      const highest = getHighestAdvisory(countryCode);
+      
+      res.json({
+        countryCode,
+        advisories,
+        highestLevel: highest?.level || null,
+        highestLevelLabel: highest ? getAdvisoryLevelLabel(highest.level) : null,
+      });
+    } catch (error) {
+      console.error("Error fetching country advisories:", error);
+      res.status(500).json({ error: "Failed to fetch country advisories" });
+    }
+  });
+
   // Mapbox token endpoint for frontend
   app.get("/api/config/mapbox", (req, res) => {
     const token = process.env.MAPBOX_PUBLIC_KEY;
