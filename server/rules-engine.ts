@@ -548,19 +548,32 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
     }
     
     if (usEvisaCountries.includes(destination)) {
+      const evisaFees: Record<string, number> = { IN: 25, VN: 50, KE: 51, EG: 25, BR: 81 };
+      const evisaStays: Record<string, number> = { IN: 30, VN: 30, KE: 90, EG: 30, BR: 90 };
+      const evisaDetails: Record<string, string> = {
+        BR: `US passport holders must obtain an e-Visa before traveling to Brazil. Apply online at brazil.vfsevisa.com. Processing time is approximately 5 business days. Fee is approximately $81 USD.`,
+        IN: `US passport holders can apply for an e-Visa online before traveling to India. Processing time is typically 2-5 business days.`,
+        VN: `US passport holders can apply for an e-Visa online before traveling to Vietnam. Processing time is typically 3-5 business days.`,
+        KE: `US passport holders must obtain an e-Visa before traveling to Kenya. Apply online through the eCitizen portal.`,
+        EG: `US passport holders can apply for an e-Visa online before traveling to Egypt. Processing time is typically 5-7 business days.`,
+      };
       return {
         entryType: "EVISA",
         required: true,
-        headline: `e-Visa available for ${destName}`,
-        details: `US passport holders can apply for an e-Visa online before traveling to ${destName}. Processing time is typically 2-5 business days.`,
-        reason: `As a ${citizenName} citizen, you can apply for an e-Visa to ${destName} online.`,
-        maxStayDays: 30,
-        fee: { amount: destination === "IN" ? 25 : 50, currency: "USD", reimbursable: true },
+        headline: `e-Visa required for ${destName}`,
+        details: evisaDetails[destination] || `US passport holders can apply for an e-Visa online before traveling to ${destName}. Processing time is typically 2-5 business days.`,
+        reason: `As a ${citizenName} citizen, you must apply for an e-Visa to ${destName} before travel.`,
+        maxStayDays: evisaStays[destination] || 30,
+        fee: { amount: evisaFees[destination] || 50, currency: "USD", reimbursable: true },
         governance: null,
-        sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
-        actions: getFallbackActions(destination, "EVISA"),
+        sources: destination === "BR" 
+          ? [{ sourceId: "brazil-evisa-2025", title: "Brazil e-Visa Requirements (April 2025)", verifiedAt: "2025-04-10" }]
+          : [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
+        actions: destination === "BR" 
+          ? [{ label: "Apply for e-Visa", url: "https://brazil.vfsevisa.com/" }]
+          : getFallbackActions(destination, "EVISA"),
         letterAvailable: true,
-        letterTemplate: null,
+        letterTemplate: destination === "BR" ? "BR" : null,
         dataSource: "curated",
       };
     }
@@ -598,6 +611,50 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         actions: getFallbackActions(destination, "NONE"),
         letterAvailable: true,
         letterTemplate: null,
+        dataSource: "curated",
+      };
+    }
+  }
+  
+  // Canadian citizens
+  if (citizenship === "CA") {
+    // Brazil requires eVisa for Canadians as of April 2025
+    if (destination === "BR") {
+      return {
+        entryType: "EVISA",
+        required: true,
+        headline: `e-Visa required for ${destName}`,
+        details: `Canadian passport holders must obtain an e-Visa before traveling to Brazil. Apply online at brazil.vfsevisa.com. Processing time is approximately 5 business days. Fee is approximately $80 USD.`,
+        reason: `As a ${citizenName} citizen, you must apply for an e-Visa to ${destName} before travel.`,
+        maxStayDays: 90,
+        fee: { amount: 81, currency: "USD", reimbursable: true },
+        governance: null,
+        sources: [{ sourceId: "brazil-evisa-2025", title: "Brazil e-Visa Requirements (April 2025)", verifiedAt: "2025-04-10" }],
+        actions: [{ label: "Apply for e-Visa", url: "https://brazil.vfsevisa.com/" }],
+        letterAvailable: true,
+        letterTemplate: "BR",
+        dataSource: "curated",
+      };
+    }
+  }
+  
+  // Australian citizens
+  if (citizenship === "AU") {
+    // Brazil requires eVisa for Australians as of April 2025
+    if (destination === "BR") {
+      return {
+        entryType: "EVISA",
+        required: true,
+        headline: `e-Visa required for ${destName}`,
+        details: `Australian passport holders must obtain an e-Visa before traveling to Brazil. Apply online at brazil.vfsevisa.com. Processing time is approximately 5 business days. Fee is approximately $80 USD.`,
+        reason: `As an ${citizenName} citizen, you must apply for an e-Visa to ${destName} before travel.`,
+        maxStayDays: 90,
+        fee: { amount: 81, currency: "USD", reimbursable: true },
+        governance: null,
+        sources: [{ sourceId: "brazil-evisa-2025", title: "Brazil e-Visa Requirements (April 2025)", verifiedAt: "2025-04-10" }],
+        actions: [{ label: "Apply for e-Visa", url: "https://brazil.vfsevisa.com/" }],
+        letterAvailable: true,
+        letterTemplate: "BR",
         dataSource: "curated",
       };
     }

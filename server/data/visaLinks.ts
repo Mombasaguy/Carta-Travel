@@ -195,8 +195,8 @@ export const curatedVisaLinks: Record<string, VisaLinkEntry> = {
     country: "Brazil",
     iso2: "BR",
     officialVisaUrl: "https://www.gov.br/mre/pt-br/assuntos/portal-consular/vistos",
-    eVisaUrl: "https://www.vfrb.com.br/",
-    notes: "e-Visa available for US, Canada, Australia, Japan"
+    eVisaUrl: "https://brazil.vfsevisa.com/",
+    notes: "e-Visa required for US, Canada, Australia citizens as of April 2025"
   },
   MX: {
     country: "Mexico",
