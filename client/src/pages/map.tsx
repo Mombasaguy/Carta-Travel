@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import Map, { Source, Layer, type MapMouseEvent } from "react-map-gl/mapbox";
+import Map, { Source, Layer, type MapMouseEvent, type MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -454,11 +454,34 @@ export default function MapPage() {
   const [showPanel, setShowPanel] = useState(false);
   const [letterOpen, setLetterOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const mapRef = useRef<MapRef>(null);
   const [mergeData, setMergeData] = useState({
     FULL_NAME: "",
     EMPLOYEE_EMAIL: "",
     EMPLOYEE_TITLE: "",
   });
+
+  // Auto-rotation effect for the globe
+  useEffect(() => {
+    if (!mapRef.current || isHovering) return;
+    
+    const map = mapRef.current.getMap();
+    let animationFrame: number;
+    
+    const rotate = () => {
+      if (isHovering) return;
+      const center = map.getCenter();
+      map.setCenter({ lng: center.lng + 0.03, lat: center.lat });
+      animationFrame = requestAnimationFrame(rotate);
+    };
+    
+    animationFrame = requestAnimationFrame(rotate);
+    
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [isHovering]);
 
   const handleDownloadLetter = async () => {
     if (!selectedCountry) return;
@@ -653,10 +676,10 @@ export default function MapPage() {
   return (
     <div className="relative h-[calc(100vh-8rem)]">
       <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-md p-2">
-          <label className="text-sm text-muted-foreground whitespace-nowrap">Passport:</label>
+        <div className="flex items-center gap-2 glass rounded-xl p-3 shadow-premium">
+          <label className="text-sm text-muted-foreground whitespace-nowrap font-medium">Passport:</label>
           <Select value={passport} onValueChange={setPassport}>
-            <SelectTrigger className="w-40 bg-background/80 border-0 shadow-sm" data-testid="select-passport">
+            <SelectTrigger className="w-40 bg-white/50 dark:bg-black/30 border-white/30 dark:border-white/10 shadow-sm" data-testid="select-passport">
               <SelectValue placeholder="Select passport" />
             </SelectTrigger>
             <SelectContent>
@@ -669,19 +692,19 @@ export default function MapPage() {
           </Select>
         </div>
         {!selectedCountry && (
-          <p className="text-sm text-muted-foreground hidden md:block">
+          <p className="text-sm text-muted-foreground hidden md:block glass-subtle rounded-lg px-3 py-2">
             Click any country to see entry requirements
           </p>
         )}
       </div>
 
-      <div className="absolute bottom-4 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-md p-3 border">
-        <div className="text-xs font-medium mb-2">Visa Requirements</div>
-        <div className="flex flex-col gap-1">
+      <div className="absolute bottom-4 left-4 z-10 glass rounded-xl p-4 shadow-premium">
+        <div className="text-xs font-semibold mb-3 text-foreground">Visa Requirements</div>
+        <div className="flex flex-col gap-2">
           {mapData?.legend && Object.entries(mapData.legend).map(([color, label]) => (
-            <div key={color} className="flex items-center gap-2 text-xs">
+            <div key={color} className="flex items-center gap-2.5 text-xs">
               <div 
-                className="w-3 h-3 rounded-sm" 
+                className="w-3.5 h-3.5 rounded-md shadow-sm" 
                 style={{ backgroundColor: colorMap[color as MapColor] }} 
               />
               <span className="text-muted-foreground">{label}</span>
@@ -691,17 +714,28 @@ export default function MapPage() {
       </div>
 
       <Map
+        ref={mapRef}
         mapboxAccessToken={mapboxToken}
         initialViewState={{
           longitude: 0,
           latitude: 20,
-          zoom: 1.5,
+          zoom: 1.8,
         }}
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/light-v11"
+        projection={{ name: "globe" }}
         interactiveLayerIds={["country-fills"]}
         onClick={handleCountryClick}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
         cursor="pointer"
+        fog={{
+          color: "rgb(255, 255, 255)",
+          "high-color": "rgb(50, 176, 160)",
+          "horizon-blend": 0.08,
+          "space-color": "rgb(245, 247, 250)",
+          "star-intensity": 0
+        }}
       >
         <Source
           id="countries"
@@ -712,16 +746,16 @@ export default function MapPage() {
             id="country-fills"
             type="fill"
             paint={{
-              "fill-color": mapLoading ? "#d1d5db" : fillColorExpression,
-              "fill-opacity": 0.7,
+              "fill-color": mapLoading ? "#e5e7eb" : fillColorExpression,
+              "fill-opacity": 0.85,
             }}
           />
           <Layer
             id="country-borders"
             type="line"
             paint={{
-              "line-color": "#374151",
-              "line-width": 0.8,
+              "line-color": "#9ca3af",
+              "line-width": 0.6,
             }}
           />
         </Source>
@@ -744,7 +778,7 @@ export default function MapPage() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute top-0 right-0 h-full w-72 md:w-80 bg-background/95 backdrop-blur-sm border-l overflow-y-auto z-10"
+            className="absolute top-0 right-0 h-full w-72 md:w-80 glass border-l border-white/20 dark:border-white/5 overflow-y-auto z-10 shadow-premium"
           >
             <AnimatePresence mode="wait">
               {!selectedCountry ? (
