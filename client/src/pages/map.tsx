@@ -163,6 +163,7 @@ interface AssessResult {
   reason: string | null;
   maxStayDays: number;
   fee: { amount: number; currency: string; reimbursable: boolean } | null;
+  processingTime: string | null;
   governance: { status: string; owner: string; reviewDueAt: string } | null;
   sources: { sourceId: string; title: string; verifiedAt: string }[] | null;
   actions: { label: string; url: string }[] | null;
@@ -765,16 +766,27 @@ export default function MapPage() {
                     </CardContent>
                   </Card>
 
-                  {assessResult.maxStayDays > 0 && (
+                  {(assessResult.maxStayDays > 0 || assessResult.processingTime) && (
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Clock className="w-4 h-4" />
-                          Allowed Stay
+                          Timing
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-sm">Up to {assessResult.maxStayDays} days</p>
+                      <CardContent className="space-y-2">
+                        {assessResult.maxStayDays > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Allowed Stay</span>
+                            <span>Up to {assessResult.maxStayDays} days</span>
+                          </div>
+                        )}
+                        {assessResult.processingTime && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Processing Time</span>
+                            <span>{assessResult.processingTime}</span>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   )}

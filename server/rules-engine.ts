@@ -230,6 +230,7 @@ export interface AssessResult {
   reason: string | null;
   maxStayDays: number;
   fee: { amount: number; currency: string; reimbursable: boolean } | null;
+  processingTime: string | null;
   isUSEmployerSponsored: boolean;
   governance: { status: string; owner: string; reviewDueAt: string } | null;
   sources: { sourceId: string; title: string; verifiedAt: string }[] | null;
@@ -246,6 +247,9 @@ export function assess(input: AssessInput): AssessResult {
   // Find matching rule using simplified input
   const matchedRule = findMatchingRuleForAssess(parsedInput);
   
+  // Get visa link data for processing time and fee info
+  const visaLink = getVisaLink(parsedInput.destination);
+  
   if (!matchedRule) {
     return {
       entryType: "UNKNOWN",
@@ -254,7 +258,8 @@ export function assess(input: AssessInput): AssessResult {
       details: "Please contact the travel team for guidance on travel to this destination.",
       reason: null,
       maxStayDays: 0,
-      fee: null,
+      fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : null,
+      processingTime: visaLink?.processingTime ?? null,
       isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
       governance: null,
       sources: null,
@@ -268,6 +273,13 @@ export function assess(input: AssessInput): AssessResult {
   const entry = matchedRule.outputs.entry_authorization;
   const reason = generateReason(parsedInput, matchedRule);
   
+  // Use fee from rule if available, otherwise fall back to visa link data
+  const fee = entry.fee ? {
+    amount: entry.fee.amount,
+    currency: entry.fee.currency,
+    reimbursable: entry.fee.reimbursable,
+  } : (visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : null);
+  
   return {
     entryType: entry.type,
     required: entry.required,
@@ -275,11 +287,8 @@ export function assess(input: AssessInput): AssessResult {
     details: entry.details ?? null,
     reason,
     maxStayDays: matchedRule.max_duration_days,
-    fee: entry.fee ? {
-      amount: entry.fee.amount,
-      currency: entry.fee.currency,
-      reimbursable: entry.fee.reimbursable,
-    } : null,
+    fee,
+    processingTime: visaLink?.processingTime ?? null,
     isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
     governance: {
       status: matchedRule.governance.status,
@@ -305,12 +314,20 @@ export function assess(input: AssessInput): AssessResult {
 export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
   const parsedInput = assessInputSchema.parse(input);
   
+  // Get visa link data for processing time and fee info
+  const visaLink = getVisaLink(parsedInput.destination);
+  
   // First try local policy rules
   const matchedRule = findMatchingRuleForAssess(parsedInput);
   
   if (matchedRule) {
     const entry = matchedRule.outputs.entry_authorization;
     const reason = generateReason(parsedInput, matchedRule);
+    const fee = entry.fee ? {
+      amount: entry.fee.amount,
+      currency: entry.fee.currency,
+      reimbursable: entry.fee.reimbursable,
+    } : (visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : null);
     return {
       entryType: entry.type,
       required: entry.required,
@@ -318,11 +335,8 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
       details: entry.details ?? null,
       reason,
       maxStayDays: matchedRule.max_duration_days,
-      fee: entry.fee ? {
-        amount: entry.fee.amount,
-        currency: entry.fee.currency,
-        reimbursable: entry.fee.reimbursable,
-      } : null,
+      fee,
+      processingTime: visaLink?.processingTime ?? null,
       isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
       governance: {
         status: matchedRule.governance.status,
@@ -403,7 +417,8 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
           details: detailsParts.length > 0 ? detailsParts.join(". ") : null,
           reason: apiReason,
           maxStayDays: parseDuration(primaryRule.duration || secondaryRule?.duration),
-          fee: null,
+          fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : null,
+          processingTime: visaLink?.processingTime ?? null,
           isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
           governance: null,
           sources: [{
@@ -477,7 +492,8 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
     details: "Please contact the travel team for guidance on travel to this destination.",
     reason: null,
     maxStayDays: 0,
-    fee: null,
+    fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : null,
+    processingTime: visaLink?.processingTime ?? null,
     isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
     governance: null,
     sources: null,
@@ -502,6 +518,7 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
   
   const destName = countryNameMap[destination] || destination;
   const citizenName = countryNameMap[citizenship] || citizenship;
+  const visaLink = getVisaLink(destination);
   
   if (citizenship === "US") {
     // US passport holder visa requirements
@@ -519,6 +536,7 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         reason: `As a ${citizenName} citizen, you qualify for visa-free entry to ${destName}.`,
         maxStayDays: 90,
         fee: null,
+        processingTime: visaLink?.processingTime ?? null,
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
         actions: getFallbackActions(destination, "NONE"),
@@ -537,7 +555,8 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         details: `US passport holders must obtain an ${etaNames[destination] || "Electronic Travel Authorization"} before traveling to ${destName}. This is a quick online application.`,
         reason: `As a ${citizenName} citizen, you need to register online before traveling to ${destName}.`,
         maxStayDays: destination === "GB" ? 180 : 90,
-        fee: { amount: destination === "GB" ? 10 : 20, currency: destination === "GB" ? "GBP" : "USD", reimbursable: true },
+        fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : { amount: destination === "GB" ? 10 : 20, currency: destination === "GB" ? "GBP" : "USD", reimbursable: true },
+        processingTime: visaLink?.processingTime ?? null,
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
         actions: [{ label: "Apply Online", url: destination === "GB" ? "https://www.gov.uk/apply-electronic-travel-authorisation-eta" : "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/electronic-travel-authority-601" }],
@@ -564,7 +583,8 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         details: evisaDetails[destination] || `US passport holders can apply for an e-Visa online before traveling to ${destName}. Processing time is typically 2-5 business days.`,
         reason: `As a ${citizenName} citizen, you must apply for an e-Visa to ${destName} before travel.`,
         maxStayDays: evisaStays[destination] || 30,
-        fee: { amount: evisaFees[destination] || 50, currency: "USD", reimbursable: true },
+        fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : { amount: evisaFees[destination] || 50, currency: "USD", reimbursable: true },
+        processingTime: visaLink?.processingTime ?? null,
         governance: null,
         sources: destination === "BR" 
           ? [{ sourceId: "brazil-evisa-2025", title: "Brazil e-Visa Requirements (April 2025)", verifiedAt: "2025-04-10" }]
@@ -586,7 +606,8 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         details: `US passport holders must obtain a visa from the ${destName} embassy or consulate before traveling. Allow 2-4 weeks for processing.`,
         reason: `As a ${citizenName} citizen, you must apply for a visa at the ${destName} embassy.`,
         maxStayDays: 30,
-        fee: { amount: 160, currency: "USD", reimbursable: true },
+        fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : { amount: 160, currency: "USD", reimbursable: true },
+        processingTime: visaLink?.processingTime ?? null,
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
         actions: getFallbackActions(destination, "VISA"),
@@ -606,6 +627,7 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         reason: `As a ${citizenName} citizen, you qualify for visa-free entry to ${destName}.`,
         maxStayDays: 30,
         fee: null,
+        processingTime: visaLink?.processingTime ?? null,
         governance: null,
         sources: [{ sourceId: "curated-data", title: "Carta Travel Policy", verifiedAt: "2026-01-01" }],
         actions: getFallbackActions(destination, "NONE"),
@@ -627,7 +649,8 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         details: `Canadian passport holders must obtain an e-Visa before traveling to Brazil. Apply online at brazil.vfsevisa.com. Processing time is approximately 5 business days. Fee is approximately $80 USD.`,
         reason: `As a ${citizenName} citizen, you must apply for an e-Visa to ${destName} before travel.`,
         maxStayDays: 90,
-        fee: { amount: 81, currency: "USD", reimbursable: true },
+        fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : { amount: 81, currency: "USD", reimbursable: true },
+        processingTime: visaLink?.processingTime ?? "5 business days",
         governance: null,
         sources: [{ sourceId: "brazil-evisa-2025", title: "Brazil e-Visa Requirements (April 2025)", verifiedAt: "2025-04-10" }],
         actions: [{ label: "Apply for e-Visa", url: "https://brazil.vfsevisa.com/" }],
@@ -649,7 +672,8 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
         details: `Australian passport holders must obtain an e-Visa before traveling to Brazil. Apply online at brazil.vfsevisa.com. Processing time is approximately 5 business days. Fee is approximately $80 USD.`,
         reason: `As an ${citizenName} citizen, you must apply for an e-Visa to ${destName} before travel.`,
         maxStayDays: 90,
-        fee: { amount: 81, currency: "USD", reimbursable: true },
+        fee: visaLink?.fee ? { ...visaLink.fee, reimbursable: true } : { amount: 81, currency: "USD", reimbursable: true },
+        processingTime: visaLink?.processingTime ?? "5 business days",
         governance: null,
         sources: [{ sourceId: "brazil-evisa-2025", title: "Brazil e-Visa Requirements (April 2025)", verifiedAt: "2025-04-10" }],
         actions: [{ label: "Apply for e-Visa", url: "https://brazil.vfsevisa.com/" }],

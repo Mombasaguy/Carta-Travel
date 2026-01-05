@@ -80,6 +80,7 @@ interface AssessResult {
   details: string | null;
   maxStayDays: number;
   fee: { amount: number; currency: string; reimbursable: boolean } | null;
+  processingTime: string | null;
   isUSEmployerSponsored: boolean;
   governance: { status: string; owner: string; reviewDueAt: string } | null;
   sources: { sourceId: string; title: string; verifiedAt: string }[] | null;
