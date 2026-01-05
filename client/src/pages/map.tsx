@@ -993,7 +993,7 @@ export default function MapPage() {
       <AnimatePresence>
         {(showPanel || selectedCountry) && (
           <div 
-            className="absolute top-0 right-0 h-full w-80 md:w-[340px] glass-panel overflow-y-auto z-[50]"
+            className="fixed top-0 right-0 h-full w-80 md:w-[340px] bg-white dark:bg-gray-900 border-l-4 border-red-500 overflow-y-auto z-[9999]"
           >
             <AnimatePresence mode="wait">
               {!selectedCountry ? (
