@@ -740,12 +740,12 @@ export default function MapPage() {
                         {assessResult.required && assessResult.actions && assessResult.actions.length > 0 ? (
                           <Button
                             size="sm"
-                            className="gap-1"
+                            className="gap-1 text-xs h-7 px-2"
                             asChild
                             data-testid="button-apply-visa"
                           >
                             <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
-                              Apply for Visa
+                              Apply
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           </Button>
