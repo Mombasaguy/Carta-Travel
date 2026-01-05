@@ -155,7 +155,7 @@ export default function HomePage() {
 
   const assessMutation = useMutation({
     mutationFn: async (destCode: string) => {
-      const res = await fetch("/api/trip/resolve", {
+      const res = await fetch("/api/assess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -202,7 +202,7 @@ export default function HomePage() {
         countryCode = nameToIso2[name];
       }
     }
-    if (countryCode && countryCode !== "-99" && countryNames[countryCode]) {
+    if (countryCode && countryCode !== "-99") {
       setDestination(countryCode);
       setSelectedCountry(countryCode);
       setAssessResult(null);
