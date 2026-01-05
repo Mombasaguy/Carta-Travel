@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink } from "lucide-react";
+import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink, PanelRightOpen, PanelRightClose } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -445,6 +445,7 @@ export default function MapPage() {
   const [passport, setPassport] = useState("US");
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [assessResult, setAssessResult] = useState<AssessResult | null>(null);
+  const [showPanel, setShowPanel] = useState(false);
 
   const { data: configData, isLoading: configLoading } = useQuery<{ token: string }>({
     queryKey: ["/api/config/mapbox"],
@@ -512,6 +513,7 @@ export default function MapPage() {
   const closePanel = () => {
     setSelectedCountry(null);
     setAssessResult(null);
+    setShowPanel(false);
   };
 
   // Use ISO2 colors directly from API (Mapbox uses iso_3166_1_alpha_2)
@@ -619,52 +621,81 @@ export default function MapPage() {
         </Source>
       </Map>
 
-      <div className="absolute top-0 right-0 h-full w-80 bg-background/95 backdrop-blur-sm border-l overflow-y-auto">
-        <AnimatePresence mode="wait">
-          {!selectedCountry ? (
-            <motion.div
-              key="destinations"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="p-4"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <MapPin className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Top Destinations</h2>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Popular business travel destinations. Click to see requirements for your passport.
-              </p>
-              <div className="space-y-1">
-                {topDestinations.map((dest) => {
-                  const color = colorsByIso2[dest.code];
-                  return (
-                    <button
-                      key={dest.code}
-                      onClick={() => {
-                        setSelectedCountry(dest.code);
-                        setAssessResult(null);
-                        assessMutation.mutate(dest.code);
-                      }}
-                      className="w-full flex items-center gap-3 p-3 rounded-md hover-elevate text-left group"
-                      data-testid={`button-destination-${dest.code}`}
+      <Button
+        size="icon"
+        variant="secondary"
+        className="absolute top-4 right-4 z-20 md:hidden"
+        onClick={() => setShowPanel(!showPanel)}
+        data-testid="button-toggle-panel"
+      >
+        {showPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+      </Button>
+
+      <AnimatePresence>
+        {(showPanel || selectedCountry) && (
+          <motion.div 
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="absolute top-0 right-0 h-full w-72 md:w-80 bg-background/95 backdrop-blur-sm border-l overflow-y-auto z-10"
+          >
+            <AnimatePresence mode="wait">
+              {!selectedCountry ? (
+                <motion.div
+                  key="destinations"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="p-4"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      <h2 className="text-lg font-semibold">Top Destinations</h2>
+                    </div>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="md:hidden"
+                      onClick={() => setShowPanel(false)}
+                      data-testid="button-close-destinations"
                     >
-                      <div 
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: color ? colorMap[color] : "#d1d5db" }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">{dest.name}</div>
-                        <div className="text-xs text-muted-foreground">{dest.region}</div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          ) : (
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Popular business travel destinations. Click to see requirements for your passport.
+                  </p>
+                  <div className="space-y-1">
+                    {topDestinations.map((dest) => {
+                      const color = colorsByIso2[dest.code];
+                      return (
+                        <button
+                          key={dest.code}
+                          onClick={() => {
+                            setSelectedCountry(dest.code);
+                            setAssessResult(null);
+                            assessMutation.mutate(dest.code);
+                          }}
+                          className="w-full flex items-center gap-3 p-3 rounded-md hover-elevate text-left group"
+                          data-testid={`button-destination-${dest.code}`}
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: color ? colorMap[color] : "#d1d5db" }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm">{dest.name}</div>
+                            <div className="text-xs text-muted-foreground">{dest.region}</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              ) : (
             <motion.div
               key="assessment"
               initial={{ x: "100%", opacity: 0 }}
@@ -816,8 +847,10 @@ export default function MapPage() {
               )}
             </motion.div>
           )}
-        </AnimatePresence>
-      </div>
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
