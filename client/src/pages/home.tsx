@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Map, { Source, Layer, type MapMouseEvent } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, Info, AlertCircle, ChevronUp, ChevronDown } from "lucide-react";
@@ -276,91 +275,91 @@ export default function HomePage() {
         {showLegend ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
       </Button>
 
-      <div className="absolute inset-x-0 bottom-0 md:inset-0 flex items-end md:items-center justify-center pointer-events-none md:justify-start md:pl-8 lg:pl-16 px-4 md:px-0 pb-4 md:pb-0">
+      <div className="absolute inset-x-0 bottom-0 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-8 lg:left-16 md:right-auto pointer-events-none px-4 pb-6 md:px-0 md:pb-0">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 280, damping: 30 }}
-          className="pointer-events-auto w-full max-w-md md:max-w-lg"
+          transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.1 }}
+          className="pointer-events-auto w-full md:w-96"
         >
-          <Card className="bg-background/95 backdrop-blur-sm border shadow-lg rounded-2xl overflow-visible">
-            <CardContent className="p-6">
-              <h1 className="text-2xl font-semibold tracking-tight mb-2" data-testid="text-hero-title">
-                Travel Requirements
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground drop-shadow-sm" data-testid="text-hero-title">
+                Where are you traveling?
               </h1>
-              <p className="text-sm text-muted-foreground mb-6">
-                Check visa, ETA, and company policy requirements for business travel.
+              <p className="text-sm text-muted-foreground mt-2 drop-shadow-sm">
+                Click the map or select a destination below
               </p>
+            </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Passport</label>
-                  <Select value={passport} onValueChange={setPassport}>
-                    <SelectTrigger className="w-full" data-testid="select-passport">
-                      <SelectValue placeholder="Select passport" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {passportOptions.map((opt) => (
-                        <SelectItem key={opt.code} value={opt.code}>
-                          {opt.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Destination</label>
-                  <Select 
-                    value={destination ?? ""} 
-                    onValueChange={(val) => {
-                      setDestination(val);
-                      setValidationError(null);
-                    }}
-                  >
-                    <SelectTrigger 
-                      className={`w-full ${validationError ? "border-destructive" : ""}`} 
-                      data-testid="select-destination"
-                    >
-                      <SelectValue placeholder="Select destination or click map" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {destinationOptions.map((opt) => (
-                        <SelectItem key={opt.code} value={opt.code}>
-                          {opt.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {validationError && (
-                    <p className="text-xs text-destructive mt-1">{validationError}</p>
-                  )}
-                </div>
-
-                <Button 
-                  className="w-full gap-2" 
-                  size="lg"
-                  onClick={handleCheckRequirements}
-                  data-testid="button-check-requirements"
-                >
-                  Check requirements
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-
-                <div className="text-center pt-1">
-                  <Link href="/advisories" className="text-sm text-muted-foreground inline-flex items-center gap-1 hover:text-foreground transition-colors" data-testid="link-advisories">
-                    View advisories
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap w-20">Passport</span>
+                <Select value={passport} onValueChange={setPassport}>
+                  <SelectTrigger className="flex-1 bg-background/80 backdrop-blur-sm border-0 shadow-sm" data-testid="select-passport">
+                    <SelectValue placeholder="Select passport" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {passportOptions.map((opt) => (
+                      <SelectItem key={opt.code} value={opt.code}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
 
-      <div className="hidden md:block absolute bottom-4 right-4 z-10 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded">
-        Click any country to select as destination
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap w-20">Destination</span>
+                <Select 
+                  value={destination ?? ""} 
+                  onValueChange={(val) => {
+                    setDestination(val);
+                    setValidationError(null);
+                  }}
+                >
+                  <SelectTrigger 
+                    className={`flex-1 bg-background/80 backdrop-blur-sm border-0 shadow-sm ${validationError ? "ring-2 ring-destructive" : ""}`} 
+                    data-testid="select-destination"
+                  >
+                    <SelectValue placeholder="Click map or select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {destinationOptions.map((opt) => (
+                      <SelectItem key={opt.code} value={opt.code}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {validationError && (
+                <p className="text-xs text-destructive pl-22">{validationError}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button 
+                className="w-full gap-2 shadow-lg" 
+                size="lg"
+                onClick={handleCheckRequirements}
+                data-testid="button-check-requirements"
+              >
+                Check requirements
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+
+              <Link 
+                href="/advisories" 
+                className="text-sm text-muted-foreground inline-flex items-center justify-center gap-1 hover:text-foreground transition-colors" 
+                data-testid="link-advisories"
+              >
+                View travel advisories
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
