@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight } from "lucide-react";
+import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -706,9 +706,23 @@ export default function MapPage() {
                           <Plane className="w-4 h-4" />
                           Entry Requirements
                         </CardTitle>
-                        <Badge variant={assessResult.required ? "destructive" : "secondary"}>
-                          {assessResult.entryType}
-                        </Badge>
+                        {assessResult.required && assessResult.actions && assessResult.actions.length > 0 ? (
+                          <Button
+                            size="sm"
+                            className="gap-1"
+                            asChild
+                            data-testid="button-apply-visa"
+                          >
+                            <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
+                              Apply for Visa
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        ) : (
+                          <Badge variant={assessResult.required ? "destructive" : "secondary"}>
+                            {assessResult.entryType}
+                          </Badge>
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent>
