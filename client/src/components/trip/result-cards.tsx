@@ -296,6 +296,92 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
         </Card>
       </motion.div>
 
+      {trip && ["US", "GB", "CA", "BR", "DE", "JP"].includes(trip.destination) && (
+        <motion.div variants={cardVariants} transition={springTransition}>
+          <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-invitation-letter">
+            <CardHeader className="flex flex-row items-start gap-4 pb-4">
+              <div className="p-3 rounded-xl bg-accent-2/10">
+                <Plane className="w-5 h-5 text-accent-2" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-lg font-semibold text-foreground">Invitation Letter</CardTitle>
+                <CardDescription className="mt-1">
+                  Carta-branded business invitation
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
+                Generate and download a Carta-branded business invitation letter if requested by border officials.
+              </p>
+              <p className="text-xs text-muted-foreground/80 mb-4 italic">
+                Present to immigration only if requested. Do not offer proactively.
+              </p>
+              <Sheet open={letterOpen} onOpenChange={setLetterOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" data-testid="button-generate-letter">
+                    <FileSignature className="w-4 h-4 mr-2" />
+                    Generate Letter
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="rounded-t-2xl">
+                  <SheetHeader>
+                    <SheetTitle>Invitation Letter Details</SheetTitle>
+                    <SheetDescription>
+                      Enter your information to personalize the letter
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="py-6 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name (as on passport)</Label>
+                      <Input
+                        id="fullName"
+                        placeholder="Enter your full name"
+                        value={mergeData.FULL_NAME}
+                        onChange={(e) => setMergeData({ ...mergeData, FULL_NAME: e.target.value })}
+                        data-testid="input-letter-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Work Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your.name@carta.com"
+                        value={mergeData.EMPLOYEE_EMAIL}
+                        onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_EMAIL: e.target.value })}
+                        data-testid="input-letter-email"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Job Title</Label>
+                      <Input
+                        id="title"
+                        placeholder="e.g. Software Engineer"
+                        value={mergeData.EMPLOYEE_TITLE}
+                        onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_TITLE: e.target.value })}
+                        data-testid="input-letter-title"
+                      />
+                    </div>
+                  </div>
+                  <SheetFooter>
+                    <Button
+                      onClick={handleDownloadLetter}
+                      disabled={isDownloading}
+                      className="w-full"
+                      data-testid="button-download-letter"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {isDownloading ? "Generating..." : "Download Letter"}
+                    </Button>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {result.v2Data && (
         <motion.div variants={cardVariants} transition={springTransition}>
           <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-destination-info">
@@ -522,92 +608,6 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
           </CardContent>
         </Card>
       </motion.div>
-
-      {trip && ["US", "GB", "CA", "BR", "DE", "JP"].includes(trip.destination) && (
-        <motion.div variants={cardVariants} transition={springTransition}>
-          <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-invitation-letter">
-            <CardHeader className="flex flex-row items-start gap-4 pb-4">
-              <div className="p-3 rounded-xl bg-accent-2/10">
-                <Plane className="w-5 h-5 text-accent-2" />
-              </div>
-              <div className="flex-1">
-                <CardTitle className="text-lg font-semibold text-foreground">Invitation Letter</CardTitle>
-                <CardDescription className="mt-1">
-                  Carta-branded business invitation
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
-                Carta-branded business invitation letters are available. Generate and download below if requested by border officials.
-              </p>
-              <p className="text-xs text-muted-foreground/80 mb-4 italic">
-                Present to immigration only if requested. Do not offer proactively.
-              </p>
-              <Sheet open={letterOpen} onOpenChange={setLetterOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" data-testid="button-generate-letter">
-                    <FileSignature className="w-4 h-4 mr-2" />
-                    Generate Letter
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="rounded-t-2xl">
-                  <SheetHeader>
-                    <SheetTitle>Invitation Letter Details</SheetTitle>
-                    <SheetDescription>
-                      Enter your information to personalize the letter
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="py-6 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name (as on passport)</Label>
-                      <Input
-                        id="fullName"
-                        placeholder="Enter your full name"
-                        value={mergeData.FULL_NAME}
-                        onChange={(e) => setMergeData({ ...mergeData, FULL_NAME: e.target.value })}
-                        data-testid="input-letter-name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Work Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.name@carta.com"
-                        value={mergeData.EMPLOYEE_EMAIL}
-                        onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_EMAIL: e.target.value })}
-                        data-testid="input-letter-email"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Job Title</Label>
-                      <Input
-                        id="title"
-                        placeholder="e.g. Software Engineer"
-                        value={mergeData.EMPLOYEE_TITLE}
-                        onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_TITLE: e.target.value })}
-                        data-testid="input-letter-title"
-                      />
-                    </div>
-                  </div>
-                  <SheetFooter>
-                    <Button
-                      onClick={handleDownloadLetter}
-                      disabled={isDownloading}
-                      className="w-full"
-                      data-testid="button-download-letter"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      {isDownloading ? "Generating..." : "Download Letter"}
-                    </Button>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
 
       <motion.div variants={cardVariants} transition={springTransition}>
         <Card className="overflow-visible bg-surface border-border/40 rounded-2xl shadow-soft" data-testid="card-carta-policy">
