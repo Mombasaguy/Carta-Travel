@@ -254,6 +254,12 @@ export const curatedVisaLinks: Record<string, VisaLinkEntry> = {
     officialVisaUrl: "https://www.consulat.ma/",
     notes: "Visa-free for many nationalities"
   },
+  ML: {
+    country: "Mali",
+    iso2: "ML",
+    officialVisaUrl: "https://www.diplomatiemdc.gouv.ml/vitrine/",
+    notes: "Visa required for most nationalities, apply through embassy or online portal"
+  },
   RU: {
     country: "Russia",
     iso2: "RU",
