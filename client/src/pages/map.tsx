@@ -184,6 +184,56 @@ const colorMap: Record<MapColor, string> = {
   gray: "#9E9E9E",    // Neutral grey
 };
 
+// Country centroids for flight arc visualization (approximate lon/lat)
+const countryCentroids: Record<string, [number, number]> = {
+  US: [-98.5, 39.5], GB: [-2, 54], DE: [10.5, 51], FR: [2.5, 46.5], CA: [-106, 56],
+  AU: [134, -25], JP: [138, 36], CN: [105, 35], IN: [78, 22], BR: [-53, -10],
+  MX: [-102, 23], IT: [12.5, 42.5], ES: [-3.5, 40], NL: [5.5, 52], CH: [8, 47],
+  SE: [18, 62], NO: [10, 62], DK: [10, 56], FI: [26, 64], BE: [4.5, 50.5],
+  AT: [14, 47.5], IE: [-8, 53], PT: [-8, 39.5], PL: [19, 52], CZ: [15, 49.5],
+  HU: [19.5, 47], RO: [25, 46], BG: [25, 42.5], HR: [16, 45.5], SK: [19.5, 48.5],
+  SI: [14.5, 46], EE: [25, 59], LV: [24.5, 57], LT: [24, 55.5], GR: [22, 39],
+  CY: [33, 35], MT: [14.5, 35.9], LU: [6, 49.8], IS: [-18, 65], NZ: [174, -41],
+  SG: [103.8, 1.35], HK: [114.15, 22.25], KR: [127.5, 36], TW: [121, 24],
+  TH: [101, 15], MY: [102, 4], ID: [120, -2], PH: [122, 12], VN: [108, 16],
+  AE: [54, 24], SA: [45, 24], IL: [35, 31.5], TR: [35, 39], ZA: [-25, 29],
+  EG: [30, 27], NG: [8, 10], KE: [38, 1], AR: [-64, -34], CL: [-71, -33],
+  CO: [-74, 4], PE: [-76, -10], RU: [100, 60], UA: [32, 49], QA: [51.5, 25.5],
+  KW: [47.5, 29.5], BH: [50.5, 26], OM: [57, 21], JO: [36, 31], LB: [35.8, 33.9],
+  PK: [69, 30], BD: [90, 24], LK: [81, 8], NP: [84, 28], MM: [96, 21],
+  KH: [105, 13], LA: [103, 18],
+};
+
+// Generate a curved arc between two points (Great Circle approximation for visual effect)
+function generateFlightArc(start: [number, number], end: [number, number], numPoints = 50): GeoJSON.Feature<GeoJSON.LineString> {
+  const [startLng, startLat] = start;
+  const [endLng, endLat] = end;
+  
+  const coordinates: [number, number][] = [];
+  
+  for (let i = 0; i <= numPoints; i++) {
+    const t = i / numPoints;
+    
+    // Linear interpolation for position
+    const lng = startLng + t * (endLng - startLng);
+    const lat = startLat + t * (endLat - startLat);
+    
+    // Add curvature - parabolic arc that peaks at midpoint
+    const arcHeight = Math.sin(t * Math.PI) * Math.min(30, Math.abs(endLng - startLng) * 0.15);
+    
+    coordinates.push([lng, lat + arcHeight]);
+  }
+  
+  return {
+    type: "Feature",
+    properties: {},
+    geometry: {
+      type: "LineString",
+      coordinates,
+    },
+  };
+}
+
 const countryNameMap: Record<string, string> = {
   US: "United States",
   GB: "United Kingdom",
@@ -455,6 +505,7 @@ export default function MapPage() {
   const [letterOpen, setLetterOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const mapRef = useRef<MapRef>(null);
   const [mergeData, setMergeData] = useState({
     FULL_NAME: "",
@@ -727,7 +778,39 @@ export default function MapPage() {
         interactiveLayerIds={["country-fills"]}
         onClick={handleCountryClick}
         onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
+        onMouseLeave={() => {
+          setIsHovering(false);
+          setHoveredCountry(null);
+        }}
+        onMouseMove={(e) => {
+          const feature = e.features?.[0];
+          if (feature) {
+            const props = feature.properties;
+            let countryCode = props?.["ISO3166-1-Alpha-2"];
+            if (!countryCode || countryCode === "-99") {
+              countryCode = props?.["ISO_A2"];
+            }
+            if (!countryCode || countryCode === "-99") {
+              const iso3 = props?.["ISO3166-1-Alpha-3"] || props?.["ISO_A3"];
+              if (iso3 && iso3ToIso2[iso3]) {
+                countryCode = iso3ToIso2[iso3];
+              }
+            }
+            if (!countryCode || countryCode === "-99") {
+              const name = props?.["ADMIN"] || props?.["name"];
+              if (name && nameToIso2[name]) {
+                countryCode = nameToIso2[name];
+              }
+            }
+            if (countryCode && countryCode !== "-99" && countryCode !== passport) {
+              setHoveredCountry(countryCode);
+            } else {
+              setHoveredCountry(null);
+            }
+          } else {
+            setHoveredCountry(null);
+          }
+        }}
         cursor="pointer"
         fog={{
           color: "rgb(252, 253, 255)",
@@ -773,6 +856,48 @@ export default function MapPage() {
             }}
           />
         </Source>
+        
+        {/* Flight Arc - animated path from origin to hovered destination */}
+        {hoveredCountry && countryCentroids[passport] && countryCentroids[hoveredCountry] && (
+          <Source
+            id="flight-arc"
+            type="geojson"
+            data={generateFlightArc(countryCentroids[passport], countryCentroids[hoveredCountry])}
+          >
+            {/* Glow effect layer */}
+            <Layer
+              id="flight-arc-glow"
+              type="line"
+              paint={{
+                "line-color": "#32B0A0",
+                "line-width": 6,
+                "line-opacity": 0.3,
+                "line-blur": 3,
+              }}
+            />
+            {/* Main arc line */}
+            <Layer
+              id="flight-arc-line"
+              type="line"
+              paint={{
+                "line-color": "#32B0A0",
+                "line-width": 2,
+                "line-opacity": 0.9,
+              }}
+            />
+            {/* Animated dashed overlay */}
+            <Layer
+              id="flight-arc-dash"
+              type="line"
+              paint={{
+                "line-color": "#ffffff",
+                "line-width": 2,
+                "line-dasharray": [0, 2, 2],
+                "line-opacity": 0.8,
+              }}
+            />
+          </Source>
+        )}
       </Map>
 
       <Button
