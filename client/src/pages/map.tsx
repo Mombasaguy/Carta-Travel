@@ -506,22 +506,42 @@ export default function MapPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+  const [userInteracting, setUserInteracting] = useState(false);
   const mapRef = useRef<MapRef>(null);
+  const interactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [mergeData, setMergeData] = useState({
     FULL_NAME: "",
     EMPLOYEE_EMAIL: "",
     EMPLOYEE_TITLE: "",
   });
 
+  // Handle user interaction - pause rotation during and after dragging
+  const handleInteractionStart = () => {
+    setUserInteracting(true);
+    if (interactionTimeoutRef.current) {
+      clearTimeout(interactionTimeoutRef.current);
+    }
+  };
+
+  const handleInteractionEnd = () => {
+    // Resume auto-rotation after 5 seconds of no interaction
+    if (interactionTimeoutRef.current) {
+      clearTimeout(interactionTimeoutRef.current);
+    }
+    interactionTimeoutRef.current = setTimeout(() => {
+      setUserInteracting(false);
+    }, 5000);
+  };
+
   // Auto-rotation effect for the globe
   useEffect(() => {
-    if (!mapRef.current || isHovering) return;
+    if (!mapRef.current || isHovering || userInteracting) return;
     
     const map = mapRef.current.getMap();
     let animationFrame: number;
     
     const rotate = () => {
-      if (isHovering) return;
+      if (isHovering || userInteracting) return;
       const center = map.getCenter();
       map.setCenter({ lng: center.lng + 0.03, lat: center.lat });
       animationFrame = requestAnimationFrame(rotate);
@@ -532,7 +552,16 @@ export default function MapPage() {
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [isHovering]);
+  }, [isHovering, userInteracting]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (interactionTimeoutRef.current) {
+        clearTimeout(interactionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleDownloadLetter = async () => {
     if (!selectedCountry) return;
@@ -783,6 +812,10 @@ export default function MapPage() {
         projection={{ name: "globe" }}
         interactiveLayerIds={["country-fills"]}
         onClick={handleCountryClick}
+        onDragStart={handleInteractionStart}
+        onDragEnd={handleInteractionEnd}
+        onZoomStart={handleInteractionStart}
+        onZoomEnd={handleInteractionEnd}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => {
           setIsHovering(false);
