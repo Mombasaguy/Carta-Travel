@@ -115,25 +115,23 @@ export function FloatingDock() {
   ];
 
   return (
-    <nav className="glass-dock rounded-full px-2 py-1.5 flex items-center gap-1">
+    <nav className="glass-dock rounded-full px-3 py-2 flex items-center gap-1">
       {navLinks.map((link) => {
         const Icon = link.icon;
-        const isActive = location === link.href;
+        const isActive = location === link.href || (link.href === "/" && location === "/map");
         return (
           <Link key={link.href} href={link.href}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`rounded-full gap-2 spring-transition ${
+            <button
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-full spring-transition ${
                 isActive 
                   ? "bg-white/15 dark:bg-white/10 text-foreground" 
-                  : "text-bento-secondary hover:text-foreground hover:bg-white/10"
+                  : "text-bento-secondary hover:text-foreground hover:bg-white/8 dark:hover:bg-white/5"
               }`}
               data-testid={`link-nav-${link.label.toLowerCase().replace(" ", "-")}`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-[18px] h-[18px]" />
               <span className="hidden sm:inline text-sm font-medium">{link.label}</span>
-            </Button>
+            </button>
           </Link>
         );
       })}

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink, PanelRightOpen, PanelRightClose, FileSignature, Download } from "lucide-react";
+import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink, PanelRightOpen, PanelRightClose, FileSignature, Download, Info } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { FloatingDock, FloatingLogo, FloatingActions } from "@/components/header";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -778,9 +778,12 @@ export default function MapPage() {
               </SelectContent>
             </Select>
             {!selectedCountry && (
-              <p className="text-xs text-bento-secondary mt-3 max-w-[160px]">
-                Click any country to view requirements
-              </p>
+              <div className="flex items-start gap-1.5 mt-3 max-w-[180px]">
+                <Info className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-primary/80">
+                  Click any country to view requirements
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -877,14 +880,30 @@ export default function MapPage() {
         }}
         onLoad={(e) => {
           const map = e.target;
-          // Improve country label readability with stronger white halo
+          // Improve country label readability and reduce clutter
           const labelLayers = ['country-label', 'state-label', 'settlement-label', 'settlement-major-label', 'settlement-minor-label'];
           labelLayers.forEach(layerId => {
             if (map.getLayer(layerId)) {
+              // Paint properties for styling
               map.setPaintProperty(layerId, 'text-halo-color', '#ffffff');
               map.setPaintProperty(layerId, 'text-halo-width', 2);
               map.setPaintProperty(layerId, 'text-halo-blur', 0);
               map.setPaintProperty(layerId, 'text-color', '#2d3748');
+              
+              // Layout properties to reduce label overlap/clutter
+              map.setLayoutProperty(layerId, 'text-allow-overlap', false);
+              map.setLayoutProperty(layerId, 'text-ignore-placement', false);
+              map.setLayoutProperty(layerId, 'text-padding', 3);
+              map.setLayoutProperty(layerId, 'text-optional', true);
+              
+              // Make text size responsive to zoom level
+              map.setLayoutProperty(layerId, 'text-size', [
+                'interpolate', ['linear'], ['zoom'],
+                1, 8,    // At zoom 1, text is 8px
+                3, 10,   // At zoom 3, text is 10px
+                5, 12,   // At zoom 5, text is 12px
+                8, 14    // At zoom 8+, text is 14px
+              ]);
             }
           });
         }}
