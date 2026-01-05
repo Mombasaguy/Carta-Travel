@@ -1,5 +1,4 @@
-import { useState, useCallback, useRef } from "react";
-import type { MapRef } from "react-map-gl/mapbox";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import Map, { Source, Layer, type MapMouseEvent } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
@@ -460,21 +459,6 @@ export default function MapPage() {
     EMPLOYEE_EMAIL: "",
     EMPLOYEE_TITLE: "",
   });
-  const mapRef = useRef<MapRef>(null);
-
-  const handleMapLoad = useCallback(() => {
-    const map = mapRef.current?.getMap();
-    if (!map) return;
-
-    map.setFog({
-      color: "rgba(50, 176, 160, 0.3)",
-      "high-color": "rgba(80, 200, 180, 0.5)",
-      "horizon-blend": 0.15,
-      "space-color": "#020a10",
-      "star-intensity": 0.6,
-      range: [0.5, 10],
-    });
-  }, []);
 
   const handleDownloadLetter = async () => {
     if (!selectedCountry) return;
@@ -707,7 +691,6 @@ export default function MapPage() {
       </div>
 
       <Map
-        ref={mapRef}
         mapboxAccessToken={mapboxToken}
         initialViewState={{
           longitude: 0,
@@ -715,11 +698,9 @@ export default function MapPage() {
           zoom: 1.5,
         }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
-        projection={{ name: "globe" }}
+        mapStyle="mapbox://styles/mapbox/light-v11"
         interactiveLayerIds={["country-fills"]}
         onClick={handleCountryClick}
-        onLoad={handleMapLoad}
         cursor="pointer"
       >
         <Source
@@ -739,8 +720,8 @@ export default function MapPage() {
             id="country-borders"
             type="line"
             paint={{
-              "line-color": "#1e293b",
-              "line-width": 0.5,
+              "line-color": "#374151",
+              "line-width": 0.8,
             }}
           />
         </Source>
