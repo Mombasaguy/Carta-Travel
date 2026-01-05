@@ -101,6 +101,7 @@ export default function AssessPage() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const defaultDestination = params.get("destination") || "";
+  const defaultCitizenship = params.get("passport") || "";
   
   const [result, setResult] = useState<AssessResult | null>(null);
   const [trip, setTrip] = useState<TripPayload | null>(null);
@@ -158,6 +159,7 @@ export default function AssessPage() {
               >
                 <EntryForm
                   defaultDestination={defaultDestination}
+                  defaultCitizenship={defaultCitizenship}
                   onSubmit={async (payload) => {
                     setTrip(payload);
                     const res = await fetch("/api/assess", {

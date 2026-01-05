@@ -46,6 +46,7 @@ export type EntryFormData = z.infer<typeof formSchema>;
 interface EntryFormProps {
   onSubmit: (data: EntryFormData & { purpose: "BUSINESS" }) => Promise<void>;
   defaultDestination?: string;
+  defaultCitizenship?: string;
 }
 
 const citizenshipOptions = [
@@ -556,16 +557,21 @@ function calculatePolicyWarning(travelDate: string, destination: string): Policy
   return null;
 }
 
-export function EntryForm({ onSubmit, defaultDestination }: EntryFormProps) {
+export function EntryForm({ onSubmit, defaultDestination, defaultCitizenship }: EntryFormProps) {
   const validatedDestination = defaultDestination && 
     destinationOptions.some(opt => opt.value === defaultDestination) 
       ? defaultDestination 
       : "";
   
+  const validatedCitizenship = defaultCitizenship && 
+    citizenshipOptions.some(opt => opt.value === defaultCitizenship) 
+      ? defaultCitizenship 
+      : "";
+  
   const form = useForm<EntryFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      citizenship: "",
+      citizenship: validatedCitizenship,
       destination: validatedDestination,
       durationDays: 7,
       travelDate: "",

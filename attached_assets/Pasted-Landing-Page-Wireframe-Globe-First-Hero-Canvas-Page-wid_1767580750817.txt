@@ -1,0 +1,178 @@
+Landing Page Wireframe (Globe-First Hero)
+Canvas
+
+Page width: Full-width
+
+Max content width (overlay): 640px
+
+Background: White
+
+Primary visual: Interactive globe (existing component)
+
+Section 1: Hero (Above the fold)
+Layout
+┌───────────────────────────────────────────────┐
+│                                               │
+│            [ INTERACTIVE GLOBE ]               │
+│                                               │
+│      ┌─────────────────────────────────┐      │
+│      │  Travel Requirements             │      │
+│      │  Check visa, ETA, and policy     │      │
+│      │  requirements for business travel│      │
+│      │                                  │      │
+│      │  Passport       [ dropdown ]     │      │
+│      │  Destination    [ dropdown ]     │      │
+│      │                                  │      │
+│      │  [ Check requirements ]          │      │
+│      │  View advisories →               │      │
+│      └─────────────────────────────────┘      │
+│                                               │
+└───────────────────────────────────────────────┘
+
+Globe (Hero Background)
+
+Component
+
+Reuse the globe from /map
+
+Size:
+
+Desktop: ~70–80% viewport height
+
+Mobile: ~50–60% viewport height
+
+Behavior
+
+Globe loads immediately (no empty white screen)
+
+Clicking a country:
+
+Sets Destination field in overlay
+
+Highlights country briefly (existing behavior)
+
+Drag to rotate stays enabled
+
+Legend:
+
+Collapsed by default
+
+Small “ⓘ Visa legend” button bottom-left
+
+Expands on click (same colors as now)
+
+Overlay Card (Primary Interaction)
+
+Position
+
+Desktop: floating over globe, slightly left-of-center or center
+
+Mobile: bottom sheet (sticky, rounded top)
+
+Style
+
+Background: white
+
+Border radius: 12–16px
+
+Shadow: subtle (no heavy elevation)
+
+Padding: 24px
+
+Overlay Content (Exact hierarchy)
+
+H1
+
+Text: Travel Requirements
+
+Size: Large, confident (no marketing fluff)
+
+Subtext
+
+Check visa, ETA, and company policy requirements for business travel.
+
+Muted gray
+
+Form
+
+Passport dropdown
+
+Label: Passport
+
+Default: United States (or last-used)
+
+Destination dropdown
+
+Label: Destination
+
+Empty by default
+
+Filled automatically if user clicks globe
+
+Primary CTA
+
+Button text: Check requirements
+
+Full width
+
+Disabled until destination selected
+
+Secondary Action
+
+Text link under button: View advisories →
+
+Routes to /advisories
+
+Microcopy (only when needed)
+
+If destination empty and CTA clicked:
+Select a destination to continue
+
+Mobile-Specific Behavior
+
+Globe visible at top
+
+Overlay becomes bottom sheet:
+
+Sticky
+
+Can be swiped slightly down but not dismissed
+
+Inputs remain fully accessible
+
+CTA always visible without scrolling
+
+What to REMOVE from Landing Page
+
+❌ “Check Trip Requirements” card
+❌ Top Destinations list
+❌ Any long explanatory text
+❌ Sidebar layouts
+
+Landing page should feel immediate, calm, confident.
+
+Navigation (unchanged)
+
+Top nav stays minimal:
+
+Home
+
+Where can I go?
+
+Check requirements
+
+Advisories
+
+Success Criteria (for Replit)
+
+User can land and understand value in < 5 seconds
+
+User can start by either:
+
+Clicking the globe
+
+Using dropdowns
+
+No visual clutter
+
+Globe feels like the product, not a decoration
