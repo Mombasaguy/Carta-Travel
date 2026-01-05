@@ -933,6 +933,7 @@ export default function MapPage() {
         </Source>
         
         {/* Flight Arc - animated path from origin to hovered destination */}
+        {/* Rendered below country-fills to not interfere with clicks */}
         {hoveredCountry && countryCentroids[passport] && countryCentroids[hoveredCountry] && (
           <Source
             key={`flight-arc-${passport}-${hoveredCountry}`}
@@ -940,10 +941,11 @@ export default function MapPage() {
             type="geojson"
             data={generateFlightArc(countryCentroids[passport], countryCentroids[hoveredCountry])}
           >
-            {/* Glow effect layer */}
+            {/* Glow effect layer - rendered below country-fills */}
             <Layer
               id={`flight-arc-glow-${hoveredCountry}`}
               type="line"
+              beforeId="country-fills"
               paint={{
                 "line-color": "#32B0A0",
                 "line-width": 6,
@@ -951,20 +953,22 @@ export default function MapPage() {
                 "line-blur": 3,
               }}
             />
-            {/* Main arc line */}
+            {/* Main arc line - rendered below country-fills */}
             <Layer
               id={`flight-arc-line-${hoveredCountry}`}
               type="line"
+              beforeId="country-fills"
               paint={{
                 "line-color": "#32B0A0",
                 "line-width": 2,
                 "line-opacity": 0.9,
               }}
             />
-            {/* Animated dashed overlay */}
+            {/* Animated dashed overlay - rendered below country-fills */}
             <Layer
               id={`flight-arc-dash-${hoveredCountry}`}
               type="line"
+              beforeId="country-fills"
               paint={{
                 "line-color": "#ffffff",
                 "line-width": 2,
@@ -993,7 +997,7 @@ export default function MapPage() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute top-0 right-0 h-full w-80 md:w-[340px] glass-panel overflow-y-auto z-[5]"
+            className="absolute top-0 right-0 h-full w-80 md:w-[340px] glass-panel overflow-y-auto z-[50]"
           >
             <AnimatePresence mode="wait">
               {!selectedCountry ? (
