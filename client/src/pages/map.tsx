@@ -725,12 +725,15 @@ export default function MapPage() {
   }
 
   return (
-    <div className="relative h-[calc(100vh-8rem)]">
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
-        <div className="flex items-center gap-2 glass rounded-xl p-3 shadow-premium">
-          <label className="text-sm text-muted-foreground whitespace-nowrap font-medium">Passport:</label>
+    <div className="relative h-screen">
+      {/* Passport Selector - Top Left Bento Card */}
+      <div className="absolute top-20 left-4 z-10">
+        <div className="glass-bento rounded-2xl p-4">
+          <label className="text-xs text-bento-muted uppercase tracking-wider font-medium mb-2 block">
+            Your Passport
+          </label>
           <Select value={passport} onValueChange={setPassport}>
-            <SelectTrigger className="w-40 bg-white/50 dark:bg-black/30 border-white/30 dark:border-white/10 shadow-sm" data-testid="select-passport">
+            <SelectTrigger className="w-44 bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10" data-testid="select-passport">
               <SelectValue placeholder="Select passport" />
             </SelectTrigger>
             <SelectContent>
@@ -741,24 +744,27 @@ export default function MapPage() {
               ))}
             </SelectContent>
           </Select>
+          {!selectedCountry && (
+            <p className="text-xs text-bento-secondary mt-3 max-w-[160px]">
+              Click any country to see entry requirements
+            </p>
+          )}
         </div>
-        {!selectedCountry && (
-          <p className="text-sm text-muted-foreground hidden md:block glass-subtle rounded-lg px-3 py-2">
-            Click any country to see entry requirements
-          </p>
-        )}
       </div>
 
-      <div className="absolute bottom-4 left-4 z-10 glass rounded-xl p-4 shadow-premium">
-        <div className="text-xs font-semibold mb-3 text-foreground">Visa Requirements</div>
-        <div className="flex flex-col gap-2">
+      {/* Legend - Bottom Left Bento Card */}
+      <div className="absolute bottom-4 left-4 z-10 glass-bento rounded-2xl p-4">
+        <div className="text-xs text-bento-muted uppercase tracking-wider font-medium mb-3">
+          Visa Requirements
+        </div>
+        <div className="flex flex-col gap-2.5">
           {mapData?.legend && Object.entries(mapData.legend).map(([color, label]) => (
-            <div key={color} className="flex items-center gap-2.5 text-xs">
+            <div key={color} className="flex items-center gap-3 text-sm">
               <div 
-                className="w-3.5 h-3.5 rounded-md shadow-sm" 
+                className="w-3 h-3 rounded-full" 
                 style={{ backgroundColor: colorMap[color as MapColor] }} 
               />
-              <span className="text-muted-foreground">{label}</span>
+              <span className="text-bento-secondary">{label}</span>
             </div>
           ))}
         </div>
@@ -904,7 +910,7 @@ export default function MapPage() {
       <Button
         size="icon"
         variant="secondary"
-        className="absolute top-4 right-4 z-20 md:hidden"
+        className="absolute top-20 right-4 z-20 md:hidden glass-bento rounded-xl"
         onClick={() => setShowPanel(!showPanel)}
         data-testid="button-toggle-panel"
       >
@@ -918,7 +924,7 @@ export default function MapPage() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute top-0 right-0 h-full w-72 md:w-80 glass border-l border-white/20 dark:border-white/5 overflow-y-auto z-10 shadow-premium"
+            className="absolute top-0 right-0 h-full w-72 md:w-80 glass-bento border-l border-white/10 dark:border-white/5 overflow-y-auto z-10"
           >
             <AnimatePresence mode="wait">
               {!selectedCountry ? (

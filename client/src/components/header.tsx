@@ -1,21 +1,77 @@
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Home, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { NotificationBell } from "./notification-bell";
 import { useState } from "react";
 import cartaLogo from "@assets/image_1767488150902.png";
 
-export function Header() {
+interface HeaderProps {
+  variant?: "default" | "floating";
+}
+
+export function Header({ variant = "default" }: HeaderProps) {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/assess", label: "Check Requirements" },
-    { href: "/advisories", label: "Advisories" },
+    { href: "/", label: "Home", icon: Home },
+    { href: "/assess", label: "Check Requirements", icon: ClipboardCheck },
+    { href: "/advisories", label: "Advisories", icon: AlertTriangle },
   ];
 
+  // Floating dock variant for map/home page
+  if (variant === "floating") {
+    return (
+      <>
+        {/* Floating Navigation Dock - Top Center */}
+        <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] glass-dock rounded-full px-2 py-1.5 flex items-center gap-1">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = location === link.href;
+            return (
+              <Link key={link.href} href={link.href}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-full gap-2 transition-all ${
+                    isActive 
+                      ? "bg-white/20 dark:bg-white/10 text-foreground" 
+                      : "text-bento-secondary hover:text-foreground"
+                  }`}
+                  data-testid={`link-nav-${link.label.toLowerCase().replace(" ", "-")}`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline text-sm font-medium">{link.label}</span>
+                </Button>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Floating Logo - Top Left */}
+        <Link href="/" className="fixed top-4 left-4 z-[100] glass-bento rounded-xl px-3 py-2 flex items-center gap-2">
+          <img 
+            src={cartaLogo} 
+            alt="Carta" 
+            className="h-6 w-auto object-contain"
+            data-testid="img-carta-logo"
+          />
+          <span className="text-bento-primary text-sm font-medium hidden sm:inline" data-testid="text-logo">
+            Travel
+          </span>
+        </Link>
+
+        {/* Floating Actions - Top Right */}
+        <div className="fixed top-4 right-4 z-[100] glass-bento rounded-xl px-2 py-1.5 flex items-center gap-1">
+          <NotificationBell />
+          <ThemeToggle />
+        </div>
+      </>
+    );
+  }
+
+  // Default header for other pages
   return (
     <header className="sticky top-0 z-[100] w-full border-b border-white/20 dark:border-white/10 bg-white/10 dark:bg-black/20 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -257,6 +257,48 @@
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
 }
 
+/* Premium Bento Glass - Ultra transparent with strong blur and etched effect */
+.glass-bento {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass-bento {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Floating dock nav pill */
+.glass-dock {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.dark .glass-dock {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 /* Premium shadow for floating elements */
 .shadow-premium {
   box-shadow: 
@@ -270,6 +312,22 @@
     0 4px 6px -1px rgba(0, 0, 0, 0.3),
     0 10px 20px -2px rgba(0, 0, 0, 0.25),
     0 20px 40px -4px rgba(0, 0, 0, 0.2);
+}
+
+/* Bento text hierarchy */
+.text-bento-primary {
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.text-bento-secondary {
+  font-weight: 400;
+  color: hsl(var(--foreground) / 0.7);
+}
+
+.text-bento-muted {
+  font-weight: 400;
+  color: hsl(var(--foreground) / 0.5);
 }
 
 /**
