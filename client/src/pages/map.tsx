@@ -992,11 +992,7 @@ export default function MapPage() {
 
       <AnimatePresence>
         {(showPanel || selectedCountry) && (
-          <motion.div 
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          <div 
             className="absolute top-0 right-0 h-full w-80 md:w-[340px] glass-panel overflow-y-auto z-[50]"
           >
             <AnimatePresence mode="wait">
@@ -1280,7 +1276,7 @@ export default function MapPage() {
             </motion.div>
           )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
