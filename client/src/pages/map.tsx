@@ -765,18 +765,22 @@ export default function MapPage() {
 
                   {assessResult.actions && assessResult.actions.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      {assessResult.actions.map((action, i) => (
-                        <Button
-                          key={i}
-                          variant="outline"
-                          className="w-full justify-start"
-                          asChild
-                        >
-                          <a href={action.url} target="_blank" rel="noopener noreferrer">
-                            {action.label}
-                          </a>
-                        </Button>
-                      ))}
+                      {assessResult.actions.map((action, i) => {
+                        const isApplyAction = action.label.toLowerCase().includes("apply");
+                        return (
+                          <Button
+                            key={i}
+                            variant={isApplyAction ? "default" : "outline"}
+                            className="w-full"
+                            asChild
+                            data-testid={`button-action-${i}`}
+                          >
+                            <a href={action.url} target="_blank" rel="noopener noreferrer">
+                              {isApplyAction ? "Apply for Visa" : action.label}
+                            </a>
+                          </Button>
+                        );
+                      })}
                     </div>
                   )}
 
