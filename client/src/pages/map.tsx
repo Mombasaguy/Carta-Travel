@@ -730,22 +730,22 @@ export default function MapPage() {
         onMouseLeave={() => setIsHovering(false)}
         cursor="pointer"
         fog={{
-          color: "rgb(255, 255, 255)",
+          color: "rgb(252, 253, 255)",
           "high-color": "rgb(50, 176, 160)",
-          "horizon-blend": 0.06,
+          "horizon-blend": 0.04,
           "space-color": "rgb(248, 250, 252)",
           "star-intensity": 0
         }}
         onLoad={(e) => {
           const map = e.target;
-          // Improve country label readability with white halo
-          const labelLayers = ['country-label', 'state-label', 'settlement-label'];
+          // Improve country label readability with stronger white halo
+          const labelLayers = ['country-label', 'state-label', 'settlement-label', 'settlement-major-label', 'settlement-minor-label'];
           labelLayers.forEach(layerId => {
             if (map.getLayer(layerId)) {
               map.setPaintProperty(layerId, 'text-halo-color', '#ffffff');
-              map.setPaintProperty(layerId, 'text-halo-width', 1.5);
-              map.setPaintProperty(layerId, 'text-halo-blur', 0.5);
-              map.setPaintProperty(layerId, 'text-color', '#1a1a1a');
+              map.setPaintProperty(layerId, 'text-halo-width', 2);
+              map.setPaintProperty(layerId, 'text-halo-blur', 0);
+              map.setPaintProperty(layerId, 'text-color', '#2d3748');
             }
           });
         }}

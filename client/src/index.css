@@ -214,17 +214,17 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    /* Premium fintech radial gradient - soft, diffuse, like air */
+    /* Premium fintech radial gradient - extremely subtle, diffuse atmospheric glow */
     background: 
-      radial-gradient(ellipse 80% 80% at center, rgba(50,176,160,0.03) 0%, rgba(50,176,160,0.01) 40%, transparent 70%),
-      radial-gradient(ellipse at center, rgba(255,255,255,1) 0%, rgba(250,252,254,1) 50%, rgba(245,247,250,1) 100%);
+      radial-gradient(ellipse 120% 100% at 50% 40%, rgba(50,176,160,0.015) 0%, rgba(50,176,160,0.005) 50%, transparent 80%),
+      linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(252,253,255,1) 40%, rgba(248,250,252,1) 100%);
     background-attachment: fixed;
   }
 
   .dark body {
     background: 
-      radial-gradient(ellipse 80% 80% at center, rgba(50,176,160,0.05) 0%, rgba(50,176,160,0.02) 40%, transparent 70%),
-      radial-gradient(ellipse at center, rgba(15,15,18,1) 0%, rgba(10,10,12,1) 50%, rgba(5,5,7,1) 100%);
+      radial-gradient(ellipse 120% 100% at 50% 40%, rgba(50,176,160,0.03) 0%, rgba(50,176,160,0.01) 50%, transparent 80%),
+      linear-gradient(180deg, rgba(12,12,14,1) 0%, rgba(8,8,10,1) 40%, rgba(5,5,7,1) 100%);
   }
 }
 
