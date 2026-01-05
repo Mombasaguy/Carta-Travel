@@ -20,6 +20,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={MapPage} />
+      <Route path="/map" component={MapPage} />
       <Route path="/trip" component={TripFlowPage} />
       <Route path="/assess" component={AssessPage} />
       <Route path="/advisories" component={AdvisoriesPage} />
@@ -35,7 +36,7 @@ function AppLayout() {
   const [location] = useLocation();
   
   // Use floating header for home/map page
-  const isMapPage = location === "/";
+  const isMapPage = location === "/" || location === "/map";
   
   if (isMapPage) {
     return (
