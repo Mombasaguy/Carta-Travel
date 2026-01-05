@@ -2,13 +2,18 @@ import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import Map, { Source, Layer, type MapMouseEvent } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink, PanelRightOpen, PanelRightClose, FileSignature, Download } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import "mapbox-gl/dist/mapbox-gl.css";
+
+const LETTER_SUPPORTED_COUNTRIES = ["US", "GB", "CA", "BR", "DE", "JP"];
 
 const topDestinations = [
   { code: "US", name: "United States", region: "North America" },
@@ -447,6 +452,99 @@ export default function MapPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [assessResult, setAssessResult] = useState<AssessResult | null>(null);
   const [showPanel, setShowPanel] = useState(false);
+  const [letterOpen, setLetterOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [mergeData, setMergeData] = useState({
+    FULL_NAME: "",
+    EMPLOYEE_EMAIL: "",
+    EMPLOYEE_TITLE: "",
+  });
+
+  const handleDownloadLetter = async () => {
+    if (!selectedCountry) return;
+    
+    setIsDownloading(true);
+    try {
+      const currentDate = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      
+      const today = new Date();
+      const returnDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
+      
+      const response = await fetch("/api/letters/docx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateId: selectedCountry,
+          merge: {
+            FULL_NAME: mergeData.FULL_NAME || "Employee Name",
+            EMPLOYEE_EMAIL: mergeData.EMPLOYEE_EMAIL || "employee@carta.com",
+            EMPLOYEE_TITLE: mergeData.EMPLOYEE_TITLE || "Team Member",
+            CITIZENSHIP: passport,
+            DEPARTURE_DATE: today.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long", 
+              day: "numeric"
+            }),
+            RETURN_DATE: returnDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric"
+            }),
+            CURRENT_DATE: currentDate
+          }
+        })
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Carta_Invitation_Letter_${selectedCountry}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setLetterOpen(false);
+      } else {
+        const fallbackResponse = await fetch("/api/letters/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            employeeName: mergeData.FULL_NAME || "Employee Name",
+            employeeEmail: mergeData.EMPLOYEE_EMAIL || "employee@carta.com",
+            employeeTitle: mergeData.EMPLOYEE_TITLE || "Team Member",
+            destinationCountry: selectedCountry,
+            citizenship: passport,
+            departureDate: today.toISOString().split("T")[0],
+            returnDate: returnDate.toISOString().split("T")[0],
+            purpose: "BUSINESS",
+            template: selectedCountry
+          })
+        });
+        
+        const data = await fallbackResponse.json();
+        const textBlob = new Blob([data.content], { type: "text/plain" });
+        const url = URL.createObjectURL(textBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invitation_letter_${selectedCountry}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setLetterOpen(false);
+      }
+    } catch (error) {
+      console.error("Failed to download letter:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const { data: configData, isLoading: configLoading } = useQuery<{ token: string }>({
     queryKey: ["/api/config/mapbox"],
@@ -847,6 +945,85 @@ export default function MapPage() {
                         );
                       })}
                     </div>
+                  )}
+
+                  {selectedCountry && LETTER_SUPPORTED_COUNTRIES.includes(selectedCountry) && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <FileSignature className="w-4 h-4" />
+                          Invitation Letter
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Official Carta business letter
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Present to immigration only if requested.
+                        </p>
+                        <Sheet open={letterOpen} onOpenChange={setLetterOpen}>
+                          <SheetTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-full" data-testid="button-generate-letter-map">
+                              <FileSignature className="w-4 h-4 mr-2" />
+                              Generate Letter
+                            </Button>
+                          </SheetTrigger>
+                          <SheetContent side="bottom" className="rounded-t-2xl">
+                            <SheetHeader>
+                              <SheetTitle>Invitation Letter Details</SheetTitle>
+                              <SheetDescription>
+                                Enter your information to personalize the letter
+                              </SheetDescription>
+                            </SheetHeader>
+                            <div className="py-6 space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="fullName">Full Name (as on passport)</Label>
+                                <Input
+                                  id="fullName"
+                                  placeholder="Enter your full name"
+                                  value={mergeData.FULL_NAME}
+                                  onChange={(e) => setMergeData({ ...mergeData, FULL_NAME: e.target.value })}
+                                  data-testid="input-letter-name-map"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="email">Work Email</Label>
+                                <Input
+                                  id="email"
+                                  type="email"
+                                  placeholder="your.name@carta.com"
+                                  value={mergeData.EMPLOYEE_EMAIL}
+                                  onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_EMAIL: e.target.value })}
+                                  data-testid="input-letter-email-map"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="title">Job Title</Label>
+                                <Input
+                                  id="title"
+                                  placeholder="e.g. Software Engineer"
+                                  value={mergeData.EMPLOYEE_TITLE}
+                                  onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_TITLE: e.target.value })}
+                                  data-testid="input-letter-title-map"
+                                />
+                              </div>
+                            </div>
+                            <SheetFooter>
+                              <Button
+                                onClick={handleDownloadLetter}
+                                disabled={isDownloading}
+                                className="w-full"
+                                data-testid="button-download-letter-map"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                {isDownloading ? "Generating..." : "Download Letter"}
+                              </Button>
+                            </SheetFooter>
+                          </SheetContent>
+                        </Sheet>
+                      </CardContent>
+                    </Card>
                   )}
 
                   {assessResult.governance && (
