@@ -836,6 +836,20 @@ export default function MapPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-4"
                 >
+                  {assessResult.actions && assessResult.actions.length > 0 && 
+                   ["VISA", "EVISA", "ETA"].includes(assessResult.entryType) && (
+                    <Button
+                      className="w-full"
+                      asChild
+                      data-testid="button-apply-visa-top"
+                    >
+                      <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
+                        {assessResult.entryType === "ETA" ? "Apply for ETA" : "Apply for Visa"}
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                      </a>
+                    </Button>
+                  )}
+
                   <Card>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between gap-2">
@@ -843,24 +857,9 @@ export default function MapPage() {
                           <Plane className="w-4 h-4" />
                           Entry Requirements
                         </CardTitle>
-                        {assessResult.actions && assessResult.actions.length > 0 && 
-                         ["VISA", "EVISA", "ETA"].includes(assessResult.entryType) ? (
-                          <Button
-                            size="sm"
-                            className="gap-1 text-xs h-7 px-2"
-                            asChild
-                            data-testid="button-apply-visa"
-                          >
-                            <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
-                              {assessResult.entryType === "ETA" ? "Apply for ETA" : "Apply for Visa"}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </Button>
-                        ) : (
-                          <Badge variant={assessResult.required ? "destructive" : "secondary"}>
-                            {assessResult.entryType}
-                          </Badge>
-                        )}
+                        <Badge variant={assessResult.required ? "destructive" : "secondary"}>
+                          {assessResult.entryType}
+                        </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -924,27 +923,6 @@ export default function MapPage() {
                         <p className="text-sm text-muted-foreground">{assessResult.reason}</p>
                       </CardContent>
                     </Card>
-                  )}
-
-                  {assessResult.actions && assessResult.actions.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      {assessResult.actions.map((action, i) => {
-                        const isApplyAction = action.label.toLowerCase().includes("apply");
-                        return (
-                          <Button
-                            key={i}
-                            variant={isApplyAction ? "default" : "outline"}
-                            className="w-full"
-                            asChild
-                            data-testid={`button-action-${i}`}
-                          >
-                            <a href={action.url} target="_blank" rel="noopener noreferrer">
-                              {isApplyAction ? "Apply for Visa" : action.label}
-                            </a>
-                          </Button>
-                        );
-                      })}
-                    </div>
                   )}
 
                   {selectedCountry && LETTER_SUPPORTED_COUNTRIES.includes(selectedCountry) && (
