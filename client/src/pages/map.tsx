@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink, PanelRightOpen, PanelRightClose, FileSignature, Download } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { FloatingDock, FloatingLogo, FloatingActions } from "@/components/header";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const LETTER_SUPPORTED_COUNTRIES = ["US", "GB", "CA", "BR", "DE", "JP"];
@@ -755,47 +756,63 @@ export default function MapPage() {
 
   return (
     <div className="relative h-screen">
-      {/* Passport Selector - Top Left Bento Card */}
-      <div className="absolute top-20 left-4 z-10">
-        <div className="glass-bento rounded-2xl p-4">
-          <label className="text-xs text-bento-muted uppercase tracking-wider font-medium mb-2 block">
-            Your Passport
-          </label>
-          <Select value={passport} onValueChange={setPassport}>
-            <SelectTrigger className="w-44 bg-white/10 dark:bg-white/5 border-white/20 dark:border-white/10" data-testid="select-passport">
-              <SelectValue placeholder="Select passport" />
-            </SelectTrigger>
-            <SelectContent>
-              {passportOptions.map((opt) => (
-                <SelectItem key={opt.code} value={opt.code}>
-                  {opt.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {!selectedCountry && (
-            <p className="text-xs text-bento-secondary mt-3 max-w-[160px]">
-              Click any country to see entry requirements
-            </p>
-          )}
+      {/* Bento HUD Grid Overlay */}
+      <div className="bento-hud">
+        {/* Top Left: Logo + Passport Selector */}
+        <div className="bento-hud-top-left">
+          <FloatingLogo />
+          <div className="glass-bento rounded-2xl p-4">
+            <label className="text-label mb-2 block">
+              Your Passport
+            </label>
+            <Select value={passport} onValueChange={setPassport}>
+              <SelectTrigger className="w-44 bg-white/5 dark:bg-white/5 border-white/10 spring-transition" data-testid="select-passport">
+                <SelectValue placeholder="Select passport" />
+              </SelectTrigger>
+              <SelectContent>
+                {passportOptions.map((opt) => (
+                  <SelectItem key={opt.code} value={opt.code}>
+                    {opt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!selectedCountry && (
+              <p className="text-xs text-bento-secondary mt-3 max-w-[160px]">
+                Click any country to view requirements
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Legend - Bottom Left Bento Card */}
-      <div className="absolute bottom-4 left-4 z-10 glass-bento rounded-2xl p-4">
-        <div className="text-xs text-bento-muted uppercase tracking-wider font-medium mb-3">
-          Visa Requirements
+        {/* Top Center: Navigation Dock */}
+        <div className="bento-hud-top-center">
+          <FloatingDock />
         </div>
-        <div className="flex flex-col gap-2.5">
-          {mapData?.legend && Object.entries(mapData.legend).map(([color, label]) => (
-            <div key={color} className="flex items-center gap-3 text-sm">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: colorMap[color as MapColor] }} 
-              />
-              <span className="text-bento-secondary">{label}</span>
+
+        {/* Top Right: Actions */}
+        <div className="bento-hud-top-right">
+          <FloatingActions />
+        </div>
+
+        {/* Bottom Left: Legend */}
+        <div className="bento-hud-bottom-left">
+          <div className="glass-bento rounded-2xl p-4">
+            <div className="text-label mb-3">
+              Entry Requirements
             </div>
-          ))}
+            <div className="flex flex-col gap-2.5">
+              {mapData?.legend && Object.entries(mapData.legend).map(([color, label]) => (
+                <div key={color} className="flex items-center gap-3 text-sm spring-transition">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: colorMap[color as MapColor] }} 
+                  />
+                  <span className="text-bento-secondary">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -942,8 +959,8 @@ export default function MapPage() {
 
       <Button
         size="icon"
-        variant="secondary"
-        className="absolute top-20 right-4 z-20 md:hidden glass-bento rounded-xl"
+        variant="ghost"
+        className="absolute top-28 right-6 z-20 md:hidden glass-bento rounded-xl"
         onClick={() => setShowPanel(!showPanel)}
         data-testid="button-toggle-panel"
       >
@@ -957,7 +974,7 @@ export default function MapPage() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute top-0 right-0 h-full w-72 md:w-80 glass-bento border-l border-white/10 dark:border-white/5 overflow-y-auto z-10"
+            className="absolute top-0 right-0 h-full w-80 md:w-[340px] glass-panel overflow-y-auto z-[5]"
           >
             <AnimatePresence mode="wait">
               {!selectedCountry ? (
@@ -966,25 +983,25 @@ export default function MapPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="p-4"
+                  className="p-6 pt-8"
                 >
                   <div className="flex items-center justify-between gap-2 mb-4">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-primary" />
-                      <h2 className="text-lg font-semibold">Top Destinations</h2>
+                      <h2 className="text-lg font-medium text-bento-primary">Top Destinations</h2>
                     </div>
                     <Button 
                       size="icon" 
                       variant="ghost" 
-                      className="md:hidden"
+                      className="md:hidden spring-transition"
                       onClick={() => setShowPanel(false)}
                       data-testid="button-close-destinations"
                     >
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Popular business travel destinations. Click to see requirements for your passport.
+                  <p className="text-sm text-bento-secondary mb-6">
+                    Popular business travel destinations
                   </p>
                   <div className="space-y-1">
                     {topDestinations.map((dest) => {
@@ -997,7 +1014,7 @@ export default function MapPage() {
                             setAssessResult(null);
                             assessMutation.mutate(dest.code);
                           }}
-                          className="w-full flex items-center gap-3 p-3 rounded-md hover-elevate text-left group"
+                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 spring-transition text-left group"
                           data-testid={`button-destination-${dest.code}`}
                         >
                           <div 
@@ -1005,10 +1022,10 @@ export default function MapPage() {
                             style={{ backgroundColor: color ? colorMap[color] : "#d1d5db" }}
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm">{dest.name}</div>
-                            <div className="text-xs text-muted-foreground">{dest.region}</div>
+                            <div className="font-medium text-sm text-bento-primary">{dest.name}</div>
+                            <div className="text-xs text-bento-muted">{dest.region}</div>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <ChevronRight className="w-4 h-4 text-bento-muted opacity-0 group-hover:opacity-100 spring-transition" />
                         </button>
                       );
                     })}
@@ -1021,15 +1038,19 @@ export default function MapPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="p-4"
+              className="p-6 pt-8"
             >
-              <div className="flex items-center justify-between gap-2 mb-4">
-                <h2 className="text-lg font-semibold">
-                  {countryNameMap[selectedCountry] || selectedCountry}
-                </h2>
+              <div className="flex items-center justify-between gap-2 mb-6">
+                <div>
+                  <p className="text-label mb-1">Destination</p>
+                  <h2 className="text-xl font-medium text-bento-primary">
+                    {countryNameMap[selectedCountry] || selectedCountry}
+                  </h2>
+                </div>
                 <Button 
                   size="icon" 
                   variant="ghost" 
+                  className="spring-transition"
                   onClick={closePanel}
                   data-testid="button-close-panel"
                 >
