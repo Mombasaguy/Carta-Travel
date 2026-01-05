@@ -257,6 +257,20 @@ export function ResultCards({ result, trip }: ResultCardsProps) {
             </Badge>
           </CardHeader>
           <CardContent className="pt-0">
+            {result.actions && result.actions.length > 0 && 
+             ["VISA", "EVISA", "ETA"].includes(result.entryType) && (
+              <Button
+                className="w-full mb-4"
+                asChild
+                data-testid="button-apply-visa-top"
+              >
+                <a href={result.actions[0].url} target="_blank" rel="noopener noreferrer">
+                  {result.entryType === "ETA" ? "Apply for ETA" : 
+                   result.entryType === "EVISA" ? "Apply for E-Visa" : "Apply for Visa"}
+                  <ExternalLink className="w-4 h-4 ml-2" />
+                </a>
+              </Button>
+            )}
             <p className="text-sm text-foreground leading-relaxed" data-testid="text-headline">{result.headline}</p>
             {result.details && (
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed" data-testid="text-details">
