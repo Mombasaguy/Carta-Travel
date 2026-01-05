@@ -177,11 +177,11 @@ interface AssessResult {
 }
 
 const colorMap: Record<MapColor, string> = {
-  green: "#22c55e",
-  yellow: "#eab308",
-  orange: "#f97316",
-  red: "#ef4444",
-  gray: "#6b7280",
+  green: "#66BB6A",   // Soft sage/emerald
+  yellow: "#FFD54F",  // Soft gold
+  orange: "#FFB74D",  // Soft amber
+  red: "#E57373",     // Soft salmon/brick
+  gray: "#9E9E9E",    // Neutral grey
 };
 
 const countryNameMap: Record<string, string> = {
@@ -732,9 +732,22 @@ export default function MapPage() {
         fog={{
           color: "rgb(255, 255, 255)",
           "high-color": "rgb(50, 176, 160)",
-          "horizon-blend": 0.08,
-          "space-color": "rgb(245, 247, 250)",
+          "horizon-blend": 0.06,
+          "space-color": "rgb(248, 250, 252)",
           "star-intensity": 0
+        }}
+        onLoad={(e) => {
+          const map = e.target;
+          // Improve country label readability with white halo
+          const labelLayers = ['country-label', 'state-label', 'settlement-label'];
+          labelLayers.forEach(layerId => {
+            if (map.getLayer(layerId)) {
+              map.setPaintProperty(layerId, 'text-halo-color', '#ffffff');
+              map.setPaintProperty(layerId, 'text-halo-width', 1.5);
+              map.setPaintProperty(layerId, 'text-halo-blur', 0.5);
+              map.setPaintProperty(layerId, 'text-color', '#1a1a1a');
+            }
+          });
         }}
       >
         <Source
@@ -754,8 +767,9 @@ export default function MapPage() {
             id="country-borders"
             type="line"
             paint={{
-              "line-color": "#9ca3af",
-              "line-width": 0.6,
+              "line-color": "#ffffff",
+              "line-width": 0.5,
+              "line-opacity": 0.8,
             }}
           />
         </Source>
