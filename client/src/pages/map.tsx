@@ -737,7 +737,8 @@ export default function MapPage() {
                           <Plane className="w-4 h-4" />
                           Entry Requirements
                         </CardTitle>
-                        {assessResult.required && assessResult.actions && assessResult.actions.length > 0 ? (
+                        {assessResult.actions && assessResult.actions.length > 0 && 
+                         ["VISA", "EVISA", "ETA"].includes(assessResult.entryType) ? (
                           <Button
                             size="sm"
                             className="gap-1 text-xs h-7 px-2"
@@ -745,7 +746,7 @@ export default function MapPage() {
                             data-testid="button-apply-visa"
                           >
                             <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
-                              Apply
+                              {assessResult.entryType === "ETA" ? "Apply for ETA" : "Apply for Visa"}
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           </Button>
