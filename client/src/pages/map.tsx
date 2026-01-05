@@ -860,13 +860,14 @@ export default function MapPage() {
         {/* Flight Arc - animated path from origin to hovered destination */}
         {hoveredCountry && countryCentroids[passport] && countryCentroids[hoveredCountry] && (
           <Source
-            id="flight-arc"
+            key={`flight-arc-${passport}-${hoveredCountry}`}
+            id={`flight-arc-${hoveredCountry}`}
             type="geojson"
             data={generateFlightArc(countryCentroids[passport], countryCentroids[hoveredCountry])}
           >
             {/* Glow effect layer */}
             <Layer
-              id="flight-arc-glow"
+              id={`flight-arc-glow-${hoveredCountry}`}
               type="line"
               paint={{
                 "line-color": "#32B0A0",
@@ -877,7 +878,7 @@ export default function MapPage() {
             />
             {/* Main arc line */}
             <Layer
-              id="flight-arc-line"
+              id={`flight-arc-line-${hoveredCountry}`}
               type="line"
               paint={{
                 "line-color": "#32B0A0",
@@ -887,7 +888,7 @@ export default function MapPage() {
             />
             {/* Animated dashed overlay */}
             <Layer
-              id="flight-arc-dash"
+              id={`flight-arc-dash-${hoveredCountry}`}
               type="line"
               paint={{
                 "line-color": "#ffffff",
