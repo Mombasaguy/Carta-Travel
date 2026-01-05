@@ -467,11 +467,12 @@ export default function MapPage() {
     if (!map) return;
 
     map.setFog({
-      color: "rgb(10, 20, 40)",
-      "high-color": "rgb(20, 40, 80)",
-      "horizon-blend": 0.1,
-      "space-color": "rgb(5, 10, 20)",
-      "star-intensity": 0.8,
+      color: "rgba(50, 176, 160, 0.3)",
+      "high-color": "rgba(80, 200, 180, 0.5)",
+      "horizon-blend": 0.15,
+      "space-color": "#020a10",
+      "star-intensity": 0.6,
+      range: [0.5, 10],
     });
   }, []);
 
