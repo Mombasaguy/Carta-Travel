@@ -1,13 +1,32 @@
 import { useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Map, { Source, Layer, type MapMouseEvent } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Info, AlertCircle, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowRight, Info, AlertCircle, ChevronUp, ChevronDown, X, Plane, Clock, FileText, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import "mapbox-gl/dist/mapbox-gl.css";
+
+interface AssessResult {
+  destination: string;
+  citizenship: string;
+  purpose: string;
+  entryType: string;
+  required: boolean;
+  headline: string;
+  details?: string;
+  maxStayDays: number;
+  processingTime?: string;
+  fee?: { currency: string; amount: number; reimbursable: boolean };
+  reason?: string;
+  actions?: { label: string; url: string }[];
+  governance?: { status: string; reviewDueAt: string };
+  dataSource?: string;
+}
 
 type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
 
@@ -115,6 +134,8 @@ export default function HomePage() {
   const [destination, setDestination] = useState<string | null>(null);
   const [showLegend, setShowLegend] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [assessResult, setAssessResult] = useState<AssessResult | null>(null);
 
   const { data: configData, isLoading: configLoading } = useQuery<{ token: string }>({
     queryKey: ["/api/config/mapbox"],
@@ -130,6 +151,26 @@ export default function HomePage() {
       return res.json();
     },
     enabled: !!mapboxToken,
+  });
+
+  const assessMutation = useMutation({
+    mutationFn: async (destCode: string) => {
+      const res = await fetch("/api/trip/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destination: destCode,
+          citizenship: passport,
+          purpose: "BUSINESS",
+          startDate: new Date().toISOString().split("T")[0],
+          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setAssessResult(data);
+    },
   });
 
   const handleCountryClick = useCallback((e: MapMouseEvent) => {
@@ -163,9 +204,17 @@ export default function HomePage() {
     }
     if (countryCode && countryCode !== "-99" && countryNames[countryCode]) {
       setDestination(countryCode);
+      setSelectedCountry(countryCode);
+      setAssessResult(null);
       setValidationError(null);
+      assessMutation.mutate(countryCode);
     }
-  }, []);
+  }, [assessMutation]);
+
+  const closePanel = () => {
+    setSelectedCountry(null);
+    setAssessResult(null);
+  };
 
   const handleCheckRequirements = () => {
     if (!destination) {
@@ -361,6 +410,154 @@ export default function HomePage() {
           </div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {selectedCountry && (
+          <motion.div 
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="absolute top-0 right-0 h-full w-80 bg-background/95 backdrop-blur-sm border-l overflow-y-auto z-30"
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <h2 className="text-lg font-semibold">
+                  {countryNames[selectedCountry] || selectedCountry}
+                </h2>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={closePanel}
+                  data-testid="button-close-panel"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {assessMutation.isPending && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                </div>
+              )}
+
+              {assessResult && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-4"
+                >
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Plane className="w-4 h-4" />
+                          Entry Requirements
+                        </CardTitle>
+                        {assessResult.actions && assessResult.actions.length > 0 && 
+                         ["VISA", "EVISA", "ETA"].includes(assessResult.entryType) ? (
+                          <Button
+                            size="sm"
+                            className="gap-1 text-xs h-7 px-2"
+                            asChild
+                            data-testid="button-apply-visa"
+                          >
+                            <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
+                              {assessResult.entryType === "ETA" ? "Apply for ETA" : "Apply for Visa"}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        ) : (
+                          <Badge variant={assessResult.required ? "destructive" : "secondary"}>
+                            {assessResult.entryType}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="font-medium mb-1">{assessResult.headline}</p>
+                      {assessResult.details && (
+                        <p className="text-sm text-muted-foreground">{assessResult.details}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {(assessResult.maxStayDays > 0 || assessResult.processingTime) && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          Timing
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {assessResult.maxStayDays > 0 && (
+                          <div className="flex justify-between gap-2 text-sm">
+                            <span className="text-muted-foreground">Allowed Stay</span>
+                            <span>Up to {assessResult.maxStayDays} days</span>
+                          </div>
+                        )}
+                        {assessResult.processingTime && (
+                          <div className="flex justify-between gap-2 text-sm">
+                            <span className="text-muted-foreground">Processing Time</span>
+                            <span>{assessResult.processingTime}</span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {assessResult.fee && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Fee</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm">
+                          {assessResult.fee.currency} {assessResult.fee.amount}
+                          {assessResult.fee.reimbursable && (
+                            <span className="text-green-600 dark:text-green-400 ml-2">(Reimbursable)</span>
+                          )}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {assessResult.reason && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Why This Applies
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">{assessResult.reason}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <Button 
+                    className="w-full gap-2" 
+                    onClick={handleCheckRequirements}
+                    data-testid="button-full-assessment"
+                  >
+                    View full assessment
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </motion.div>
+              )}
+
+              {assessMutation.isError && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                  <p>Could not load requirements for this destination.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
