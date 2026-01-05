@@ -19,10 +19,9 @@ import AdvisoriesPage from "@/pages/advisories";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
+      <Route path="/" component={MapPage} />
       <Route path="/trip" component={TripFlowPage} />
       <Route path="/assess" component={AssessPage} />
-      <Route path="/map" component={MapPage} />
       <Route path="/advisories" component={AdvisoriesPage} />
       <Route path="/country/:id" component={CountryDetailPage} />
       <Route path="/search" component={SearchPage} />
