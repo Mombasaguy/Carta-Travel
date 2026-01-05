@@ -554,20 +554,27 @@ export default function MapPage() {
 
   return (
     <div className="relative h-[calc(100vh-8rem)]">
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-md p-2 border">
-        <label className="text-sm font-medium whitespace-nowrap">Your Passport:</label>
-        <Select value={passport} onValueChange={setPassport}>
-          <SelectTrigger className="w-44 bg-background" data-testid="select-passport">
-            <SelectValue placeholder="Select passport" />
-          </SelectTrigger>
-          <SelectContent>
-            {passportOptions.map((opt) => (
-              <SelectItem key={opt.code} value={opt.code}>
-                {opt.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
+        <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-md p-2">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">Passport:</label>
+          <Select value={passport} onValueChange={setPassport}>
+            <SelectTrigger className="w-40 bg-background/80 border-0 shadow-sm" data-testid="select-passport">
+              <SelectValue placeholder="Select passport" />
+            </SelectTrigger>
+            <SelectContent>
+              {passportOptions.map((opt) => (
+                <SelectItem key={opt.code} value={opt.code}>
+                  {opt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {!selectedCountry && (
+          <p className="text-sm text-muted-foreground hidden md:block">
+            Click any country to see entry requirements
+          </p>
+        )}
       </div>
 
       <div className="absolute bottom-4 left-4 z-10 bg-background/90 backdrop-blur-sm rounded-md p-3 border">
