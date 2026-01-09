@@ -263,7 +263,7 @@ export function assess(input: AssessInput): AssessResult {
       isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
       governance: null,
       sources: null,
-      actions: null,
+      actions: getFallbackActions(parsedInput.destination, "UNKNOWN"),
       letterAvailable: false,
       letterTemplate: null,
       dataSource: "unknown",
@@ -497,7 +497,7 @@ export async function assessWithApi(input: AssessInput): Promise<AssessResult> {
     isUSEmployerSponsored: parsedInput.isUSEmployerSponsored,
     governance: null,
     sources: null,
-    actions: null,
+    actions: getFallbackActions(parsedInput.destination, "UNKNOWN"),
     letterAvailable: false,
     letterTemplate: null,
     dataSource: "unknown",
@@ -689,22 +689,36 @@ function getCuratedVisaData(citizenship: string, destination: string): Omit<Asse
 
 function getFallbackActions(destination: string, entryType: string): { label: string; url: string }[] | null {
   const visaLink = getVisaLink(destination);
-  if (!visaLink) return null;
-  
   const actions: { label: string; url: string }[] = [];
   
-  // Add appropriate link based on entry type
-  if (entryType === "ETA" && visaLink.etaUrl) {
-    actions.push({ label: "Apply for ETA", url: visaLink.etaUrl });
-  } else if (entryType === "EVISA" && visaLink.eVisaUrl) {
-    actions.push({ label: "Apply for e-Visa", url: visaLink.eVisaUrl });
-  } else if (entryType === "VISA") {
-    actions.push({ label: "Visa Information", url: visaLink.officialVisaUrl });
-  }
-  
-  // Always add official visa info as secondary link if not already added
-  if (actions.length === 0 || (actions[0].url !== visaLink.officialVisaUrl)) {
-    actions.push({ label: "Official Visa Info", url: visaLink.officialVisaUrl });
+  if (visaLink) {
+    // Add appropriate link based on entry type
+    if (entryType === "ETA" && visaLink.etaUrl) {
+      actions.push({ label: "Apply for ETA", url: visaLink.etaUrl });
+    } else if (entryType === "EVISA" && visaLink.eVisaUrl) {
+      actions.push({ label: "Apply for e-Visa", url: visaLink.eVisaUrl });
+    } else if (entryType === "VISA") {
+      actions.push({ label: "Visa Information", url: visaLink.officialVisaUrl });
+    }
+    
+    // Always add official visa info as secondary link if not already added
+    if (actions.length === 0 || (actions[0].url !== visaLink.officialVisaUrl)) {
+      actions.push({ label: "Official Visa Info", url: visaLink.officialVisaUrl });
+    }
+  } else {
+    // Fallback for countries without curated links - use Wikipedia or travel advisory
+    const countryName = getCountryName(destination).replace(/ /g, "_");
+    const wikiUrl = `https://en.wikipedia.org/wiki/Visa_requirements_for_${countryName}_citizens`;
+    
+    if (entryType === "VISA") {
+      actions.push({ label: "Visa Information", url: wikiUrl });
+    } else if (entryType === "ETA") {
+      actions.push({ label: "ETA Information", url: wikiUrl });
+    } else if (entryType === "EVISA") {
+      actions.push({ label: "e-Visa Information", url: wikiUrl });
+    } else {
+      actions.push({ label: "Entry Information", url: wikiUrl });
+    }
   }
   
   return actions.length > 0 ? actions : null;
@@ -730,6 +744,60 @@ const countryNames: Record<string, string> = {
   MX: "Mexico",
   IT: "Italy",
   ES: "Spain",
+  NL: "Netherlands",
+  CH: "Switzerland",
+  SE: "Sweden",
+  NO: "Norway",
+  DK: "Denmark",
+  FI: "Finland",
+  IE: "Ireland",
+  AT: "Austria",
+  BE: "Belgium",
+  PT: "Portugal",
+  GR: "Greece",
+  PL: "Poland",
+  CZ: "Czech Republic",
+  HU: "Hungary",
+  RO: "Romania",
+  NZ: "New Zealand",
+  SG: "Singapore",
+  HK: "Hong Kong",
+  KR: "South Korea",
+  TW: "Taiwan",
+  TH: "Thailand",
+  MY: "Malaysia",
+  ID: "Indonesia",
+  PH: "Philippines",
+  VN: "Vietnam",
+  AE: "United Arab Emirates",
+  SA: "Saudi Arabia",
+  IL: "Israel",
+  TR: "Turkey",
+  ZA: "South Africa",
+  EG: "Egypt",
+  NG: "Nigeria",
+  KE: "Kenya",
+  AR: "Argentina",
+  CL: "Chile",
+  CO: "Colombia",
+  PE: "Peru",
+  RU: "Russia",
+  UA: "Ukraine",
+  QA: "Qatar",
+  KW: "Kuwait",
+  BH: "Bahrain",
+  OM: "Oman",
+  JO: "Jordan",
+  LB: "Lebanon",
+  PK: "Pakistan",
+  BD: "Bangladesh",
+  LK: "Sri Lanka",
+  NP: "Nepal",
+  MM: "Myanmar",
+  KH: "Cambodia",
+  LA: "Laos",
+  MA: "Morocco",
+  TN: "Tunisia",
 };
 
 function getCountryName(code: string): string {

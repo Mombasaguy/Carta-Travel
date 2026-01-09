@@ -891,23 +891,51 @@ export default function MapPage() {
                 >
                   <Card className="border-gray-200">
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Plane className="w-4 h-4 text-emerald-600" />
                           Entry Requirements
                         </CardTitle>
-                        <Badge 
-                          variant={assessResult.required ? "destructive" : "secondary"}
-                          className={!assessResult.required ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : ""}
-                        >
-                          {assessResult.entryType}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={assessResult.required ? "destructive" : "secondary"}
+                            className={!assessResult.required ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : ""}
+                          >
+                            {assessResult.entryType}
+                          </Badge>
+                          {assessResult.actions && assessResult.actions.length > 0 && (
+                            <a 
+                              href={assessResult.actions[0].url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                              data-testid="link-apply-portal"
+                            >
+                              Apply
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <p className="font-medium text-gray-900">{assessResult.headline}</p>
                       {assessResult.details && (
                         <p className="text-sm text-gray-500 mt-1">{assessResult.details}</p>
+                      )}
+                      {assessResult.actions && assessResult.actions.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <a 
+                            href={assessResult.actions[0].url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-medium rounded-lg transition-colors w-full justify-center"
+                            data-testid="button-apply-visa-top"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            {assessResult.actions[0].label}
+                          </a>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
