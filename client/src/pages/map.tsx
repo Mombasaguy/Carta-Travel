@@ -162,10 +162,13 @@ export default function MapPage() {
           destination: destCode,
           citizenship: passport,
           purpose: "BUSINESS",
-          startDate: new Date().toISOString().split("T")[0],
-          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          durationDays: 7,
+          travelDate: new Date().toISOString().split("T")[0],
         }),
       });
+      if (!res.ok) {
+        throw new Error("Assessment failed");
+      }
       return res.json();
     },
     onSuccess: (data) => {
