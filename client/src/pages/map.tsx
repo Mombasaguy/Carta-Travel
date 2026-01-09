@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { X, Plane, FileText, Clock, AlertCircle, ChevronRight, ExternalLink, FileSignature, Download, Globe } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
+import cartaLogo from "@assets/image_1767998973366.png";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const LETTER_SUPPORTED_COUNTRIES = ["US", "GB", "CA", "BR", "DE", "JP"];
@@ -618,13 +619,15 @@ export default function MapPage() {
     <div className="relative h-screen overflow-hidden bg-gradient-to-b from-slate-50 to-white">
       <div className="absolute top-0 left-0 right-0 z-20">
         <div className="flex flex-col items-center pt-4 pb-2">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-              <Globe className="w-5 h-5 text-white" />
-            </div>
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <img 
+              src={cartaLogo} 
+              alt="Carta" 
+              className="h-8 w-auto"
+            />
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
-                <span className="text-emerald-600">Carta</span> Travel
+                Travel
               </h1>
               <p className="text-[10px] uppercase tracking-wider text-gray-500 -mt-0.5">
                 Global Mobility Platform
