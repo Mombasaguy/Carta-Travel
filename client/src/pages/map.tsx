@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import Map, { Source, Layer, type MapMouseEvent } from "react-map-gl/mapbox";
+import Map, { Source, Layer, type MapMouseEvent, type MapRef } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -135,6 +135,7 @@ export default function MapPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [assessResult, setAssessResult] = useState<AssessResult | null>(null);
+  const mapRef = useRef<MapRef>(null);
 
   const { data: configData, isLoading: configLoading } = useQuery<{ token: string }>({
     queryKey: ["/api/config/mapbox"],
@@ -173,12 +174,17 @@ export default function MapPage() {
   });
 
   const handleCountryClick = useCallback((e: MapMouseEvent) => {
-    const features = e.features;
+    if (!mapRef.current) return;
+    
+    const features = mapRef.current.queryRenderedFeatures(e.point, {
+      layers: ["country-fills"],
+    });
+    
     if (!features || features.length === 0) return;
-    const countryFeature = features.find(f => f.layer?.id === "country-fills");
-    if (!countryFeature) return;
+    const countryFeature = features[0];
     const props = countryFeature.properties;
     if (!props) return;
+    
     let countryCode = props["ISO3166-1-Alpha-2"];
     if (!countryCode || countryCode === "-99") countryCode = props["ISO_A2"];
     if (!countryCode || countryCode === "-99") {
@@ -323,6 +329,7 @@ export default function MapPage() {
       ) : (
         <div className="pt-[72px] h-full">
           <Map
+            ref={mapRef}
             mapboxAccessToken={mapboxToken}
             initialViewState={{
               longitude: 0,
