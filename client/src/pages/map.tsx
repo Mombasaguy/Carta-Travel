@@ -990,69 +990,15 @@ export default function MapPage() {
         {showPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
       </Button>
 
-      {/* Debug: Always show panel */}
-      <div 
-        className="fixed top-0 right-0 h-full w-80 md:w-[340px] bg-white dark:bg-gray-900 border-l-4 border-red-500 overflow-y-auto z-[9999] shadow-2xl"
-      >
-        <div className="p-4 bg-red-100 dark:bg-red-900 text-black dark:text-white font-bold">
-          DEBUG: Panel is visible. Selected: {selectedCountry || "none"}
-        </div>
-        <AnimatePresence mode="wait">
-          {!selectedCountry ? (
-                <motion.div
-                  key="destinations"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="p-6 pt-8"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-primary" />
-                      <h2 className="text-lg font-medium text-bento-primary">Top Destinations</h2>
-                    </div>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="md:hidden spring-transition"
-                      onClick={() => setShowPanel(false)}
-                      data-testid="button-close-destinations"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-sm text-bento-secondary mb-6">
-                    Popular business travel destinations
-                  </p>
-                  <div className="space-y-1">
-                    {topDestinations.map((dest) => {
-                      const color = colorsByIso2[dest.code];
-                      return (
-                        <button
-                          key={dest.code}
-                          onClick={() => {
-                            setSelectedCountry(dest.code);
-                            setAssessResult(null);
-                            assessMutation.mutate(dest.code);
-                          }}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 spring-transition text-left group"
-                          data-testid={`button-destination-${dest.code}`}
-                        >
-                          <div 
-                            className="w-3 h-3 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: color ? colorMap[color] : "#d1d5db" }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-bento-primary">{dest.name}</div>
-                            <div className="text-xs text-bento-muted">{dest.region}</div>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-bento-muted opacity-0 group-hover:opacity-100 spring-transition" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              ) : (
+      <AnimatePresence>
+        {selectedCountry && (
+          <motion.div 
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 h-full w-80 md:w-[340px] glass-panel overflow-y-auto z-[50] shadow-2xl"
+          >
             <motion.div
               key="assessment"
               initial={{ x: "100%", opacity: 0 }}
@@ -1276,9 +1222,9 @@ export default function MapPage() {
                 </div>
               )}
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
