@@ -620,15 +620,12 @@ export default function MapPage() {
       <div className="absolute top-0 left-0 right-0 z-20">
         <div className="flex flex-col items-center pt-4 pb-2">
           <Link href="/" className="flex flex-col items-center hover:opacity-80 transition-opacity">
-            <h1 className="flex items-center text-xl font-semibold text-gray-900">
-              <img 
-                src={cartaLogo} 
-                alt="Carta" 
-                className="h-6 w-auto mr-1.5"
-              />
-              Travel
-            </h1>
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mt-0.5">
+            <img 
+              src={cartaLogo} 
+              alt="Carta" 
+              className="h-12 w-auto"
+            />
+            <p className="text-[11px] uppercase tracking-widest text-gray-500 mt-1">
               Global Mobility Platform
             </p>
           </Link>
