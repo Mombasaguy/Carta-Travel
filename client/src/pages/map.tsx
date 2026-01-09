@@ -1,33 +1,32 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import Map, { Source, Layer, type MapMouseEvent, type MapRef } from "react-map-gl/mapbox";
+import { useLocation } from "wouter";
+import Map, { Source, Layer, type MapMouseEvent } from "react-map-gl/mapbox";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { X, Plane, FileText, Clock, AlertCircle, MapPin, ChevronRight, ExternalLink, PanelRightOpen, PanelRightClose, FileSignature, Download, Info } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import { FloatingDock, FloatingLogo, FloatingActions } from "@/components/header";
+import { ArrowRight, AlertCircle, X, Plane, Clock, FileText, ExternalLink, Globe, Shield } from "lucide-react";
+import { Link } from "wouter";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const LETTER_SUPPORTED_COUNTRIES = ["US", "GB", "CA", "BR", "DE", "JP"];
-
-const topDestinations = [
-  { code: "US", name: "United States", region: "North America" },
-  { code: "GB", name: "United Kingdom", region: "Europe" },
-  { code: "DE", name: "Germany", region: "Europe" },
-  { code: "FR", name: "France", region: "Europe" },
-  { code: "CA", name: "Canada", region: "North America" },
-  { code: "AE", name: "United Arab Emirates", region: "Middle East" },
-  { code: "SG", name: "Singapore", region: "Asia" },
-  { code: "JP", name: "Japan", region: "Asia" },
-  { code: "AU", name: "Australia", region: "Oceania" },
-  { code: "CH", name: "Switzerland", region: "Europe" },
-];
+interface AssessResult {
+  destination: string;
+  citizenship: string;
+  purpose: string;
+  entryType: string;
+  required: boolean;
+  headline: string;
+  details?: string;
+  maxStayDays: number;
+  processingTime?: string;
+  fee?: { currency: string; amount: number; reimbursable: boolean };
+  reason?: string;
+  actions?: { label: string; url: string }[];
+  governance?: { status: string; reviewDueAt: string };
+  dataSource?: string;
+}
 
 type MapColor = "green" | "yellow" | "orange" | "red" | "gray";
 
@@ -38,617 +37,104 @@ interface MapColorResponse {
   legend: Record<MapColor, string>;
 }
 
-// ISO2 to ISO3 mapping for converting between country code formats
-const iso2ToIso3: Record<string, string> = {
-  US: "USA", GB: "GBR", DE: "DEU", FR: "FRA", CA: "CAN", AU: "AUS",
-  JP: "JPN", CN: "CHN", IN: "IND", BR: "BRA", MX: "MEX", IT: "ITA",
-  ES: "ESP", NL: "NLD", CH: "CHE", SE: "SWE", NO: "NOR", DK: "DNK",
-  FI: "FIN", BE: "BEL", AT: "AUT", IE: "IRL", PT: "PRT", PL: "POL",
-  CZ: "CZE", HU: "HUN", RO: "ROU", BG: "BGR", HR: "HRV", SK: "SVK",
-  SI: "SVN", EE: "EST", LV: "LVA", LT: "LTU", GR: "GRC", CY: "CYP",
-  MT: "MLT", LU: "LUX", IS: "ISL", NZ: "NZL", SG: "SGP", HK: "HKG",
-  KR: "KOR", TW: "TWN", MY: "MYS", TH: "THA", VN: "VNM", PH: "PHL",
-  ID: "IDN", AE: "ARE", SA: "SAU", IL: "ISR", TR: "TUR", ZA: "ZAF",
-  EG: "EGY", NG: "NGA", KE: "KEN", MA: "MAR", AR: "ARG", CL: "CHL",
-  CO: "COL", PE: "PER", VE: "VEN", RU: "RUS", UA: "UKR", QA: "QAT",
-  KW: "KWT", BH: "BHR", OM: "OMN", JO: "JOR", LB: "LBN", PK: "PAK",
-  BD: "BGD", LK: "LKA", NP: "NPL", MM: "MMR", KH: "KHM", LA: "LAO",
-};
-
-// Reverse mapping: ISO3 to ISO2
-const iso3ToIso2: Record<string, string> = Object.fromEntries(
-  Object.entries(iso2ToIso3).map(([iso2, iso3]) => [iso3, iso2])
-);
-
-// Country name to ISO2 mapping for fallback when ISO codes are missing (-99)
-const nameToIso2: Record<string, string> = {
-  "France": "FR",
-  "Norway": "NO",
-  "United States of America": "US",
-  "United States": "US",
-  "United Kingdom": "GB",
-  "Germany": "DE",
-  "Canada": "CA",
-  "Australia": "AU",
-  "Japan": "JP",
-  "China": "CN",
-  "India": "IN",
-  "Brazil": "BR",
-  "Mexico": "MX",
-  "Italy": "IT",
-  "Spain": "ES",
-  "Netherlands": "NL",
-  "Switzerland": "CH",
-  "Sweden": "SE",
-  "Denmark": "DK",
-  "Finland": "FI",
-  "Belgium": "BE",
-  "Austria": "AT",
-  "Ireland": "IE",
-  "Portugal": "PT",
-  "Poland": "PL",
-  "Czech Republic": "CZ",
-  "Czechia": "CZ",
-  "Hungary": "HU",
-  "Romania": "RO",
-  "Bulgaria": "BG",
-  "Croatia": "HR",
-  "Slovakia": "SK",
-  "Slovenia": "SI",
-  "Estonia": "EE",
-  "Latvia": "LV",
-  "Lithuania": "LT",
-  "Greece": "GR",
-  "Cyprus": "CY",
-  "Malta": "MT",
-  "Luxembourg": "LU",
-  "Iceland": "IS",
-  "New Zealand": "NZ",
-  "Singapore": "SG",
-  "Hong Kong": "HK",
-  "South Korea": "KR",
-  "Republic of Korea": "KR",
-  "Korea": "KR",
-  "Taiwan": "TW",
-  "Thailand": "TH",
-  "Vietnam": "VN",
-  "Viet Nam": "VN",
-  "Philippines": "PH",
-  "Indonesia": "ID",
-  "Malaysia": "MY",
-  "United Arab Emirates": "AE",
-  "Saudi Arabia": "SA",
-  "Israel": "IL",
-  "Turkey": "TR",
-  "South Africa": "ZA",
-  "Egypt": "EG",
-  "Nigeria": "NG",
-  "Kenya": "KE",
-  "Morocco": "MA",
-  "Argentina": "AR",
-  "Chile": "CL",
-  "Colombia": "CO",
-  "Peru": "PE",
-  "Venezuela": "VE",
-  "Russia": "RU",
-  "Russian Federation": "RU",
-  "Ukraine": "UA",
-  "Qatar": "QA",
-  "Kuwait": "KW",
-  "Bahrain": "BH",
-  "Oman": "OM",
-  "Jordan": "JO",
-  "Lebanon": "LB",
-  "Pakistan": "PK",
-  "Bangladesh": "BD",
-  "Sri Lanka": "LK",
-  "Nepal": "NP",
-  "Myanmar": "MM",
-  "Cambodia": "KH",
-  "Laos": "LA",
-  "Lao PDR": "LA",
-  "Serbia": "RS",
-  "Kosovo": "XK",
-  "Montenegro": "ME",
-  "Bosnia and Herzegovina": "BA",
-  "North Macedonia": "MK",
-  "Macedonia": "MK",
-  "Albania": "AL",
-  "Moldova": "MD",
-  "Belarus": "BY",
-  "Georgia": "GE",
-  "Armenia": "AM",
-  "Azerbaijan": "AZ",
-};
-
-interface AssessResult {
-  entryType: string;
-  required: boolean;
-  headline: string;
-  details: string | null;
-  reason: string | null;
-  maxStayDays: number;
-  fee: { amount: number; currency: string; reimbursable: boolean } | null;
-  processingTime: string | null;
-  governance: { status: string; owner: string; reviewDueAt: string } | null;
-  sources: { sourceId: string; title: string; verifiedAt: string }[] | null;
-  actions: { label: string; url: string }[] | null;
-  letterAvailable: boolean;
-  dataSource: string;
-}
-
 const colorMap: Record<MapColor, string> = {
-  green: "#66BB6A",   // Soft sage/emerald
-  yellow: "#FFD54F",  // Soft gold
-  orange: "#FFB74D",  // Soft amber
-  red: "#E57373",     // Soft salmon/brick
-  gray: "#9E9E9E",    // Neutral grey
+  green: "#22c55e",
+  yellow: "#eab308",
+  orange: "#f97316",
+  red: "#ef4444",
+  gray: "#6b7280",
 };
 
-// Country centroids for flight arc visualization (approximate lon/lat)
-const countryCentroids: Record<string, [number, number]> = {
-  US: [-98.5, 39.5], GB: [-2, 54], DE: [10.5, 51], FR: [2.5, 46.5], CA: [-106, 56],
-  AU: [134, -25], JP: [138, 36], CN: [105, 35], IN: [78, 22], BR: [-53, -10],
-  MX: [-102, 23], IT: [12.5, 42.5], ES: [-3.5, 40], NL: [5.5, 52], CH: [8, 47],
-  SE: [18, 62], NO: [10, 62], DK: [10, 56], FI: [26, 64], BE: [4.5, 50.5],
-  AT: [14, 47.5], IE: [-8, 53], PT: [-8, 39.5], PL: [19, 52], CZ: [15, 49.5],
-  HU: [19.5, 47], RO: [25, 46], BG: [25, 42.5], HR: [16, 45.5], SK: [19.5, 48.5],
-  SI: [14.5, 46], EE: [25, 59], LV: [24.5, 57], LT: [24, 55.5], GR: [22, 39],
-  CY: [33, 35], MT: [14.5, 35.9], LU: [6, 49.8], IS: [-18, 65], NZ: [174, -41],
-  SG: [103.8, 1.35], HK: [114.15, 22.25], KR: [127.5, 36], TW: [121, 24],
-  TH: [101, 15], MY: [102, 4], ID: [120, -2], PH: [122, 12], VN: [108, 16],
-  AE: [54, 24], SA: [45, 24], IL: [35, 31.5], TR: [35, 39], ZA: [-25, 29],
-  EG: [30, 27], NG: [8, 10], KE: [38, 1], AR: [-64, -34], CL: [-71, -33],
-  CO: [-74, 4], PE: [-76, -10], RU: [100, 60], UA: [32, 49], QA: [51.5, 25.5],
-  KW: [47.5, 29.5], BH: [50.5, 26], OM: [57, 21], JO: [36, 31], LB: [35.8, 33.9],
-  PK: [69, 30], BD: [90, 24], LK: [81, 8], NP: [84, 28], MM: [96, 21],
-  KH: [105, 13], LA: [103, 18],
+const iso3ToIso2: Record<string, string> = {
+  USA: "US", GBR: "GB", DEU: "DE", FRA: "FR", CAN: "CA", AUS: "AU",
+  JPN: "JP", CHN: "CN", IND: "IN", BRA: "BR", MEX: "MX", ITA: "IT",
+  ESP: "ES", NLD: "NL", CHE: "CH", SWE: "SE", NOR: "NO", DNK: "DK",
+  FIN: "FI", BEL: "BE", AUT: "AT", IRL: "IE", PRT: "PT", POL: "PL",
+  CZE: "CZ", HUN: "HU", ROU: "RO", BGR: "BG", HRV: "HR", SVK: "SK",
+  SVN: "SI", EST: "EE", LVA: "LV", LTU: "LT", GRC: "GR", CYP: "CY",
+  MLT: "MT", LUX: "LU", ISL: "IS", NZL: "NZ", SGP: "SG", HKG: "HK",
+  KOR: "KR", TWN: "TW", MYS: "MY", THA: "TH", VNM: "VN", PHL: "PH",
+  IDN: "ID", ARE: "AE", SAU: "SA", ISR: "IL", TUR: "TR", ZAF: "ZA",
+  EGY: "EG", NGA: "NG", KEN: "KE", MAR: "MA", ARG: "AR", CHL: "CL",
+  COL: "CO", PER: "PE", VEN: "VE", RUS: "RU", UKR: "UA", QAT: "QA",
 };
 
-// Generate a curved arc between two points (Great Circle approximation for visual effect)
-function generateFlightArc(start: [number, number], end: [number, number], numPoints = 50): GeoJSON.Feature<GeoJSON.LineString> {
-  const [startLng, startLat] = start;
-  const [endLng, endLat] = end;
-  
-  const coordinates: [number, number][] = [];
-  
-  for (let i = 0; i <= numPoints; i++) {
-    const t = i / numPoints;
-    
-    // Linear interpolation for position
-    const lng = startLng + t * (endLng - startLng);
-    const lat = startLat + t * (endLat - startLat);
-    
-    // Add curvature - parabolic arc that peaks at midpoint
-    const arcHeight = Math.sin(t * Math.PI) * Math.min(30, Math.abs(endLng - startLng) * 0.15);
-    
-    coordinates.push([lng, lat + arcHeight]);
-  }
-  
-  return {
-    type: "Feature",
-    properties: {},
-    geometry: {
-      type: "LineString",
-      coordinates,
-    },
-  };
-}
+const nameToIso2: Record<string, string> = {
+  "France": "FR", "Norway": "NO", "United States of America": "US",
+  "United States": "US", "United Kingdom": "GB", "Germany": "DE",
+  "Canada": "CA", "Australia": "AU", "Japan": "JP", "China": "CN",
+  "India": "IN", "Brazil": "BR", "Mexico": "MX", "Italy": "IT",
+  "Spain": "ES", "Netherlands": "NL", "Switzerland": "CH", "Sweden": "SE",
+  "Denmark": "DK", "Finland": "FI", "Belgium": "BE", "Austria": "AT",
+  "Ireland": "IE", "Portugal": "PT", "Poland": "PL", "Czech Republic": "CZ",
+  "Czechia": "CZ", "Hungary": "HU", "Romania": "RO", "Bulgaria": "BG",
+  "Croatia": "HR", "Slovakia": "SK", "Slovenia": "SI", "Estonia": "EE",
+  "Latvia": "LV", "Lithuania": "LT", "Greece": "GR", "Cyprus": "CY",
+  "Malta": "MT", "Luxembourg": "LU", "Iceland": "IS", "New Zealand": "NZ",
+  "Singapore": "SG", "Hong Kong": "HK", "South Korea": "KR", "Republic of Korea": "KR",
+  "Korea": "KR", "Taiwan": "TW", "Thailand": "TH", "Vietnam": "VN",
+  "Viet Nam": "VN", "Philippines": "PH", "Indonesia": "ID", "Malaysia": "MY",
+  "United Arab Emirates": "AE", "Saudi Arabia": "SA", "Israel": "IL",
+  "Turkey": "TR", "South Africa": "ZA", "Egypt": "EG", "Nigeria": "NG",
+  "Kenya": "KE", "Morocco": "MA", "Argentina": "AR", "Chile": "CL",
+  "Colombia": "CO", "Peru": "PE",
+};
 
-const countryNameMap: Record<string, string> = {
-  US: "United States",
-  GB: "United Kingdom",
-  CA: "Canada",
-  DE: "Germany",
-  JP: "Japan",
-  BR: "Brazil",
-  FR: "France",
-  IT: "Italy",
-  ES: "Spain",
-  AU: "Australia",
-  IN: "India",
-  CN: "China",
-  MX: "Mexico",
-  NL: "Netherlands",
-  CH: "Switzerland",
-  SE: "Sweden",
-  NO: "Norway",
-  DK: "Denmark",
-  FI: "Finland",
-  IE: "Ireland",
-  AT: "Austria",
-  BE: "Belgium",
-  PT: "Portugal",
-  GR: "Greece",
-  PL: "Poland",
-  CZ: "Czech Republic",
-  HU: "Hungary",
-  RO: "Romania",
-  BG: "Bulgaria",
-  HR: "Croatia",
-  SK: "Slovakia",
-  SI: "Slovenia",
-  EE: "Estonia",
-  LV: "Latvia",
-  LT: "Lithuania",
-  LU: "Luxembourg",
-  MT: "Malta",
-  CY: "Cyprus",
-  NZ: "New Zealand",
-  SG: "Singapore",
-  HK: "Hong Kong",
-  KR: "South Korea",
-  TW: "Taiwan",
-  TH: "Thailand",
-  MY: "Malaysia",
-  ID: "Indonesia",
-  PH: "Philippines",
-  VN: "Vietnam",
-  AE: "United Arab Emirates",
-  SA: "Saudi Arabia",
-  IL: "Israel",
-  TR: "Turkey",
-  ZA: "South Africa",
-  EG: "Egypt",
-  NG: "Nigeria",
-  KE: "Kenya",
-  AR: "Argentina",
-  CL: "Chile",
-  CO: "Colombia",
-  PE: "Peru",
+const countryNames: Record<string, string> = {
+  US: "United States", GB: "United Kingdom", CA: "Canada", BR: "Brazil",
+  DE: "Germany", JP: "Japan", AU: "Australia", FR: "France", IT: "Italy",
+  ES: "Spain", NL: "Netherlands", SG: "Singapore", IN: "India", CN: "China",
+  KR: "South Korea", MX: "Mexico", CH: "Switzerland", SE: "Sweden",
+  NO: "Norway", DK: "Denmark", FI: "Finland", IE: "Ireland", NZ: "New Zealand",
+  PL: "Poland", PT: "Portugal", AT: "Austria", BE: "Belgium", AE: "United Arab Emirates",
+  SA: "Saudi Arabia", IL: "Israel", TR: "Turkey", ZA: "South Africa",
+  EG: "Egypt", TH: "Thailand", MY: "Malaysia", ID: "Indonesia", PH: "Philippines",
+  VN: "Vietnam", AR: "Argentina", CL: "Chile", CO: "Colombia", PE: "Peru",
+  RU: "Russia", UA: "Ukraine", GR: "Greece", CZ: "Czech Republic", HU: "Hungary",
+  RO: "Romania", BG: "Bulgaria", HR: "Croatia", IS: "Iceland",
 };
 
 const passportOptions = [
-  { code: "AF", name: "Afghanistan" },
-  { code: "AL", name: "Albania" },
-  { code: "DZ", name: "Algeria" },
-  { code: "AD", name: "Andorra" },
-  { code: "AO", name: "Angola" },
-  { code: "AG", name: "Antigua and Barbuda" },
-  { code: "AR", name: "Argentina" },
-  { code: "AM", name: "Armenia" },
-  { code: "AU", name: "Australia" },
-  { code: "AT", name: "Austria" },
-  { code: "AZ", name: "Azerbaijan" },
-  { code: "BS", name: "Bahamas" },
-  { code: "BH", name: "Bahrain" },
-  { code: "BD", name: "Bangladesh" },
-  { code: "BB", name: "Barbados" },
-  { code: "BY", name: "Belarus" },
-  { code: "BE", name: "Belgium" },
-  { code: "BZ", name: "Belize" },
-  { code: "BJ", name: "Benin" },
-  { code: "BT", name: "Bhutan" },
-  { code: "BO", name: "Bolivia" },
-  { code: "BA", name: "Bosnia and Herzegovina" },
-  { code: "BW", name: "Botswana" },
-  { code: "BR", name: "Brazil" },
-  { code: "BN", name: "Brunei" },
-  { code: "BG", name: "Bulgaria" },
-  { code: "BF", name: "Burkina Faso" },
-  { code: "BI", name: "Burundi" },
-  { code: "CV", name: "Cabo Verde" },
-  { code: "KH", name: "Cambodia" },
-  { code: "CM", name: "Cameroon" },
-  { code: "CA", name: "Canada" },
-  { code: "CF", name: "Central African Republic" },
-  { code: "TD", name: "Chad" },
-  { code: "CL", name: "Chile" },
-  { code: "CN", name: "China" },
-  { code: "CO", name: "Colombia" },
-  { code: "KM", name: "Comoros" },
-  { code: "CG", name: "Congo" },
-  { code: "CD", name: "Congo (DRC)" },
-  { code: "CR", name: "Costa Rica" },
-  { code: "CI", name: "Cote d'Ivoire" },
-  { code: "HR", name: "Croatia" },
-  { code: "CU", name: "Cuba" },
-  { code: "CY", name: "Cyprus" },
-  { code: "CZ", name: "Czechia" },
-  { code: "DK", name: "Denmark" },
-  { code: "DJ", name: "Djibouti" },
-  { code: "DM", name: "Dominica" },
-  { code: "DO", name: "Dominican Republic" },
-  { code: "EC", name: "Ecuador" },
-  { code: "EG", name: "Egypt" },
-  { code: "SV", name: "El Salvador" },
-  { code: "GQ", name: "Equatorial Guinea" },
-  { code: "ER", name: "Eritrea" },
-  { code: "EE", name: "Estonia" },
-  { code: "SZ", name: "Eswatini" },
-  { code: "ET", name: "Ethiopia" },
-  { code: "FJ", name: "Fiji" },
-  { code: "FI", name: "Finland" },
-  { code: "FR", name: "France" },
-  { code: "GA", name: "Gabon" },
-  { code: "GM", name: "Gambia" },
-  { code: "GE", name: "Georgia" },
-  { code: "DE", name: "Germany" },
-  { code: "GH", name: "Ghana" },
-  { code: "GR", name: "Greece" },
-  { code: "GD", name: "Grenada" },
-  { code: "GT", name: "Guatemala" },
-  { code: "GN", name: "Guinea" },
-  { code: "GW", name: "Guinea-Bissau" },
-  { code: "GY", name: "Guyana" },
-  { code: "HT", name: "Haiti" },
-  { code: "HN", name: "Honduras" },
-  { code: "HK", name: "Hong Kong" },
-  { code: "HU", name: "Hungary" },
-  { code: "IS", name: "Iceland" },
-  { code: "IN", name: "India" },
-  { code: "ID", name: "Indonesia" },
-  { code: "IR", name: "Iran" },
-  { code: "IQ", name: "Iraq" },
-  { code: "IE", name: "Ireland" },
-  { code: "IL", name: "Israel" },
-  { code: "IT", name: "Italy" },
-  { code: "JM", name: "Jamaica" },
-  { code: "JP", name: "Japan" },
-  { code: "JO", name: "Jordan" },
-  { code: "KZ", name: "Kazakhstan" },
-  { code: "KE", name: "Kenya" },
-  { code: "KI", name: "Kiribati" },
-  { code: "KP", name: "Korea (North)" },
-  { code: "KR", name: "Korea (South)" },
-  { code: "KW", name: "Kuwait" },
-  { code: "KG", name: "Kyrgyzstan" },
-  { code: "LA", name: "Laos" },
-  { code: "LV", name: "Latvia" },
-  { code: "LB", name: "Lebanon" },
-  { code: "LS", name: "Lesotho" },
-  { code: "LR", name: "Liberia" },
-  { code: "LY", name: "Libya" },
-  { code: "LI", name: "Liechtenstein" },
-  { code: "LT", name: "Lithuania" },
-  { code: "LU", name: "Luxembourg" },
-  { code: "MG", name: "Madagascar" },
-  { code: "MW", name: "Malawi" },
-  { code: "MY", name: "Malaysia" },
-  { code: "MV", name: "Maldives" },
-  { code: "ML", name: "Mali" },
-  { code: "MT", name: "Malta" },
-  { code: "MH", name: "Marshall Islands" },
-  { code: "MR", name: "Mauritania" },
-  { code: "MU", name: "Mauritius" },
-  { code: "MX", name: "Mexico" },
-  { code: "FM", name: "Micronesia" },
-  { code: "MD", name: "Moldova" },
-  { code: "MC", name: "Monaco" },
-  { code: "MN", name: "Mongolia" },
-  { code: "ME", name: "Montenegro" },
-  { code: "MA", name: "Morocco" },
-  { code: "MZ", name: "Mozambique" },
-  { code: "MM", name: "Myanmar" },
-  { code: "NA", name: "Namibia" },
-  { code: "NR", name: "Nauru" },
-  { code: "NP", name: "Nepal" },
-  { code: "NL", name: "Netherlands" },
-  { code: "NZ", name: "New Zealand" },
-  { code: "NI", name: "Nicaragua" },
-  { code: "NE", name: "Niger" },
-  { code: "NG", name: "Nigeria" },
-  { code: "MK", name: "North Macedonia" },
-  { code: "NO", name: "Norway" },
-  { code: "OM", name: "Oman" },
-  { code: "PK", name: "Pakistan" },
-  { code: "PW", name: "Palau" },
-  { code: "PS", name: "Palestine" },
-  { code: "PA", name: "Panama" },
-  { code: "PG", name: "Papua New Guinea" },
-  { code: "PY", name: "Paraguay" },
-  { code: "PE", name: "Peru" },
-  { code: "PH", name: "Philippines" },
-  { code: "PL", name: "Poland" },
-  { code: "PT", name: "Portugal" },
-  { code: "QA", name: "Qatar" },
-  { code: "RO", name: "Romania" },
-  { code: "RU", name: "Russia" },
-  { code: "RW", name: "Rwanda" },
-  { code: "KN", name: "Saint Kitts and Nevis" },
-  { code: "LC", name: "Saint Lucia" },
-  { code: "VC", name: "Saint Vincent and the Grenadines" },
-  { code: "WS", name: "Samoa" },
-  { code: "SM", name: "San Marino" },
-  { code: "ST", name: "Sao Tome and Principe" },
-  { code: "SA", name: "Saudi Arabia" },
-  { code: "SN", name: "Senegal" },
-  { code: "RS", name: "Serbia" },
-  { code: "SC", name: "Seychelles" },
-  { code: "SL", name: "Sierra Leone" },
-  { code: "SG", name: "Singapore" },
-  { code: "SK", name: "Slovakia" },
-  { code: "SI", name: "Slovenia" },
-  { code: "SB", name: "Solomon Islands" },
-  { code: "SO", name: "Somalia" },
-  { code: "ZA", name: "South Africa" },
-  { code: "SS", name: "South Sudan" },
-  { code: "ES", name: "Spain" },
-  { code: "LK", name: "Sri Lanka" },
-  { code: "SD", name: "Sudan" },
-  { code: "SR", name: "Suriname" },
-  { code: "SE", name: "Sweden" },
-  { code: "CH", name: "Switzerland" },
-  { code: "SY", name: "Syria" },
-  { code: "TW", name: "Taiwan" },
-  { code: "TJ", name: "Tajikistan" },
-  { code: "TZ", name: "Tanzania" },
-  { code: "TH", name: "Thailand" },
-  { code: "TL", name: "Timor-Leste" },
-  { code: "TG", name: "Togo" },
-  { code: "TO", name: "Tonga" },
-  { code: "TT", name: "Trinidad and Tobago" },
-  { code: "TN", name: "Tunisia" },
-  { code: "TR", name: "Turkey" },
-  { code: "TM", name: "Turkmenistan" },
-  { code: "TV", name: "Tuvalu" },
-  { code: "UG", name: "Uganda" },
-  { code: "UA", name: "Ukraine" },
-  { code: "AE", name: "United Arab Emirates" },
-  { code: "GB", name: "United Kingdom" },
   { code: "US", name: "United States" },
-  { code: "UY", name: "Uruguay" },
-  { code: "UZ", name: "Uzbekistan" },
-  { code: "VU", name: "Vanuatu" },
-  { code: "VA", name: "Vatican City" },
-  { code: "VE", name: "Venezuela" },
-  { code: "VN", name: "Vietnam" },
-  { code: "YE", name: "Yemen" },
-  { code: "ZM", name: "Zambia" },
-  { code: "ZW", name: "Zimbabwe" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "CA", name: "Canada" },
+  { code: "AU", name: "Australia" },
+  { code: "DE", name: "Germany" },
+  { code: "FR", name: "France" },
+  { code: "IT", name: "Italy" },
+  { code: "ES", name: "Spain" },
+  { code: "JP", name: "Japan" },
+  { code: "KR", name: "South Korea" },
+  { code: "SG", name: "Singapore" },
+  { code: "NL", name: "Netherlands" },
+  { code: "CH", name: "Switzerland" },
+  { code: "SE", name: "Sweden" },
+  { code: "NO", name: "Norway" },
+  { code: "DK", name: "Denmark" },
+  { code: "FI", name: "Finland" },
+  { code: "IE", name: "Ireland" },
+  { code: "NZ", name: "New Zealand" },
+  { code: "AT", name: "Austria" },
+  { code: "BE", name: "Belgium" },
+  { code: "PT", name: "Portugal" },
+  { code: "PL", name: "Poland" },
+  { code: "BR", name: "Brazil" },
+  { code: "MX", name: "Mexico" },
+  { code: "IN", name: "India" },
+  { code: "CN", name: "China" },
 ];
 
+const destinationOptions = Object.entries(countryNames)
+  .map(([code, name]) => ({ code, name }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
 export default function MapPage() {
+  const [, navigate] = useLocation();
   const [passport, setPassport] = useState("US");
+  const [destination, setDestination] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [assessResult, setAssessResult] = useState<AssessResult | null>(null);
-  const [showPanel, setShowPanel] = useState(false);
-  const [letterOpen, setLetterOpen] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
-  const [userInteracting, setUserInteracting] = useState(false);
-  const mapRef = useRef<MapRef>(null);
-  const interactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [mergeData, setMergeData] = useState({
-    FULL_NAME: "",
-    EMPLOYEE_EMAIL: "",
-    EMPLOYEE_TITLE: "",
-  });
-
-  // Handle user interaction - pause rotation during and after dragging
-  const handleInteractionStart = () => {
-    setUserInteracting(true);
-    if (interactionTimeoutRef.current) {
-      clearTimeout(interactionTimeoutRef.current);
-    }
-  };
-
-  const handleInteractionEnd = () => {
-    // Resume auto-rotation after 5 seconds of no interaction
-    if (interactionTimeoutRef.current) {
-      clearTimeout(interactionTimeoutRef.current);
-    }
-    interactionTimeoutRef.current = setTimeout(() => {
-      setUserInteracting(false);
-    }, 5000);
-  };
-
-  // Auto-rotation effect for the globe
-  useEffect(() => {
-    if (!mapRef.current || isHovering || userInteracting) return;
-    
-    const map = mapRef.current.getMap();
-    let animationFrame: number;
-    
-    const rotate = () => {
-      if (isHovering || userInteracting) return;
-      const center = map.getCenter();
-      map.setCenter({ lng: center.lng + 0.03, lat: center.lat });
-      animationFrame = requestAnimationFrame(rotate);
-    };
-    
-    animationFrame = requestAnimationFrame(rotate);
-    
-    return () => {
-      cancelAnimationFrame(animationFrame);
-    };
-  }, [isHovering, userInteracting]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (interactionTimeoutRef.current) {
-        clearTimeout(interactionTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleDownloadLetter = async () => {
-    if (!selectedCountry) return;
-    
-    setIsDownloading(true);
-    try {
-      const currentDate = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      });
-      
-      const today = new Date();
-      const returnDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-      
-      const response = await fetch("/api/letters/docx", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          templateId: selectedCountry,
-          merge: {
-            FULL_NAME: mergeData.FULL_NAME || "Employee Name",
-            EMPLOYEE_EMAIL: mergeData.EMPLOYEE_EMAIL || "employee@carta.com",
-            EMPLOYEE_TITLE: mergeData.EMPLOYEE_TITLE || "Team Member",
-            CITIZENSHIP: passport,
-            DEPARTURE_DATE: today.toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long", 
-              day: "numeric"
-            }),
-            RETURN_DATE: returnDate.toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric"
-            }),
-            CURRENT_DATE: currentDate
-          }
-        })
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Carta_Invitation_Letter_${selectedCountry}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setLetterOpen(false);
-      } else {
-        const fallbackResponse = await fetch("/api/letters/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            employeeName: mergeData.FULL_NAME || "Employee Name",
-            employeeEmail: mergeData.EMPLOYEE_EMAIL || "employee@carta.com",
-            employeeTitle: mergeData.EMPLOYEE_TITLE || "Team Member",
-            destinationCountry: selectedCountry,
-            citizenship: passport,
-            departureDate: today.toISOString().split("T")[0],
-            returnDate: returnDate.toISOString().split("T")[0],
-            purpose: "BUSINESS",
-            template: selectedCountry
-          })
-        });
-        
-        const data = await fallbackResponse.json();
-        const textBlob = new Blob([data.content], { type: "text/plain" });
-        const url = URL.createObjectURL(textBlob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invitation_letter_${selectedCountry}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setLetterOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to download letter:", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
 
   const { data: configData, isLoading: configLoading } = useQuery<{ token: string }>({
     queryKey: ["/api/config/mapbox"],
@@ -660,20 +146,24 @@ export default function MapPage() {
     queryKey: ["/api/map", passport],
     queryFn: async () => {
       const res = await fetch(`/api/map?passport=${passport}`);
+      if (!res.ok) throw new Error("Failed to fetch map data");
       return res.json();
     },
+    enabled: !!mapboxToken,
   });
 
   const assessMutation = useMutation({
-    mutationFn: async (destination: string) => {
-      const today = new Date().toISOString().split("T")[0];
-      const res = await apiRequest("POST", "/api/assess", {
-        citizenship: passport,
-        destination,
-        purpose: "BUSINESS",
-        durationDays: 14,
-        travelDate: today,
-        isUSEmployerSponsored: false,
+    mutationFn: async (destCode: string) => {
+      const res = await fetch("/api/assess", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          destination: destCode,
+          citizenship: passport,
+          purpose: "BUSINESS",
+          startDate: new Date().toISOString().split("T")[0],
+          endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        }),
       });
       return res.json();
     },
@@ -683,313 +173,297 @@ export default function MapPage() {
   });
 
   const handleCountryClick = useCallback((e: MapMouseEvent) => {
-    const feature = e.features?.[0];
-    const props = feature?.properties;
-    // Try multiple property names - different GeoJSON sources use different conventions
-    // Some use -99 for countries with complex territories (like France)
-    let countryCode = props?.["ISO3166-1-Alpha-2"];
-    // Fallback: try ISO_A2 (common in Natural Earth data)
+    const features = e.features;
+    if (!features || features.length === 0) return;
+    const countryFeature = features.find(f => f.layer?.id === "country-fills");
+    if (!countryFeature) return;
+    const props = countryFeature.properties;
+    if (!props) return;
+    let countryCode = props["ISO3166-1-Alpha-2"];
+    if (!countryCode || countryCode === "-99") countryCode = props["ISO_A2"];
     if (!countryCode || countryCode === "-99") {
-      countryCode = props?.["ISO_A2"];
+      const iso3 = props["ISO3166-1-Alpha-3"] || props["ISO_A3"];
+      if (iso3 && iso3ToIso2[iso3]) countryCode = iso3ToIso2[iso3];
     }
-    // Fallback: derive from ISO_A3 if available
     if (!countryCode || countryCode === "-99") {
-      const iso3 = props?.["ISO3166-1-Alpha-3"] || props?.["ISO_A3"];
-      if (iso3 && iso3ToIso2[iso3]) {
-        countryCode = iso3ToIso2[iso3];
-      }
-    }
-    // Final fallback: try to match by country name
-    if (!countryCode || countryCode === "-99") {
-      const name = props?.["ADMIN"] || props?.["name"];
-      if (name && nameToIso2[name]) {
-        countryCode = nameToIso2[name];
-      }
+      const name = props["ADMIN"] || props["name"];
+      if (name && nameToIso2[name]) countryCode = nameToIso2[name];
     }
     if (countryCode && countryCode !== "-99") {
+      setDestination(countryCode);
       setSelectedCountry(countryCode);
       setAssessResult(null);
+      setValidationError(null);
       assessMutation.mutate(countryCode);
     }
-  }, [assessMutation, passport]);
+  }, [assessMutation]);
 
   const closePanel = () => {
     setSelectedCountry(null);
     setAssessResult(null);
-    setShowPanel(false);
   };
 
-  // Use ISO2 colors directly from API (Mapbox uses iso_3166_1_alpha_2)
-  const colorsByIso2 = mapData?.colorsByIso2 ?? {};
+  const handleCheckRequirements = () => {
+    if (!destination) {
+      setValidationError("Select a destination to continue");
+      return;
+    }
+    navigate(`/assess?passport=${passport}&destination=${destination}`);
+  };
 
-  // GeoJSON uses "ISO3166-1-Alpha-2" for 2-letter country codes
+  const colorsByIso2 = mapData?.colorsByIso2 ?? {};
   const fillColorExpression = [
     "match",
     ["get", "ISO3166-1-Alpha-2"],
-    ...Object.entries(colorsByIso2).flatMap(([code, color]) => [
-      code,
-      colorMap[color],
-    ]),
+    ...Object.entries(colorsByIso2).flatMap(([code, color]) => [code, colorMap[color]]),
     "#d1d5db",
   ] as unknown as string;
 
-  if (configLoading) {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-        <p className="text-muted-foreground mt-4">Loading map...</p>
-      </div>
-    );
-  }
-
-  if (!mapboxToken) {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-        <h1 className="text-2xl font-semibold mb-2">Mapbox Token Required</h1>
-        <p className="text-muted-foreground">
-          Please configure the MAPBOX_PUBLIC_KEY secret to enable the map.
-        </p>
-      </div>
-    );
-  }
+  const selectedPassportName = passportOptions.find(p => p.code === passport)?.name || passport;
 
   return (
-    <div className="relative h-screen">
-      {/* Bento HUD Grid Overlay */}
-      <div className="bento-hud">
-        {/* Top Left: Logo + Passport Selector */}
-        <div className="bento-hud-top-left">
-          <FloatingLogo />
-          <div className="glass-bento rounded-2xl p-4">
-            <label className="text-label mb-2 block">
-              Your Passport
-            </label>
-            <Select value={passport} onValueChange={setPassport}>
-              <SelectTrigger className="w-44 bg-white/5 dark:bg-white/5 border-white/10 spring-transition" data-testid="select-passport">
-                <SelectValue placeholder="Select passport" />
-              </SelectTrigger>
-              <SelectContent>
-                {passportOptions.map((opt) => (
-                  <SelectItem key={opt.code} value={opt.code}>
-                    {opt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!selectedCountry && (
-              <div className="flex items-start gap-1.5 mt-3 max-w-[180px]">
-                <Info className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-primary/80">
-                  Click any country to view requirements
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Top Center: Navigation Dock */}
-        <div className="bento-hud-top-center">
-          <FloatingDock />
-        </div>
-
-        {/* Top Right: Actions */}
-        <div className="bento-hud-top-right">
-          <FloatingActions />
-        </div>
-
-        {/* Bottom Left: Legend */}
-        <div className="bento-hud-bottom-left">
-          <div className="glass-bento rounded-2xl p-4">
-            <div className="text-label mb-3">
-              Entry Requirements
-            </div>
-            <div className="flex flex-col gap-2.5">
-              {mapData?.legend && Object.entries(mapData.legend).map(([color, label]) => (
-                <div key={color} className="flex items-center gap-3 text-sm spring-transition">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: colorMap[color as MapColor] }} 
-                  />
-                  <span className="text-bento-secondary">{label}</span>
+    <div className="relative h-[calc(100vh-3.5rem)] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+      {/* Premium Header Bar */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="absolute top-0 left-0 right-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60"
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Branding */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
+                  <Globe className="w-4 h-4 text-white" />
                 </div>
-              ))}
+                <div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-semibold tracking-tight text-slate-900">Carta</span>
+                    <span className="text-lg font-light text-slate-600">Travel</span>
+                  </div>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-400 -mt-0.5">Global Mobility Platform</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Center: Context Message */}
+            <div className="hidden md:flex items-center gap-6">
+              <div className="text-center">
+                <p className="text-sm text-slate-600">
+                  Viewing requirements for{" "}
+                  <span className="font-semibold text-slate-900">{selectedPassportName}</span>{" "}
+                  passport holders
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">Click any country to see entry requirements</p>
+              </div>
+            </div>
+
+            {/* Right: Legend */}
+            <div className="hidden lg:flex items-center gap-4">
+              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50/80 rounded-full border border-slate-200/60">
+                {mapData?.legend && Object.entries(mapData.legend).slice(0, 4).map(([color, label]) => (
+                  <div key={color} className="flex items-center gap-1.5">
+                    <div 
+                      className="w-2.5 h-2.5 rounded-full shadow-sm" 
+                      style={{ backgroundColor: colorMap[color as MapColor] }} 
+                    />
+                    <span className="text-xs text-slate-600">{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* Mobile Context Banner */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="md:hidden absolute top-[72px] left-0 right-0 z-10 px-4"
+      >
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg border border-slate-200/60 px-4 py-3 shadow-sm">
+          <p className="text-sm text-slate-600 text-center">
+            Visa requirements for <span className="font-semibold text-slate-900">{selectedPassportName}</span> passport
+          </p>
+          {/* Mobile Legend */}
+          <div className="flex items-center justify-center gap-3 mt-2">
+            {mapData?.legend && Object.entries(mapData.legend).slice(0, 4).map(([color, label]) => (
+              <div key={color} className="flex items-center gap-1">
+                <div 
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: colorMap[color as MapColor] }} 
+                />
+                <span className="text-[10px] text-slate-500">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Map */}
+      {configLoading ? (
+        <div className="absolute inset-0 flex items-center justify-center pt-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-emerald-500 border-t-transparent mx-auto" />
+            <p className="text-sm text-slate-500 mt-3">Loading global map...</p>
+          </div>
+        </div>
+      ) : !mapboxToken ? (
+        <div className="absolute inset-0 flex items-center justify-center pt-20">
+          <div className="text-center px-4">
+            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+            <h1 className="text-xl font-semibold mb-2 text-slate-900">Map Configuration Required</h1>
+            <p className="text-slate-500">Please configure the Mapbox token.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="pt-[72px] h-full">
+          <Map
+            mapboxAccessToken={mapboxToken}
+            initialViewState={{
+              longitude: 0,
+              latitude: 20,
+              zoom: 1.5,
+            }}
+            style={{ width: "100%", height: "100%" }}
+            mapStyle="mapbox://styles/mapbox/light-v11"
+            interactiveLayerIds={["country-fills"]}
+            onClick={handleCountryClick}
+            cursor="pointer"
+          >
+            <Source
+              id="countries"
+              type="geojson"
+              data="https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
+            >
+              <Layer
+                id="country-fills"
+                type="fill"
+                paint={{
+                  "fill-color": mapLoading ? "#d1d5db" : fillColorExpression,
+                  "fill-opacity": 0.75,
+                }}
+              />
+              <Layer
+                id="country-borders"
+                type="line"
+                paint={{
+                  "line-color": "#94a3b8",
+                  "line-width": 0.5,
+                }}
+              />
+            </Source>
+          </Map>
+        </div>
+      )}
+
+      {/* Floating Control Panel */}
+      <div className="absolute inset-x-0 bottom-0 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-8 lg:left-12 md:right-auto pointer-events-none px-4 pb-6 md:px-0 md:pb-0 md:pt-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
+          className="pointer-events-auto w-full md:w-[380px]"
+        >
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/60 p-6 space-y-5">
+            {/* Header */}
+            <div>
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900" data-testid="text-hero-title">
+                Where are you traveling?
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">
+                Select your passport and explore visa requirements worldwide
+              </p>
+            </div>
+
+            {/* Form Fields */}
+            <div className="flex flex-col gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Your Passport</label>
+                <Select value={passport} onValueChange={setPassport}>
+                  <SelectTrigger className="w-full bg-slate-50 border-slate-200 focus:ring-emerald-500 focus:border-emerald-500" data-testid="select-passport">
+                    <SelectValue placeholder="Select passport" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {passportOptions.map((opt) => (
+                      <SelectItem key={opt.code} value={opt.code}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Destination</label>
+                <Select 
+                  value={destination ?? ""} 
+                  onValueChange={(val) => {
+                    setDestination(val);
+                    setValidationError(null);
+                  }}
+                >
+                  <SelectTrigger 
+                    className={`w-full bg-slate-50 border-slate-200 focus:ring-emerald-500 focus:border-emerald-500 ${validationError ? "ring-2 ring-red-500 border-red-500" : ""}`} 
+                    data-testid="select-destination"
+                  >
+                    <SelectValue placeholder="Click map or select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {destinationOptions.map((opt) => (
+                      <SelectItem key={opt.code} value={opt.code}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {validationError && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {validationError}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-3 pt-1">
+              <Button 
+                className="w-full gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/25 text-white" 
+                size="lg"
+                onClick={handleCheckRequirements}
+                data-testid="button-check-requirements"
+              >
+                Check Requirements
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+
+              <Link 
+                href="/advisories" 
+                className="text-sm text-slate-500 inline-flex items-center justify-center gap-1 hover:text-slate-700 transition-colors" 
+                data-testid="link-advisories"
+              >
+                View travel advisories
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {/* Trust Badge */}
+            <div className="pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                <Shield className="w-3.5 h-3.5" />
+                <span>Data verified against official sources</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      <Map
-        ref={mapRef}
-        mapboxAccessToken={mapboxToken}
-        initialViewState={{
-          longitude: 0,
-          latitude: 20,
-          zoom: 1.8,
-        }}
-        style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/light-v11"
-        projection={{ name: "globe" }}
-        interactiveLayerIds={["country-fills"]}
-        onClick={handleCountryClick}
-        onDragStart={handleInteractionStart}
-        onDragEnd={handleInteractionEnd}
-        onZoomStart={handleInteractionStart}
-        onZoomEnd={handleInteractionEnd}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => {
-          setIsHovering(false);
-          setHoveredCountry(null);
-        }}
-        onMouseMove={(e) => {
-          const feature = e.features?.[0];
-          if (feature) {
-            const props = feature.properties;
-            let countryCode = props?.["ISO3166-1-Alpha-2"];
-            if (!countryCode || countryCode === "-99") {
-              countryCode = props?.["ISO_A2"];
-            }
-            if (!countryCode || countryCode === "-99") {
-              const iso3 = props?.["ISO3166-1-Alpha-3"] || props?.["ISO_A3"];
-              if (iso3 && iso3ToIso2[iso3]) {
-                countryCode = iso3ToIso2[iso3];
-              }
-            }
-            if (!countryCode || countryCode === "-99") {
-              const name = props?.["ADMIN"] || props?.["name"];
-              if (name && nameToIso2[name]) {
-                countryCode = nameToIso2[name];
-              }
-            }
-            if (countryCode && countryCode !== "-99" && countryCode !== passport) {
-              setHoveredCountry(countryCode);
-            } else {
-              setHoveredCountry(null);
-            }
-          } else {
-            setHoveredCountry(null);
-          }
-        }}
-        cursor="pointer"
-        fog={{
-          color: "rgb(252, 253, 255)",
-          "high-color": "rgb(50, 176, 160)",
-          "horizon-blend": 0.04,
-          "space-color": "rgb(248, 250, 252)",
-          "star-intensity": 0
-        }}
-        onLoad={(e) => {
-          const map = e.target;
-          // Improve country label readability and reduce clutter
-          const labelLayers = ['country-label', 'state-label', 'settlement-label', 'settlement-major-label', 'settlement-minor-label'];
-          labelLayers.forEach(layerId => {
-            if (map.getLayer(layerId)) {
-              // Paint properties for styling
-              map.setPaintProperty(layerId, 'text-halo-color', '#ffffff');
-              map.setPaintProperty(layerId, 'text-halo-width', 2);
-              map.setPaintProperty(layerId, 'text-halo-blur', 0);
-              map.setPaintProperty(layerId, 'text-color', '#2d3748');
-              
-              // Layout properties to reduce label overlap/clutter
-              map.setLayoutProperty(layerId, 'text-allow-overlap', false);
-              map.setLayoutProperty(layerId, 'text-ignore-placement', false);
-              map.setLayoutProperty(layerId, 'text-padding', 3);
-              map.setLayoutProperty(layerId, 'text-optional', true);
-              
-              // Make text size responsive to zoom level
-              map.setLayoutProperty(layerId, 'text-size', [
-                'interpolate', ['linear'], ['zoom'],
-                1, 8,    // At zoom 1, text is 8px
-                3, 10,   // At zoom 3, text is 10px
-                5, 12,   // At zoom 5, text is 12px
-                8, 14    // At zoom 8+, text is 14px
-              ]);
-            }
-          });
-        }}
-      >
-        <Source
-          id="countries"
-          type="geojson"
-          data="https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-        >
-          <Layer
-            id="country-fills"
-            type="fill"
-            paint={{
-              "fill-color": mapLoading ? "#e5e7eb" : fillColorExpression,
-              "fill-opacity": 0.85,
-            }}
-          />
-          <Layer
-            id="country-borders"
-            type="line"
-            paint={{
-              "line-color": "#ffffff",
-              "line-width": 0.5,
-              "line-opacity": 0.8,
-            }}
-          />
-        </Source>
-        
-        {/* Flight Arc - animated path from origin to hovered destination */}
-        {/* Rendered below country-fills to not interfere with clicks */}
-        {hoveredCountry && countryCentroids[passport] && countryCentroids[hoveredCountry] && (
-          <Source
-            key={`flight-arc-${passport}-${hoveredCountry}`}
-            id={`flight-arc-${hoveredCountry}`}
-            type="geojson"
-            data={generateFlightArc(countryCentroids[passport], countryCentroids[hoveredCountry])}
-          >
-            {/* Glow effect layer - rendered below country-fills */}
-            <Layer
-              id={`flight-arc-glow-${hoveredCountry}`}
-              type="line"
-              beforeId="country-fills"
-              paint={{
-                "line-color": "#32B0A0",
-                "line-width": 6,
-                "line-opacity": 0.3,
-                "line-blur": 3,
-              }}
-            />
-            {/* Main arc line - rendered below country-fills */}
-            <Layer
-              id={`flight-arc-line-${hoveredCountry}`}
-              type="line"
-              beforeId="country-fills"
-              paint={{
-                "line-color": "#32B0A0",
-                "line-width": 2,
-                "line-opacity": 0.9,
-              }}
-            />
-            {/* Animated dashed overlay - rendered below country-fills */}
-            <Layer
-              id={`flight-arc-dash-${hoveredCountry}`}
-              type="line"
-              beforeId="country-fills"
-              paint={{
-                "line-color": "#ffffff",
-                "line-width": 2,
-                "line-dasharray": [0, 2, 2],
-                "line-opacity": 0.8,
-              }}
-            />
-          </Source>
-        )}
-      </Map>
-
-      <Button
-        size="icon"
-        variant="ghost"
-        className="absolute top-28 right-6 z-20 md:hidden glass-bento rounded-xl"
-        onClick={() => setShowPanel(!showPanel)}
-        data-testid="button-toggle-panel"
-      >
-        {showPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-      </Button>
-
+      {/* Slide-out Country Panel */}
       <AnimatePresence>
         {selectedCountry && (
           <motion.div 
@@ -997,27 +471,20 @@ export default function MapPage() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-80 md:w-[340px] glass-panel overflow-y-auto z-[50] shadow-2xl"
+            className="absolute top-0 right-0 h-full w-80 bg-white/95 backdrop-blur-md border-l border-slate-200 overflow-y-auto z-30"
           >
-            <motion.div
-              key="assessment"
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="p-6 pt-8"
-            >
-              <div className="flex items-center justify-between gap-2 mb-6">
+            <div className="p-5 pt-20">
+              <div className="flex items-center justify-between gap-2 mb-5">
                 <div>
-                  <p className="text-label mb-1">Destination</p>
-                  <h2 className="text-xl font-medium text-bento-primary">
-                    {countryNameMap[selectedCountry] || selectedCountry}
+                  <h2 className="text-xl font-semibold text-slate-900">
+                    {countryNames[selectedCountry] || selectedCountry}
                   </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Entry requirements for {selectedPassportName} citizens</p>
                 </div>
                 <Button 
                   size="icon" 
                   variant="ghost" 
-                  className="spring-transition"
+                  className="text-slate-400 hover:text-slate-600"
                   onClick={closePanel}
                   data-testid="button-close-panel"
                 >
@@ -1027,7 +494,7 @@ export default function MapPage() {
 
               {assessMutation.isPending && (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent" />
                 </div>
               )}
 
@@ -1037,59 +504,63 @@ export default function MapPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-4"
                 >
-                  {assessResult.actions && assessResult.actions.length > 0 && 
-                   ["VISA", "EVISA", "ETA"].includes(assessResult.entryType) && (
-                    <Button
-                      className="w-full"
-                      asChild
-                      data-testid="button-apply-visa-top"
-                    >
-                      <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
-                        {assessResult.entryType === "ETA" ? "Apply for ETA" : "Apply for Visa"}
-                        <ExternalLink className="w-4 h-4 ml-2" />
-                      </a>
-                    </Button>
-                  )}
-
-                  <Card>
+                  <Card className="border-slate-200 shadow-sm">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between gap-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Plane className="w-4 h-4" />
+                        <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-700">
+                          <Plane className="w-4 h-4 text-emerald-500" />
                           Entry Requirements
                         </CardTitle>
-                        <Badge variant={assessResult.required ? "destructive" : "secondary"}>
-                          {assessResult.entryType}
-                        </Badge>
+                        {assessResult.actions && assessResult.actions.length > 0 && 
+                         ["VISA", "EVISA", "ETA"].includes(assessResult.entryType) ? (
+                          <Button
+                            size="sm"
+                            className="gap-1 text-xs h-7 px-2 bg-emerald-500 hover:bg-emerald-600"
+                            asChild
+                            data-testid="button-apply-visa"
+                          >
+                            <a href={assessResult.actions[0].url} target="_blank" rel="noopener noreferrer">
+                              {assessResult.entryType === "ETA" ? "Apply for ETA" : "Apply for Visa"}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        ) : (
+                          <Badge 
+                            variant={assessResult.required ? "destructive" : "secondary"}
+                            className={!assessResult.required ? "bg-emerald-100 text-emerald-700" : ""}
+                          >
+                            {assessResult.entryType}
+                          </Badge>
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="font-medium mb-1">{assessResult.headline}</p>
+                      <p className="font-medium text-slate-900 mb-1">{assessResult.headline}</p>
                       {assessResult.details && (
-                        <p className="text-sm text-muted-foreground">{assessResult.details}</p>
+                        <p className="text-sm text-slate-500">{assessResult.details}</p>
                       )}
                     </CardContent>
                   </Card>
 
                   {(assessResult.maxStayDays > 0 || assessResult.processingTime) && (
-                    <Card>
+                    <Card className="border-slate-200 shadow-sm">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
+                        <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-700">
+                          <Clock className="w-4 h-4 text-emerald-500" />
                           Timing
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         {assessResult.maxStayDays > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Allowed Stay</span>
-                            <span>Up to {assessResult.maxStayDays} days</span>
+                          <div className="flex justify-between gap-2 text-sm">
+                            <span className="text-slate-500">Allowed Stay</span>
+                            <span className="text-slate-900 font-medium">Up to {assessResult.maxStayDays} days</span>
                           </div>
                         )}
                         {assessResult.processingTime && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Processing Time</span>
-                            <span>{assessResult.processingTime}</span>
+                          <div className="flex justify-between gap-2 text-sm">
+                            <span className="text-slate-500">Processing Time</span>
+                            <span className="text-slate-900 font-medium">{assessResult.processingTime}</span>
                           </div>
                         )}
                       </CardContent>
@@ -1097,15 +568,15 @@ export default function MapPage() {
                   )}
 
                   {assessResult.fee && (
-                    <Card>
+                    <Card className="border-slate-200 shadow-sm">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Fee</CardTitle>
+                        <CardTitle className="text-sm font-medium text-slate-700">Fee</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm">
+                        <p className="text-sm text-slate-900 font-medium">
                           {assessResult.fee.currency} {assessResult.fee.amount}
                           {assessResult.fee.reimbursable && (
-                            <span className="text-green-600 ml-2">(Reimbursable)</span>
+                            <span className="text-emerald-600 ml-2 font-normal">(Reimbursable)</span>
                           )}
                         </p>
                       </CardContent>
@@ -1113,118 +584,47 @@ export default function MapPage() {
                   )}
 
                   {assessResult.reason && (
-                    <Card>
+                    <Card className="border-slate-200 shadow-sm">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <FileText className="w-4 h-4" />
-                          Why This Applies
+                        <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-700">
+                          <FileText className="w-4 h-4 text-emerald-500" />
+                          Policy Basis
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm text-muted-foreground">{assessResult.reason}</p>
+                        <p className="text-sm text-slate-500">{assessResult.reason}</p>
                       </CardContent>
                     </Card>
                   )}
 
-                  {selectedCountry && LETTER_SUPPORTED_COUNTRIES.includes(selectedCountry) && (
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <FileSignature className="w-4 h-4" />
-                          Invitation Letter
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                          Official Carta business letter
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-xs text-muted-foreground mb-3">
-                          Present to immigration only if requested.
-                        </p>
-                        <Sheet open={letterOpen} onOpenChange={setLetterOpen}>
-                          <SheetTrigger asChild>
-                            <Button variant="outline" size="sm" className="w-full" data-testid="button-generate-letter-map">
-                              <FileSignature className="w-4 h-4 mr-2" />
-                              Generate Letter
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent side="bottom" className="rounded-t-2xl">
-                            <SheetHeader>
-                              <SheetTitle>Invitation Letter Details</SheetTitle>
-                              <SheetDescription>
-                                Enter your information to personalize the letter
-                              </SheetDescription>
-                            </SheetHeader>
-                            <div className="py-6 space-y-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="fullName">Full Name (as on passport)</Label>
-                                <Input
-                                  id="fullName"
-                                  placeholder="Enter your full name"
-                                  value={mergeData.FULL_NAME}
-                                  onChange={(e) => setMergeData({ ...mergeData, FULL_NAME: e.target.value })}
-                                  data-testid="input-letter-name-map"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="email">Work Email</Label>
-                                <Input
-                                  id="email"
-                                  type="email"
-                                  placeholder="your.name@carta.com"
-                                  value={mergeData.EMPLOYEE_EMAIL}
-                                  onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_EMAIL: e.target.value })}
-                                  data-testid="input-letter-email-map"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="title">Job Title</Label>
-                                <Input
-                                  id="title"
-                                  placeholder="e.g. Software Engineer"
-                                  value={mergeData.EMPLOYEE_TITLE}
-                                  onChange={(e) => setMergeData({ ...mergeData, EMPLOYEE_TITLE: e.target.value })}
-                                  data-testid="input-letter-title-map"
-                                />
-                              </div>
-                            </div>
-                            <SheetFooter>
-                              <Button
-                                onClick={handleDownloadLetter}
-                                disabled={isDownloading}
-                                className="w-full"
-                                data-testid="button-download-letter-map"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                {isDownloading ? "Generating..." : "Download Letter"}
-                              </Button>
-                            </SheetFooter>
-                          </SheetContent>
-                        </Sheet>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {assessResult.governance && (
-                    <div className="text-xs text-muted-foreground border-t pt-3 mt-4">
-                      <p>Data source: {assessResult.dataSource}</p>
-                      <p>Status: {assessResult.governance.status}</p>
-                      <p>Review due: {assessResult.governance.reviewDueAt}</p>
-                    </div>
-                  )}
+                  <Button 
+                    className="w-full gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700" 
+                    onClick={handleCheckRequirements}
+                    data-testid="button-full-assessment"
+                  >
+                    View Full Assessment
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </motion.div>
               )}
 
               {assessMutation.isError && (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-slate-400">
                   <AlertCircle className="w-8 h-8 mx-auto mb-2" />
                   <p>Could not load requirements for this destination.</p>
                 </div>
               )}
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Footer Attribution */}
+      <div className="absolute bottom-3 right-3 z-10">
+        <p className="text-[10px] text-slate-400 bg-white/60 backdrop-blur-sm px-2 py-1 rounded">
+          Built for Carta · Visa data updated daily
+        </p>
+      </div>
     </div>
   );
 }
