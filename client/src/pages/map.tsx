@@ -990,13 +990,15 @@ export default function MapPage() {
         {showPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
       </Button>
 
-      <AnimatePresence>
-        {(showPanel || selectedCountry) && (
-          <div 
-            className="fixed top-0 right-0 h-full w-80 md:w-[340px] bg-white dark:bg-gray-900 border-l-4 border-red-500 overflow-y-auto z-[9999]"
-          >
-            <AnimatePresence mode="wait">
-              {!selectedCountry ? (
+      {/* Debug: Always show panel */}
+      <div 
+        className="fixed top-0 right-0 h-full w-80 md:w-[340px] bg-white dark:bg-gray-900 border-l-4 border-red-500 overflow-y-auto z-[9999] shadow-2xl"
+      >
+        <div className="p-4 bg-red-100 dark:bg-red-900 text-black dark:text-white font-bold">
+          DEBUG: Panel is visible. Selected: {selectedCountry || "none"}
+        </div>
+        <AnimatePresence mode="wait">
+          {!selectedCountry ? (
                 <motion.div
                   key="destinations"
                   initial={{ opacity: 0 }}
@@ -1275,10 +1277,8 @@ export default function MapPage() {
               )}
             </motion.div>
           )}
-            </AnimatePresence>
-          </div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
